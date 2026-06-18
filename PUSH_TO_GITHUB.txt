@@ -1,0 +1,42 @@
+═══════════════════════════════════════════════════════════════
+  COMMANDES POUR POUSSER VERS GITHUB
+═══════════════════════════════════════════════════════════════
+
+📌 IMPORTANT: Créez d'abord le dépôt sur GitHub:
+   https://github.com/new
+   Nom: ocr_project
+   ⚠️ Ne cochez PAS "Add a README file"
+
+═══════════════════════════════════════════════════════════════
+
+ÉTAPE 1: Lier le dépôt local à GitHub
+─────────────────────────────────────────────────────────────
+cd C:\Users\MSI\Desktop\ocr_project
+git remote add origin https://github.com/Kinzaachaouachi/ocr_project.git
+
+ÉTAPE 2: Vérifier la connexion
+─────────────────────────────────────────────────────────────
+git remote -v
+
+ÉTAPE 3: Pousser la branche ocr vers GitHub
+─────────────────────────────────────────────────────────────
+git push -u origin ocr
+
+═══════════════════════════════════════════════════════════════
+
+🔐 AUTHENTIFICATION GITHUB:
+   Nom d'utilisateur: Kinzaachaouachi
+   Mot de passe: [Utilisez un Personal Access Token]
+
+   Si vous n'avez pas de token:
+   1. https://github.com/settings/tokens
+   2. "Generate new token (classic)"
+   3. Cochez "repo"
+   4. Copiez le token et utilisez-le comme mot de passe
+
+═══════════════════════════════════════════════════════════════
+
+✅ APRÈS LE PUSH, VÉRIFIEZ:
+   https://github.com/Kinzaachaouachi/ocr_project/tree/ocr
+
+═══════════════════════════════════════════════════════════════
