@@ -76,7 +76,7 @@ ocr_project/
 
 Pour plus de détails, consultez :
 - **[README_TESTS.md](README_TESTS.md)** - Guide complet des tests
-- **[INSTRUCTIONS_GIT.md](INSTRUCTIONS_GIT.md)** - Instructions Git
+- **[BENCHMARK_REPORT.md](BENCHMARK_REPORT.md)** - Rapport de benchmark détaillé 📊
 
 ## 🔧 Technologies
 
