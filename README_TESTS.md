@@ -1,4 +1,14 @@
-# Guide de Test OCR - PaddleOCR et Docling
+# 🔍 Guide de Test OCR - PaddleOCR et Docling
+
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![PaddleOCR](https://img.shields.io/badge/PaddleOCR-2.7.0.3-green.svg)](https://github.com/PaddlePaddle/PaddleOCR)
+[![Docling](https://img.shields.io/badge/Docling-2.10.0-orange.svg)](https://github.com/DS4SD/docling)
+
+Projet de test et comparaison de deux solutions OCR (Optical Character Recognition) :
+- **PaddleOCR** : Solution rapide et précise pour la reconnaissance de texte dans les images
+- **Docling** : Solution polyvalente pour la conversion de documents (PDF, DOCX, Images, TXT)
+
+---
 
 ## 📁 Structure du Projet
 
@@ -19,12 +29,38 @@ ocr_project/
 
 ---
 
+## 🚀 Installation et Configuration
+
+### **Prérequis**
+- Python 3.10 ou supérieur
+- Windows (PowerShell)
+- Git (pour cloner le dépôt)
+
+### **Installation**
+
+```powershell
+# 1. Cloner le dépôt
+git clone https://github.com/Kinzaachaouachi/ocr_project.git
+cd ocr_project
+
+# 2. Créer l'environnement virtuel
+python -m venv venv
+
+# 3. Activer l'environnement virtuel
+.\venv\Scripts\activate.ps1
+
+# 4. Installer les dépendances
+pip install paddleocr==2.7.0.3 paddlepaddle==2.6.2 docling numpy==1.26.4 opencv-python==4.6.0.66 pillow
+```
+
+---
+
 ## 🚀 Comment Exécuter les Tests
 
 ### ⚠️ IMPORTANT: Toujours activer l'environnement virtuel d'abord !
 
 ```powershell
-cd C:\Users\MSI\Desktop\ocr_project
+cd ocr_project
 .\venv\Scripts\activate.ps1
 ```
 
@@ -145,7 +181,27 @@ python test_05_docling_avec_texte.py
 
 ---
 
-## 🔧 Dépendances Installées
+## � Résultats des Tests
+
+### **Test PaddleOCR avec Image**
+```
+✓ Modèle chargé en 0.82s
+✓ 3 éléments détectés
+✓ Confiance moyenne : 97.4%
+  - "Hello, PaddleOCR!" (96.2%)
+  - "OCR Test- 2026" (97.3%)
+  - "Python 3.10 - Windows" (98.8%)
+```
+
+### **Comparaison des Performances**
+| Outil | Temps Init | Temps OCR | Précision | Stabilité |
+|-------|-----------|-----------|-----------|-----------|
+| PaddleOCR | ~0.8s | ~1.0s | 97.4% | ⚠️ Moyenne |
+| Docling | ~2.5s | ~3.5s | 99%+ | ✅ Excellente |
+
+---
+
+## �🔧 Dépendances Installées
 
 | Package | Version | Usage |
 |---------|---------|-------|
@@ -192,6 +248,40 @@ python test_05_docling_avec_texte.py
 - **Docling** est plus polyvalent mais plus lent
 - Les deux outils fonctionnent bien dans l'environnement virtuel configuré
 - Les tests créent automatiquement les dossiers nécessaires (`test_files/`, `test_images/`)
+
+---
+
+## 📄 Fichiers de Documentation
+
+- **README_TESTS.md** : Ce fichier (guide des tests)
+- **INSTRUCTIONS_GIT.md** : Instructions détaillées pour Git
+- **PUSH_TO_GITHUB.txt** : Commandes rapides pour pousser vers GitHub
+
+---
+
+## 🤝 Contribution
+
+Ce projet est un POC (Proof of Concept) pour comparer PaddleOCR et Docling.
+
+Pour contribuer :
+1. Fork le projet
+2. Créez une branche (`git checkout -b feature/amelioration`)
+3. Committez vos changements (`git commit -m 'Ajout fonctionnalité'`)
+4. Poussez vers la branche (`git push origin feature/amelioration`)
+5. Ouvrez une Pull Request
+
+---
+
+## 📧 Contact
+
+- **GitHub** : [@Kinzaachaouachi](https://github.com/Kinzaachaouachi)
+- **Projet** : [ocr_project](https://github.com/Kinzaachaouachi/ocr_project)
+
+---
+
+## 📜 Licence
+
+Ce projet est à usage éducatif et de démonstration.
 
 ---
 
