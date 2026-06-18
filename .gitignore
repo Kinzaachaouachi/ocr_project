@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environnement virtuel
+venv/
+venv_new/
+env/
+ENV/
+
+# Images générées par les tests
+test_images/
+test_files/
+
+# Résultats de tests
+*.json
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Système d'exploitation
+.DS_Store
+Thumbs.db
+
+# PaddleOCR cache
+.paddleocr/
+
+# Modèles téléchargés
+*.pdparams
+*.pdiparams
+*.pdmodel
+inference/
