@@ -1,4 +1,4 @@
-# 🔍 OCR Project - PaddleOCR & Docling
+# OCR Project - PaddleOCR & Docling
 
 [![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
 [![PaddleOCR](https://img.shields.io/badge/PaddleOCR-2.7.0.3-green.svg)](https://github.com/PaddlePaddle/PaddleOCR)
@@ -6,14 +6,14 @@
 
 Projet de test et comparaison de deux solutions OCR (Optical Character Recognition) pour extraire du texte à partir d'images et de documents.
 
-## 🎯 Objectif
+## Objectif
 
 Comparer les performances et la précision de **PaddleOCR** et **Docling** pour différents types de documents :
 - Images avec texte
 - Fichiers texte convertis en images
 - Documents structurés
 
-## 🚀 Installation Rapide
+## Installation
 
 ```powershell
 # Cloner le dépôt
@@ -22,63 +22,73 @@ cd ocr_project
 
 # Créer et activer l'environnement virtuel
 python -m venv venv
-.\venv\Scripts\activate.ps1
+.\venv\Scripts\activate
 
 # Installer les dépendances
-pip install paddleocr==2.7.0.3 paddlepaddle==2.6.2 docling numpy==1.26.4 opencv-python==4.6.0.66 pillow
+pip install paddleocr==2.7.0.3 paddlepaddle==2.6.2 docling numpy==1.26.4 opencv-python==4.6.0.66 pillow docling-core
 ```
 
-## 📝 Tests Disponibles
+## Tests Disponibles
 
-| Test | Outil | Type | Fichier |
-|------|-------|------|---------|
-| Test 1 | PaddleOCR | Image | `test_paddleocr.py` |
-| Test 2 | PaddleOCR | Texte → Image | `test_06_paddleocr_avec_texte.py` |
-| Test 3 | Docling | Image | `test_01_docling_avec_image.py` |
-| Test 4 | Docling | Fichier Texte | `test_05_docling_avec_texte.py` |
+| Test | Outil | Description | Commande |
+|------|-------|-------------|----------|
+| Test 1 | Docling | Image | `python test_01_docling_avec_image.py` |
+| Test 2 | Docling | Fichier Texte | `python test_05_docling_avec_texte.py` |
+| Test 3 | PaddleOCR | Image simple | `python test_paddleocr.py` |
+| Test 4 | PaddleOCR | Texte → Image | `python test_06_paddleocr_avec_texte.py` |
 
-## 🏃 Exécution
+## Exécution des Tests
 
 ```powershell
 # Activer l'environnement virtuel
-.\venv\Scripts\activate.ps1
+.\venv\Scripts\activate
 
-# Exécuter un test
+# Tests Docling
+python test_01_docling_avec_image.py
+python test_05_docling_avec_texte.py
+
+# Tests PaddleOCR
 python test_paddleocr.py
+python test_06_paddleocr_avec_texte.py
 ```
 
-## 📊 Résultats
+## Résultats des Tests
 
 ### PaddleOCR
-- ⚡ **Vitesse** : ~1.8s (init + OCR)
-- 🎯 **Précision** : 97.4%
-- 📦 **Types** : Images (PNG, JPG)
+- **Vitesse** : ~1.78s (OCR pur, sans premier téléchargement)
+- **Précision** : 98.07% (moyenne)
+- **Types supportés** : Images (PNG, JPG)
 
 ### Docling
-- 🐢 **Vitesse** : ~6s (init + conversion)
-- 🎯 **Précision** : 99%+
-- 📦 **Types** : PDF, DOCX, Images, TXT
+- **Vitesse** : ~6.91s (moyenne avec modèles OCR)
+- **Précision** : Haute qualité avec structure Markdown
+- **Types supportés** : PDF, DOCX, Images, TXT
 
-## 📁 Structure
+## Structure du Projet
 
 ```
 ocr_project/
-├── test_paddleocr.py                 # Test PaddleOCR + image
-├── test_06_paddleocr_avec_texte.py  # Test PaddleOCR + texte
-├── test_01_docling_avec_image.py    # Test Docling + image
-├── test_05_docling_avec_texte.py    # Test Docling + texte
+├── test_paddleocr.py                 # Test PaddleOCR + image simple
+├── test_06_paddleocr_avec_texte.py   # Test PaddleOCR + texte converti
+├── test_01_docling_avec_image.py     # Test Docling + image
+├── test_05_docling_avec_texte.py     # Test Docling + fichier texte
+├── docling_wrapper.py                # Wrapper alternatif
+├── demo_images/                      # Images de démonstration
 ├── corpus_test/                      # 10 images de test
-├── demo_images/                      # Images de démo
-└── README_TESTS.md                   # Documentation complète
+├── test_files/                       # Fichiers générés par les tests
+├── benchmark_results.json            # Résultats des benchmarks
+├── BENCHMARK_REPORT.md               # Rapport détaillé
+├── README_TESTS.md                   # Guide complet des tests
+└── generate_benchmark_html.py        # Générateur rapport HTML
 ```
 
-## 📖 Documentation Complète
+## Documentation
 
-Pour plus de détails, consultez :
+- **[BENCHMARK_REPORT.md](BENCHMARK_REPORT.md)** - Rapport de benchmark détaillé avec analyse complète
+- **[benchmark_report.html](benchmark_report.html)** - Rapport HTML interactif avec design moderne et images
 - **[README_TESTS.md](README_TESTS.md)** - Guide complet des tests
-- **[BENCHMARK_REPORT.md](BENCHMARK_REPORT.md)** - Rapport de benchmark détaillé 📊
 
-## 🔧 Technologies
+## Technologies
 
 - **Python** 3.10
 - **PaddleOCR** 2.7.0.3
@@ -86,28 +96,20 @@ Pour plus de détails, consultez :
 - **Docling** 2.10.0
 - **NumPy** 1.26.4
 - **OpenCV** 4.6.0.66
+- **docling-core** 2.82.0
 
-## ⚠️ Notes Importantes
+## Notes
 
 - PaddleOCR nécessite **numpy 1.26.4** (incompatible avec numpy 2.x)
+- Docling nécessite **docling-core** pour fonctionner correctement
 - Toujours activer l'environnement virtuel avant d'exécuter les tests
-- Les tests créent automatiquement les dossiers nécessaires
+- Le premier lancement de PaddleOCR télécharge les modèles (~10MB)
 
-## 🤝 Contribution
+## Auteur
 
-Les contributions sont les bienvenues ! N'hésitez pas à :
-1. Forker le projet
-2. Créer une branche (`git checkout -b feature/amelioration`)
-3. Committer vos changements
-4. Pousser vers la branche
-5. Ouvrir une Pull Request
-
-## 📧 Contact
-
-- **GitHub** : [@Kinzaachaouachi](https://github.com/Kinzaachaouachi)
-- **Projet** : [ocr_project](https://github.com/Kinzaachaouachi/ocr_project)
+**Kinza Achaouachi** - [@Kinzaachaouachi](https://github.com/Kinzaachaouachi)
 
 ---
 
-**Créé le** : 18 juin 2026  
+**Créé le** : 18 juin 2026
 **Dernière mise à jour** : 18 juin 2026

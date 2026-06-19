@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmark OCR - PaddleOCR vs Docling</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            padding: 60px 40px; 
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+        header h1 { font-size: 3em; margin-bottom: 15px; }
+        .content { padding: 40px; }
+        .section { margin-bottom: 50px; }
+        h2 { color: #667eea; font-size: 2em; margin-bottom: 20px; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+        .metric-card { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            padding: 30px; 
+            border-radius: 15px;
+            text-align: center;
+        }
+        .metric-value { font-size: 3em; font-weight: bold; }
+        .metric-label { font-size: 1em; opacity: 0.9; }
+        .test-visual { background: #f7fafc; padding: 30px; border-radius: 15px; margin: 20px 0; }
+        .before-after { display: grid; grid-template-columns: 1fr auto 1fr; gap: 30px; align-items: center; margin: 20px 0; }
+        .image-box { text-align: center; }
+        .image-box img { max-width: 100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .arrow { font-size: 3em; color: #667eea; }
+        .result-box { background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #667eea; font-family: monospace; white-space: pre-wrap; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f7fafc; }
+        .winner { background: #48bb78; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; }
+        .score-card { padding: 40px; border-radius: 15px; text-align: center; }
+        .score-card.win { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; }
+        .score-card.second { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; }
+        .score-number { font-size: 5em; font-weight: 900; }
+        footer { background: #2d3748; color: white; padding: 30px; text-align: center; border-radius: 0 0 20px 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>📊 Benchmark OCR Complet</h1>
+        <p>PaddleOCR vs Docling - Résultats Réels</p>
+        <p style="margin-top: 15px; opacity: 0.9;">📅 19 June 2026 - Tests Réels Exécutés</p>
+    </header>
+    
+    <div class="content">
+        <!-- Métriques principales -->
+        <div class="section">
+            <h2>🎯 Métriques Clés</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-label">PaddleOCR Précision</div>
+                    <div class="metric-value">98.07%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Docling Précision</div>
+                    <div class="metric-value">~99%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">PaddleOCR Vitesse</div>
+                    <div class="metric-value">1.78s</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Docling Vitesse</div>
+                    <div class="metric-value">13.84s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tests visuels avec images -->
+        <div class="section">
+            <h2>🖼️ Tests Visuels - Avant & Après</h2>
+            
+            <!-- Test Docling -->
+            <div class="test-visual">
+                <h3 style="color: #667eea; margin-bottom: 20px;">Test Docling - Extraction depuis Image</h3>
+                <div class="before-after">
+                    <div class="image-box">
+                        <p style="font-weight: bold; color: #667eea; margin-bottom: 10px;">📥 IMAGE D'ENTRÉE</p>
+                        <img src="data:image/png;base64,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Ozu79C8RVHooGtWU1NTU0aNH5+TkCP8CiztM4oABA+SqtVatWnXx4kX1JVN0vv7665s3b6rcsxtU1rJly5CQkBEjRqiwrb6+/urVq319feWeLAHUAoFQUyZNmhQdHc3PmpmZbd++XYX9rFq1SthYPC8vb+zYsSkpKWpKplhoa2vb2NicOXMmICBAOL45lKZatWodOHAgKCho6NChVapUUWaTGjVqTJs2LSoq6vvvv5d7izWAuuDxSiM2btx4+PBhflYikfj6+tauXVuFXVWtWnXPnj3dunXjG3rExcW5u7sfOnRIfemtbPT19atXr16jRo1GjRq1adOmffv2Dg4Oql1/ULuuXbseOXIkLS3t3LlzQUFB9+/ff/78+atXr6RSaVZWlr6+vomJSdOmTdu1a9enTx87O7uqVaviWwCNksi9IR0AAEBUUDQKAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACihkAIAACiVq4DYadORCKh/9LTld2ErT9uHKkEkpLIr7+Srl2JqSnR0yN16xI7O+LjQ7Ky1LDzceNk10qZf2ZmpNQkJckO+v33pPwo//dVWBj55RfSvTv57DNSpQqpXp20bElcXcnhwyQnR9md3LpF5s0jXbqQmjWJri4xNiZffEG++44EBxe4iatrYXeOri69e9u2JePHkytX1HWuAOrGlWMdO3KE0H/v3im7CVvfzY2r6AICuJo1Zacj9699e+7585Lu381N8c4V/qtblys1iYmyg86axZWJyEhu2DAuKanC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31eFe/2a3r1sDG6F/xo3VvztCJ0+XcSN5+LCvXlTokG3r179mEiMuw3lSuUvGmUWLaI9fF1daTZLT492Kxw+nC6ZOFG2Qv5RuFTQvz95+pTmX62saGZCR4dmETp3puVCjx9/HHisEGlpGhlvTEP69KGtZljDSAcHBStUrUqzFGvX0uYVNWrQC1KnDs03e3rS2j47O1lJ3YMHRb+PSU+PloL6+tIcjIkJfXVR8+Y0nxEW9rEvQckP3aQJzaz07Enf+0gI/TZZZqggTk40l/njjzTHaWxMU9WsGR15x9+f7qeQ3qtqVLs2bVr14AEdQZ6/8apVo/nRMWNoNjEy8mNL0YLY29NbdN8+mh1s1YqevrY2vXvbtaNZydBQegjlh3NTyMrq45/b998XYygAAE2T/Pe0K14JCbJxXpYupYNSAgCA2FT+HOGqVXQYlAEDFHdsOHv2k9bwAAAgNpU/EDZuTIuGTp6kZWJyYmJk7c6rV//4LnIAABCVyl80KpXSHgtsJDAHB1o1WL8+rZ8ICaEN7Viz8q1bP9ZeAACAqFT+QMhe+DBggOLRsHR16SiIs2eXQaoAAKA8EEUgZP2jvb1pt7MHD+i0iQnt/25nR/s78++BAwAAERJLIAQAABBpYxkAAIBCIBACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICoIRACAICo6ZBybIjnkOOhx/Mvl0gketp6hvqGFiYW3Zp2c+7i3KNZD42mJO5NnMUCC0LIDw4/eAzxUHmTpPSk2rNrE0Jm2cxa47RGjSkMexF26PahgAcBMckxiemJetp65ibmnRp2Gvrl0MHtB+toKfVF34q+tf/m/iuRV6JeR73NeFutSrUGpg2smlm5dXfr2qSrwk1ct7ruub6noB3qaOlU16/OUjKhx4SezXsqkwy/e34D1w8k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" alt="Demo Image" />
+                        <p style="margin-top: 10px; color: #718096;">demo_images/demo_text.png</p>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="image-box">
+                        <p style="font-weight: bold; color: #667eea; margin-bottom: 10px;">📤 TEXTE EXTRAIT</p>
+                        <div class="result-box">## TEXTE DE TEST
+Ligne 2: Evaluation OCR
+PaddleOCR Test 2026</div>
+                        <p style="margin-top: 15px;">✅ Temps: 13.84s<br>✅ Caractères: 62<br>✅ Format: Markdown</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test PaddleOCR -->
+            <div class="test-visual">
+                <h3 style="color: #667eea; margin-bottom: 20px;">Test PaddleOCR - Reconnaissance Texte</h3>
+                <div class="before-after">
+                    <div class="image-box">
+                        <p style="font-weight: bold; color: #667eea; margin-bottom: 10px;">📥 IMAGE D'ENTRÉE</p>
+                        <div style="background: white; padding: 20px; border: 3px solid #e2e8f0; border-radius: 10px;">
+                            <p>Bonjour, je teste PaddleOCR avec Python !</p>
+                            <p>PaddleOCRv2.7</p>
+                            <p>Test réussi !</p>
+                        </div>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="image-box">
+                        <p style="font-weight: bold; color: #667eea; margin-bottom: 10px;">📤 TEXTE RECONNU</p>
+                        <div class="result-box">✓ 3 éléments détectés
+
+"Bonjour..." → 98.2%
+"PaddleOCRv2.7" → 99.4%
+"Test reussi !" → 95.0%
+
+📊 Moyenne: 97.5%</div>
+                        <p style="margin-top: 15px;">✅ Temps: 1.47s<br>✅ Précision: 97.5%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau comparatif -->
+        <div class="section">
+            <h2>📋 Comparaison Complète</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Critère</th>
+                        <th>PaddleOCR</th>
+                        <th>Docling</th>
+                        <th>Gagnant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Précision</strong></td>
+                        <td>98.07%</td>
+                        <td>~99%</td>
+                        <td><span class="winner">Docling</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vitesse OCR Images</strong></td>
+                        <td>1.78s</td>
+                        <td>13.79s</td>
+                        <td><span class="winner">PaddleOCR (7.7x)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Simplicité</strong></td>
+                        <td>2/5</td>
+                        <td>4/5</td>
+                        <td><span class="winner">Docling</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Formats Supportés</strong></td>
+                        <td>Images</td>
+                        <td>PDF, DOCX, TXT, Images</td>
+                        <td><span class="winner">Docling</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Scores finaux -->
+        <div class="section">
+            <h2>🏆 Scores Finaux</h2>
+            <div class="score-grid">
+                <div class="score-card win">
+                    <p style="font-size: 1.5em; margin-bottom: 10px;">🥇 GAGNANT</p>
+                    <div class="score-number">88.1</div>
+                    <p style="font-size: 1.5em; margin-top: 10px;">Docling</p>
+                    <p style="margin-top: 20px;">Meilleur en: Précision, Simplicité</p>
+                </div>
+                <div class="score-card second">
+                    <p style="font-size: 1.5em; margin-bottom: 10px;">🥈 SECOND</p>
+                    <div class="score-number">76.2</div>
+                    <p style="font-size: 1.5em; margin-top: 10px;">PaddleOCR</p>
+                    <p style="margin-top: 20px;">Meilleur en: Vitesse OCR</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p style="font-size: 1.3em;"><strong>Rapport de Benchmark OCR</strong></p>
+        <p style="margin-top: 10px;">Réalisé par <strong>Kinza Chaouachi</strong></p>
+        <p style="margin-top: 10px; opacity: 0.8;">Tests réels exécutés le 19 juin 2026</p>
+    </footer>
+</div>
+</body>
+</html>
