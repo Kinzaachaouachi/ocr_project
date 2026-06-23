@@ -1,12 +1,12 @@
-# 🔍 Guide de Test OCR - PaddleOCR et Docling
+# 🔍 Guide de Test OCR - PaddleOCR, Docling, EasyOCR & TrOCR
 
 [![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
 [![PaddleOCR](https://img.shields.io/badge/PaddleOCR-2.7.0.3-green.svg)](https://github.com/PaddlePaddle/PaddleOCR)
 [![Docling](https://img.shields.io/badge/Docling-2.10.0-orange.svg)](https://github.com/DS4SD/docling)
+[![EasyOCR](https://img.shields.io/badge/EasyOCR-1.7.2-red.svg)](https://github.com/JaidedAI/EasyOCR)
+[![TrOCR](https://img.shields.io/badge/TrOCR-Transformers-purple.svg)](https://huggingface.co/docs/transformers/model_doc/trocr)
 
-Projet de test et comparaison de deux solutions OCR (Optical Character Recognition) :
-- **PaddleOCR** : Solution rapide et précise pour la reconnaissance de texte dans les images
-- **Docling** : Solution polyvalente pour la conversion de documents (PDF, DOCX, Images, TXT)
+Guide complet des tests de comparaison entre quatre solutions OCR sur plusieurs types de fichiers (Image, PDF, TXT).
 
 ---
 
@@ -14,17 +14,26 @@ Projet de test et comparaison de deux solutions OCR (Optical Character Recogniti
 
 ```
 ocr_project/
+├── venv/                              # Environnement virtuel Python
+├── demo_images/                       # Image de démo (benchmark principal)
+├── test_files/                        # Fichiers générés par les tests multi-formats
+│   ├── sample_image.png               #   → Image PNG de test
+│   ├── sample_document.pdf            #   → PDF de test (converti depuis l'image)
+│   └── sample_text.txt                #   → Fichier texte brut de test
+├── corpus_test/                       # 10 images de test supplémentaires
 │
-├── venv/                      # Environnement virtuel Python
-├── corpus_test/              # Images de test (10 documents)
-├── demo_images/              # Images de démo
-├── test_images/              # Images générées par les tests
+├── test_paddleocr.py                  # Test PaddleOCR avec image simple
+├── test_06_paddleocr_avec_texte.py    # Test PaddleOCR avec texte converti en image
+├── test_01_docling_avec_image.py      # Test Docling avec image
+├── test_05_docling_avec_texte.py      # Test Docling avec fichier texte
+├── test_easyocr.py                    # Test EasyOCR avec image simple
+├── test_trocr.py                      # Test TrOCR avec image simple
+├── run_all_benchmarks.py              # Benchmark global (image + PDF, 4 modèles)
+├── test_all_file_types.py             # Tests multi-formats (image / pdf / txt)
 │
-└── Fichiers de Test:
-    ├── test_paddleocr.py                    # Test 1: PaddleOCR avec image
-    ├── test_06_paddleocr_avec_texte.py     # Test 2: PaddleOCR avec texte
-    ├── test_01_docling_avec_image.py       # Test 3: Docling avec image
-    └── test_05_docling_avec_texte.py       # Test 4: Docling avec texte
+├── benchmark_results.json             # Résultats JSON (mis à jour automatiquement)
+├── BENCHMARK_REPORT.md                # Rapport Markdown complet avec résultats Image + PDF
+└── benchmark_report.html              # Rapport HTML interactif avec graphiques Chart.js
 ```
 
 ---
@@ -32,9 +41,9 @@ ocr_project/
 ## 🚀 Installation et Configuration
 
 ### **Prérequis**
-- Python 3.10 ou supérieur
+- Python 3.10
 - Windows (PowerShell)
-- Git (pour cloner le dépôt)
+- Connexion Internet (téléchargement des modèles au 1er lancement)
 
 ### **Installation**
 
@@ -47,242 +56,220 @@ cd ocr_project
 python -m venv venv
 
 # 3. Activer l'environnement virtuel
-.\venv\Scripts\activate.ps1
+.\venv\Scripts\activate
 
 # 4. Installer les dépendances
-pip install paddleocr==2.7.0.3 paddlepaddle==2.6.2 docling numpy==1.26.4 opencv-python==4.6.0.66 pillow
+pip install paddleocr==2.7.0.3 paddlepaddle==2.6.2 docling numpy==1.26.4 opencv-python==4.6.0.66 pillow docling-core easyocr transformers torch torchvision pymupdf img2pdf
 ```
 
 ---
 
-## 🚀 Comment Exécuter les Tests
+## 🚀 Commandes de Test
 
-### ⚠️ IMPORTANT: Toujours activer l'environnement virtuel d'abord !
+### ⚠️ Toujours activer l'environnement virtuel d'abord !
 
 ```powershell
-cd ocr_project
-.\venv\Scripts\activate.ps1
+.\venv\Scripts\activate
 ```
 
 ---
 
-## 📝 Tests Disponibles
+## 📝 Tests Individuels par Modèle
 
-### **TEST 1: PaddleOCR avec Image**
-
-**Fichier:** `test_paddleocr.py`
-
-**Description:** Crée une image avec du texte et la traite avec PaddleOCR
-
-**Commande:**
+### **TEST 1 — PaddleOCR avec Image**
+**Fichier :** `test_paddleocr.py`  
+**Description :** Crée une image avec du texte et la traite avec PaddleOCR.
 ```powershell
 python test_paddleocr.py
 ```
 
-**Ce que fait le test:**
-1. Vérification des dépendances (paddle, opencv, numpy)
-2. Initialisation du modèle PaddleOCR
-3. Création d'une image de test (`test_images/sample_text.png`)
-4. Reconnaissance OCR et affichage des résultats avec scores de confiance
-
-**Résultat attendu:**
-- ✓ 3 éléments détectés
-- ✓ Confiance moyenne > 95%
-- ✓ Temps d'exécution < 2 secondes
-
 ---
 
-### **TEST 2: PaddleOCR avec Texte**
-
-**Fichier:** `test_06_paddleocr_avec_texte.py`
-
-**Description:** Convertit du texte en image puis applique PaddleOCR
-
-**Commande:**
+### **TEST 2 — PaddleOCR avec Texte converti**
+**Fichier :** `test_06_paddleocr_avec_texte.py`  
+**Description :** Convertit du texte en image PNG puis applique PaddleOCR.
 ```powershell
 python test_06_paddleocr_avec_texte.py
 ```
 
-**Ce que fait le test:**
-1. Crée une image (800x600) contenant du texte structuré
-2. Sauvegarde dans `test_files/test_text_image.png`
-3. Initialise PaddleOCR
-4. Reconnaissance OCR et affichage du texte extrait
-
-**Résultat attendu:**
-- ✓ Plusieurs lignes de texte détectées
-- ✓ Texte reconnu avec structure préservée
-- ✓ Statistiques de confiance affichées
-
 ---
 
-### **TEST 3: Docling avec Image**
-
-**Fichier:** `test_01_docling_avec_image.py`
-
-**Description:** Traite une image existante avec Docling
-
-**Commande:**
+### **TEST 3 — Docling avec Image**
+**Fichier :** `test_01_docling_avec_image.py`  
+**Description :** Traite une image avec Docling et exporte en Markdown.
 ```powershell
 python test_01_docling_avec_image.py
 ```
 
-**Ce que fait le test:**
-1. Vérifie l'existence de `demo_images/demo_text.png`
-2. Initialise le DocumentConverter de Docling
-3. Convertit l'image et extrait le contenu
-4. Exporte en Markdown et JSON
-
-**Résultat attendu:**
-- ✓ Image trouvée et traitée
-- ✓ Contenu extrait en Markdown
-- ✓ Statistiques (blocs, caractères, temps) affichées
-
 ---
 
-### **TEST 4: Docling avec Texte**
-
-**Fichier:** `test_05_docling_avec_texte.py`
-
-**Description:** Crée un fichier texte et le traite avec Docling
-
-**Commande:**
+### **TEST 4 — Docling avec Fichier Texte**
+**Fichier :** `test_05_docling_avec_texte.py`  
+**Description :** Crée un fichier `.txt` et le traite avec Docling.
 ```powershell
-python test_05_docling_avec_texte.py
-```
-
-**Ce que fait le test:**
-1. Crée un fichier texte structuré (`test_files/test_document.txt`)
-2. Initialise le DocumentConverter
-3. Convertit le fichier texte
-4. Extrait et affiche le contenu en Markdown
-
-**Résultat attendu:**
-- ✓ Fichier texte créé
-- ✓ Conversion réussie
-- ✓ Contenu extrait avec structure préservée
-
----
-
-## 🎯 Exécuter Tous les Tests en Séquence
-
-```powershell
-# 1. Activer l'environnement virtuel
-.\venv\Scripts\activate.ps1
-
-# 2. Tests PaddleOCR
-python test_paddleocr.py
-python test_06_paddleocr_avec_texte.py
-
-# 3. Tests Docling
-python test_01_docling_avec_image.py
 python test_05_docling_avec_texte.py
 ```
 
 ---
 
-## � Résultats des Tests
-
-### **Test PaddleOCR avec Image**
+### **TEST 5 — EasyOCR avec Image**
+**Fichier :** `test_easyocr.py`  
+**Description :** Traite `demo_images/demo_text.png` avec EasyOCR (français + anglais).
+```powershell
+python test_easyocr.py
 ```
-✓ Modèle chargé en 0.82s
-✓ 3 éléments détectés
-✓ Confiance moyenne : 97.4%
-  - "Hello, PaddleOCR!" (96.2%)
-  - "OCR Test- 2026" (97.3%)
-  - "Python 3.10 - Windows" (98.8%)
-```
-
-### **Comparaison des Performances**
-| Outil | Temps Init | Temps OCR | Précision | Stabilité |
-|-------|-----------|-----------|-----------|-----------|
-| PaddleOCR | ~0.8s | ~1.0s | 97.4% | ⚠️ Moyenne |
-| Docling | ~2.5s | ~3.5s | 99%+ | ✅ Excellente |
+**Résultat attendu :**
+- Lignes de texte détectées avec score de confiance
+- Confiance moyenne affichée
+- Temps d'exécution ~1s
 
 ---
 
-## �🔧 Dépendances Installées
+### **TEST 6 — TrOCR avec Image**
+**Fichier :** `test_trocr.py`  
+**Description :** Traite une image avec le modèle `microsoft/trocr-small-printed`.
+```powershell
+python test_trocr.py
+```
+**Résultat attendu :**
+- Modèle chargé (téléchargement ~246MB au 1er lancement)
+- Inférence rapide sur une ligne de texte
+- ⚠️ Résultats faibles sur images multi-lignes (comportement normal)
+
+---
+
+## 🎯 Scripts de Benchmark
+
+### Option A — Benchmark Global (Recommandé)
+
+Lance les **4 modèles sur image de démo** + **tests Image vs PDF** pour chaque modèle.  
+Génère automatiquement `BENCHMARK_REPORT.md` et `benchmark_report.html` :
+
+```powershell
+python run_all_benchmarks.py
+```
+
+**Ce que fait ce script :**
+1. Exécute chaque modèle dans un **sous-processus Python isolé** (évite les conflits `shm.dll` PyTorch/PaddlePaddle sur Windows)
+2. Mesure les temps d'initialisation et d'inférence OCR
+3. Calcule la précision via la **distance de Levenshtein** par rapport à la vérité terrain
+4. Affiche un **tableau ASCII** dans la console (prêt pour capture d'écran)
+5. Teste chaque modèle sur `test_files/sample_image.png` et `test_files/sample_document.pdf`
+6. Met à jour `benchmark_results.json`, `BENCHMARK_REPORT.md` et `benchmark_report.html`
+
+---
+
+### Option B — Tests Multi-Formats (Image / PDF / TXT)
+
+```powershell
+# Matrice complète : 4 modèles × 3 formats (12 tests)
+python test_all_file_types.py
+
+# Tester un modèle sur un format précis
+python test_all_file_types.py --run-model paddleocr --file-type image
+python test_all_file_types.py --run-model paddleocr --file-type pdf
+python test_all_file_types.py --run-model paddleocr --file-type txt
+
+python test_all_file_types.py --run-model docling   --file-type image
+python test_all_file_types.py --run-model docling   --file-type pdf
+python test_all_file_types.py --run-model docling   --file-type txt
+
+python test_all_file_types.py --run-model easyocr   --file-type image
+python test_all_file_types.py --run-model easyocr   --file-type pdf
+
+python test_all_file_types.py --run-model trocr     --file-type image
+python test_all_file_types.py --run-model trocr     --file-type pdf
+```
+
+**Modèles disponibles :** `paddleocr` | `docling` | `easyocr` | `trocr`  
+**Formats disponibles :** `image` | `pdf` | `txt`
+
+---
+
+## 📊 Résultats Réels des Tests (23 juin 2026)
+
+### Benchmark sur image de démo (`demo_images/demo_text.png`)
+
+| Modèle | Init | Temps OCR | Temps Total | Précision | Simplicité |
+|--------|------|-----------|-------------|-----------|------------|
+| **PaddleOCR** | 3.60s | 1.00s | 4.60s | **100.0%** | 2/5 |
+| **Docling** | 6.50s | 12.06s | 18.56s | **100.0%** | 5/5 |
+| **EasyOCR** | 4.56s | 1.18s | 5.74s | **100.0%** | 4/5 |
+| **TrOCR** | 7.57s | 0.39s | 7.96s | 19.6% | 3/5 |
+
+### Tests Multi-Formats : Image vs PDF
+
+Vérité terrain : `DOCUMENT DE TEST MULTI-FORMATS / Ligne 2: Evaluation de l'OCR / PaddleOCR, Docling, EasyOCR et TrOCR`
+
+| Modèle | Image (.png) | Précision Image | PDF (.pdf) | Précision PDF | TXT (.txt) |
+|--------|:---:|:---:|:---:|:---:|:---:|
+| **PaddleOCR** | ✅ | **98.9%** | ✅ | **95.6%** | ❌ Non supporté |
+| **Docling** | ✅ | **95.6%** | ✅ | **60.4%** | ✅ Natif |
+| **EasyOCR** | ✅ | **93.4%** | ✅ | **62.6%** | ❌ Non supporté |
+| **TrOCR** | ✅ | 0.0% | ✅ | 1.1% | ❌ Non supporté |
+
+**Observations :**
+- **PaddleOCR** est le plus stable et précis sur les 2 formats
+- **Docling** convertit le PDF nativement et ajoute une structure Markdown (d'où la précision apparente réduite)
+- **EasyOCR** perd en précision sur PDF (qualité du rendu PyMuPDF)
+- **TrOCR** est inadapté aux images multi-lignes sans segmentation ligne par ligne
+
+---
+
+## 🔧 Dépendances Installées
 
 | Package | Version | Usage |
 |---------|---------|-------|
-| paddleocr | 2.7.0.3 | Reconnaissance OCR |
-| paddlepaddle | 2.6.2 | Framework pour PaddleOCR |
-| docling | 2.10.0 | Conversion de documents |
-| numpy | 1.26.4 | Calculs numériques |
-| opencv-python | 4.6.0.66 | Traitement d'images |
-| pillow | 12.2.0 | Création d'images |
+| `paddleocr` | 2.7.0.3 | OCR Paddle |
+| `paddlepaddle` | 2.6.2 | Backend deep learning Paddle |
+| `docling` | 2.10.0 | Analyse documents (PDF, DOCX, TXT, Images) |
+| `easyocr` | 1.7.2 | OCR basé PyTorch, multi-langue |
+| `transformers` | 5.12.1 | Accès au modèle TrOCR (Hugging Face) |
+| `torch` / `torchvision` | 2.12.1+cpu | Backend EasyOCR & TrOCR |
+| `numpy` | 1.26.4 | Verrouillé pour compatibilité PaddleOCR |
+| `opencv-python` | 4.6.0.66 | Traitement d'images |
+| `pillow` | 12.2.0 | Manipulation d'images |
+| `pymupdf (fitz)` | — | Conversion PDF → Image pour OCR |
+| `img2pdf` | — | Génération des PDF de test |
+| `docling-core` | 2.82.0 | Dépendance interne Docling |
 
 ---
 
 ## ⚠️ Résolution de Problèmes
 
-### Problème: "ModuleNotFoundError"
-**Solution:** Assurez-vous que l'environnement virtuel est activé:
+### `ModuleNotFoundError`
 ```powershell
-.\venv\Scripts\activate.ps1
+.\venv\Scripts\activate
 ```
 
-### Problème: Erreur oneDNN avec PaddleOCR
-**Solution:** Les variables d'environnement sont déjà configurées dans les scripts. Si le problème persiste, vérifier que numpy==1.26.4 est installé.
+### Erreur NumPy / PaddleOCR
+Veillez à utiliser `numpy==1.26.4`. NumPy 2.x est incompatible avec PaddleOCR actuel.
 
-### Problème: "Image non trouvée"
-**Solution:** Vérifier que les dossiers `demo_images/` et `corpus_test/` existent.
+### Conflit `shm.dll` (PyTorch + PaddlePaddle)
+PyTorch et PaddlePaddle ne peuvent pas coexister dans le même processus Python sur Windows.  
+**Solution :** le script `run_all_benchmarks.py` utilise des **sous-processus isolés** — ne jamais importer les deux dans le même script.
 
----
+### TrOCR donne de mauvais résultats
+C'est normal sur des images multi-lignes. TrOCR lit **une ligne de texte à la fois**. Pour l'utiliser correctement, segmentez l'image en lignes individuelles (CRAFT, YOLO) avant inférence.
 
-## 📊 Comparaison PaddleOCR vs Docling
-
-| Critère | PaddleOCR | Docling |
-|---------|-----------|---------|
-| **Vitesse** | ⚡ Rapide (< 2s) | 🐢 Plus lent (> 5s) |
-| **Précision** | ✅ Très bonne (> 95%) | ✅ Excellente |
-| **Types supportés** | Images (PNG, JPG) | PDF, DOCX, TXT, Images |
-| **Stabilité** | ⚠️ Sensible aux dépendances | ✅ Très stable |
-| **Facilité d'usage** | ⚠️ Configuration complexe | ✅ Simple |
+### Lenteur au 1er lancement
+- PaddleOCR : télécharge les modèles de détection (~10MB)
+- EasyOCR : télécharge CRAFT + modèle de reconnaissance (~100MB)
+- TrOCR : télécharge `microsoft/trocr-small-printed` (~246MB)
+Après le 1er lancement, les modèles sont mis en cache localement.
 
 ---
 
-## 📝 Notes
+## 📄 Documentation
 
-- **PaddleOCR** nécessite numpy 1.26.4 (incompatible avec numpy 2.x)
-- **Docling** est plus polyvalent mais plus lent
-- Les deux outils fonctionnent bien dans l'environnement virtuel configuré
-- Les tests créent automatiquement les dossiers nécessaires (`test_files/`, `test_images/`)
-
----
-
-## 📄 Fichiers de Documentation
-
-- **README_TESTS.md** : Ce fichier (guide des tests)
-- **INSTRUCTIONS_GIT.md** : Instructions détaillées pour Git
-- **PUSH_TO_GITHUB.txt** : Commandes rapides pour pousser vers GitHub
+| Fichier | Description |
+|---------|-------------|
+| **README.md** | Fiche descriptive principale et installation |
+| **README_TESTS.md** | Ce fichier — guide complet des tests |
+| **BENCHMARK_REPORT.md** | Rapport de benchmark avec résultats Image + PDF |
+| **benchmark_report.html** | Rapport interactif HTML avec graphiques |
+| **STRUCTURE.md** | Architecture physique complète du projet |
 
 ---
 
-## 🤝 Contribution
-
-Ce projet est un POC (Proof of Concept) pour comparer PaddleOCR et Docling.
-
-Pour contribuer :
-1. Fork le projet
-2. Créez une branche (`git checkout -b feature/amelioration`)
-3. Committez vos changements (`git commit -m 'Ajout fonctionnalité'`)
-4. Poussez vers la branche (`git push origin feature/amelioration`)
-5. Ouvrez une Pull Request
-
----
-
-## 📧 Contact
-
-- **GitHub** : [@Kinzaachaouachi](https://github.com/Kinzaachaouachi)
-- **Projet** : [ocr_project](https://github.com/Kinzaachaouachi/ocr_project)
-
----
-
-## 📜 Licence
-
-Ce projet est à usage éducatif et de démonstration.
-
----
-
-**Dernière mise à jour:** 18 juin 2026
+**Dernière mise à jour :** 23 juin 2026

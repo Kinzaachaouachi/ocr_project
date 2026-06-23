@@ -1,422 +1,152 @@
-# 📊 Rapport de Benchmark - PaddleOCR vs Docling
+# 📊 Rapport de Benchmark OCR Complet - Multi-Modèles
 
-**Date du benchmark :** 18 juin 2026  
+**Date de mise à jour :** 23 June 2026 a 10:49:11  
 **Environnement de test :**
 - **OS :** Windows 10/11
 - **Python :** 3.10
-- **CPU :** Architecture x64
+- **CPU :** Architecture x64 (Inférence CPU sans accélération GPU)
 
 ---
 
 ## 🎯 Objectif du Benchmark
 
-Comparer deux solutions OCR (Optical Character Recognition) pour déterminer laquelle convient le mieux selon trois critères principaux :
-
-1. **Précision** : Qualité de la reconnaissance du texte
-2. **Vitesse** : Temps de traitement
-3. **Simplicité d'intégration** : Facilité d'installation et d'utilisation
-
----
-
-## 📦 Versions Testées
-
-| Outil | Version | Dépendances Principales |
-|-------|---------|------------------------|
-| **PaddleOCR** | 2.7.0.3 | paddlepaddle 2.6.2, opencv-python 4.6.0.66, numpy 1.26.4 |
-| **Docling** | 2.10.0 | docling-core 2.82.0, pillow, requests |
+Ce rapport compare quatre solutions OCR (Optical Character Recognition) majeures selon trois critères principaux :
+1. **Précision** : Qualité et exactitude de la reconnaissance du texte par rapport à la vérité terrain.
+2. **Vitesse** : Temps d'initialisation du modèle et temps de traitement OCR de l'image.
+3. **Simplicité d'intégration** : Facilité d'installation, légèreté des dépendances et simplicité du code Python.
 
 ---
 
-## 🧪 Résultats des Tests Réels
+## 📦 Versions & Dépendances des Modèles
 
-### Test 1 : PaddleOCR - Image Simple
-
-**Fichier testé :** `test_paddleocr.py`
-
-```
-✓ Modèle chargé en 24.63s (téléchargement initial des modèles)
-✓ OCR terminé en 1.47s
-✓ 3 éléments détectés
-✓ Confiance moyenne : 97.5%
-
-Résultats détaillés :
-  - "Bonjour, je teste PaddleOCR avec Python !" (98.2%)
-  - "PaddleOCRv2.7" (99.4%)
-  - "Test reussi !" (95.0%)
-```
-
-**Temps total :** 26.10s (premier run avec téléchargement modèles ~10MB)
-
-**⚠️ Note importante :** Le premier run de PaddleOCR télécharge automatiquement les modèles OCR depuis Internet. Les exécutions suivantes sont beaucoup plus rapides (0.88s init).
+| Outil | Version | Backends / Dépendances Clés |
+|-------|---------|-----------------------------|
+| **PaddleOCR** | 2.7.0.3 | paddlepaddle 2.6.2, numpy 1.26.4 |
+| **Docling** | 2.10.0 | docling-core 2.82.0, pillow |
+| **EasyOCR** | 1.7.2 | PyTorch (torch/torchvision), numpy 1.26.4 |
+| **TrOCR** | microsoft/trocr-small-printed | Hugging Face Transformers, PyTorch |
 
 ---
 
-### Test 2 : PaddleOCR - Texte vers Image
+## 🧪 Résultats des Tests Réels (Image de démonstration)
 
-**Fichier testé :** `test_06_paddleocr_avec_texte.py`
-
+L'image de test utilisée est `demo_images/demo_text.png` contenant le texte suivant (Vérité Terrain) :
 ```
-✓ Image créée : 800x600 pixels avec 16 lignes de texte
-✓ Modèle chargé en 0.88s (modèles déjà téléchargés)
-✓ OCR terminé en 2.09s
-✓ 11 éléments détectés
-✓ Confiance moyenne : 98.64%
-
-Confiances min/max :
-  - Min : 96.84%
-  - Max : 99.99%
-```
-
-**Temps total :** 2.97s (init + traitement)
-
----
-
-### Test 3 : Docling - Image
-
-**Fichier testé :** `test_01_docling_avec_image.py`
-
-```
-✓ Image : demo_images/demo_text.png
-✓ DocumentConverter chargé en 0.05s
-✓ Téléchargement du modèle OCR (premier run)
-✓ Conversion réussie en 13.79s
-✓ Contenu : 62 caractères extraits
-
-Résultat extrait (Markdown) :
-## TEXTE DE TEST
+TEXTE DE TEST
 Ligne 2: Evaluation OCR
 PaddleOCR Test 2026
 ```
 
-**Temps total :** 13.84s (premier run avec téléchargement modèle OCR)
-
-**⚠️ Note importante :** Docling télécharge automatiquement son modèle OCR au premier run. Le temps d'initialisation reste très rapide (0.05s) mais la conversion d'images prend plus de temps que PaddleOCR.
-
----
-
-### Test 4 : Docling - Fichier Texte
-
-**Fichier testé :** `test_05_docling_avec_texte.py`
-
+### 1. PaddleOCR
+- **Temps initialisation :** 3.60s
+- **Temps OCR :** 1.00s
+- **Texte reconnu :**
 ```
-✓ Fichier texte : 584 caractères
-✓ DocumentConverter chargé en 0.05s
-✓ Conversion réussie en 0.02s (ultra rapide!)
-✓ Contenu : 564 caractères extraits
-✓ Structure Markdown parfaitement préservée
+TEXTE DE TEST
+Ligne 2: Evaluation OCR
+PaddleOCR Test 2026
 ```
+- **Précision (Levenshtein) :** **100.0%**
 
-**Temps total :** 0.07s (conversion de fichier texte)
+### 2. Docling
+- **Temps initialisation :** 6.50s
+- **Temps OCR :** 12.06s
+- **Texte reconnu :**
+```
+## TEXTE DE TEST
 
----
+Ligne 2: Evaluation OCR
 
-## 📈 Comparaison des Performances
+PaddleOCR Test 2026
+```
+- **Précision (Levenshtein) :** **100.0%**
 
-### 1️⃣ Précision
+### 3. EasyOCR
+- **Temps initialisation :** 4.56s
+- **Temps OCR :** 1.18s
+- **Texte reconnu :**
+```
+TEXTE DE TEST
+Ligne 2: Evaluation OCR
+PaddleOCR Test 2026
+```
+- **Précision (Levenshtein) :** **100.0%**
 
-| Type de Document | PaddleOCR | Docling | Gagnant |
-|------------------|-----------|---------|---------|
-| **Image simple** | 97.5% | ~99% | 🏆 Docling |
-| **Texte complexe** | 98.64% | ~99% | 🏆 Docling |
-| **Moyenne globale** | **98.07%** | **~99%** | 🏆 Docling |
-
-**Verdict Précision :** Docling offre une précision légèrement supérieure (+0.93 point)
-
----
-
-### 2️⃣ Vitesse - RÉSULTATS RÉELS
-
-| Phase | PaddleOCR | Docling | Gagnant |
-|-------|-----------|---------|---------|
-| **Initialisation (premier run)** | 24.63s | 0.05s | 🏆 Docling |
-| **Initialisation (runs suivants)** | 0.88s | 0.05s | 🏆 Docling |
-| **OCR Image Simple** | 1.47s | 13.79s | 🏆 PaddleOCR (9.4x plus rapide) |
-| **OCR Image Complexe** | 2.09s | 13.79s | 🏆 PaddleOCR (6.6x plus rapide) |
-| **Conversion Fichier Texte** | N/A | 0.02s | 🏆 Docling |
-
-**Verdict Vitesse :** 
-- **PaddleOCR** : Beaucoup plus rapide pour OCR d'images (6.6x à 9.4x plus rapide)
-- **Docling** : Ultra-rapide pour fichiers texte (0.02s) et initialisation (0.05s)
-- **Temps total moyen** : PaddleOCR 14.54s vs Docling 6.96s (en comptant init + traitement)
-
----
-
-### 3️⃣ Simplicité d'Intégration
-
-#### Installation
-
-| Critère | PaddleOCR | Docling | Gagnant |
-|---------|-----------|---------|---------|
-| **Commande** | `pip install paddleocr` | `pip install docling docling-core` | 🏆 Égalité |
-| **Taille téléchargée** | ~450 MB | ~180 MB | 🏆 Docling |
-| **Dépendances** | 15 packages | 8 packages | 🏆 Docling |
-| **Conflits potentiels** | ⚠️ numpy 1.26.4 requis | ⚠️ docling-core requis | 🏆 Égalité |
-| **Temps d'installation** | ~8 min | ~3 min | 🏆 Docling |
-
-**Score Installation :** Docling (4/5) > PaddleOCR (2/5)
+### 4. TrOCR (Hugging Face)
+- **Temps initialisation :** 7.57s
+- **Temps OCR :** 0.39s
+- **Texte reconnu :**
+```
+TEXTPER RESTART
+```
+- **Précision (Levenshtein) :** **19.6%**  
+*(Note : La faible précision de TrOCR est normale ici. TrOCR is a single-line model ; passé sur une image entière multi-lignes, il ne parvient pas à segmenter nativement et ne décode que partiellement.)*
 
 ---
 
-#### Utilisation (Code minimal)
+## 📈 Tableau Récapitulatif Global (sur image de démo)
 
-**PaddleOCR (12 lignes) :**
-```python
-import os
-os.environ['FLAGS_use_mkldnn'] = '0'
-os.environ['PADDLE_DISABLE_ONEDNN'] = '1'
+| Modèle | Temps Init | Temps OCR | Temps Total | Précision (%) | Simplicité d'intégration | Score Global /100 |
+|--------|------------|-----------|-------------|---------------|--------------------------|-------------------|
+| **PaddleOCR** | 3.60s | 1.00s | 4.60s | 100.0% | 2/5 (Moyenne) | **81.9/100** |
+| **Docling** | 6.50s | 12.06s | 18.56s | 100.0% | 5/5 (Excellente) | **77.3/100** |
+| **EasyOCR** | 4.56s | 1.18s | 5.74s | 100.0% | 4/5 (Bonne) | **91.7/100** |
+| **TrOCR** | 7.57s | 0.39s | 7.96s | 19.6% | 3/5 (Moyenne) | **59.2/100** |
 
-from paddleocr import PaddleOCR
+---
 
-ocr = PaddleOCR(use_angle_cls=False, lang='en', use_gpu=False)
-result = ocr.ocr('image.png', cls=False)
+## 📂 Résultats Multi-Formats : Image (.png) et PDF (.pdf)
 
-for line in result[0]:
-    text = line[1][0]
-    confidence = line[1][1]
-    print(f"{text} ({confidence:.2%})")
+Fichiers de test : `test_files/sample_image.png` et `test_files/sample_document.pdf`  
+Vérité terrain attendue :
+```
+DOCUMENT DE TEST MULTI-FORMATS
+Ligne 2: Evaluation de l'OCR
+PaddleOCR, Docling, EasyOCR et TrOCR
 ```
 
-**Complexité :** ⚠️ Moyenne (configuration env requise)
+### Matrice de compatibilité et précision par format
+
+| Modèle | Image (.png) | Précision Image | PDF (.pdf) | Précision PDF |
+|--------|:---:|:---:|:---:|:---:|
+| **PaddleOCR** | OK | 98.9% | OK | 95.6% |
+| **Docling** | OK | 95.6% | OK | 60.4% |
+| **EasyOCR** | OK | 93.4% | OK | 62.6% |
+| **TrOCR** | OK | 0.0% | OK | 1.1% |
+
+### Textes extraits par format
+
+#### PaddleOCR
+**Image :** `DOCUMENT DE TEST MULTI-FORMATS Ligne 2: Evaluation de l'OCR PaddleOCR Docling EasyOCRet TrOCR`  
+**PDF :** `DOCUMENT DE TEST MULTI-FORMATS Ligne 2:Evaluation de IOCR PaddleOCR, Docling, EssyOCRet TrOCR`
+
+#### Docling
+**Image :** `## DOCUMENTDE TESTMULTI-FORMATS ## Ligne 2 Evaluation de IOCR ## PaddleOCR Docling EasyOcRet TrOcR`  
+**PDF :** `## DOCUMENTDE TEST MULTI-FORMATS Ligne 2 Evaluation de IOCR`
+
+#### EasyOCR
+**Image :** `DOCUMENTDE TESTMULTI-FORMATS Ligne Evaluation de IOCR PaddleOcR Docling EasyOcRet TrOcR`  
+**PDF :** `DOCUMENTCETESTMULTHFOFIATS Fustcn IOCR PeddlOCR Docling ESOCRel TiocA`
+
+#### TrOCR
+**Image :** `*`  
+**PDF :** `2`
 
 ---
 
-**Docling (6 lignes) :**
-```python
-from docling.document_converter import DocumentConverter
+## 🏆 Classement Final & Recommandations
 
-converter = DocumentConverter()
-result = converter.convert('image.png')
+1. **🥇 EASYOCR** (91.7/100)
+2. **🥈 PADDLEOCR** (81.9/100)
+3. **🥉 DOCLING** (77.3/100)
+4. **4ème : TROCR** (59.2/100)
 
-markdown = result.document.export_to_markdown()
-print(markdown)
-```
-
-**Complexité :** ✅ Simple (aucune configuration)
-
----
-
-#### Stabilité
-
-| Critère | PaddleOCR | Docling | Gagnant |
-|---------|-----------|---------|---------|
-| **Erreurs d'installation** | ⚠️ Fréquentes (oneDNN, numpy) | ✅ Rares | 🏆 Docling |
-| **Compatibilité Windows** | ⚠️ Moyenne (config requise) | ✅ Bonne | 🏆 Docling |
-| **Dépendances manquantes** | Fréquentes | Occasionnelles (docling-core) | 🏆 Docling |
-
-**Score Stabilité :** Docling (5/5) > PaddleOCR (3/5)
+### 💡 Recommandations stratégiques d'intégration :
+- **Docling** est le meilleur choix global si vous manipulez des **fichiers complexes multipages (PDF, Word)** et souhaitez conserver la structure Markdown avec une intégration Python immédiate et propre.
+- **PaddleOCR** est le choix ultime pour la **vitesse d'inférence pure** d'images isolées, très adapté aux pipelines en temps réel en production.
+- **EasyOCR** est idéal pour des applications d'images simples avec **gestion multilingue native** très simple à déployer (Backend PyTorch standard).
+- **TrOCR** est le plus performant pour la lecture de **lignes de texte isolées hautement spécifiques (par exemple, manuscrites)** après découpage préliminaire de la page en lignes de texte individuelles.
 
 ---
 
-## 🏆 Tableau Récapitulatif - DONNÉES RÉELLES
-
-| Critère | Poids | PaddleOCR | Docling | Gagnant |
-|---------|-------|-----------|---------|---------|
-| **Précision Moyenne** | 35% | 98.07% | ~99% | 🏆 Docling (+0.93 pt) |
-| **Vitesse OCR Images** | 25% | 1.78s | 13.79s | 🏆 PaddleOCR (7.7x plus rapide) |
-| **Vitesse Init** | 10% | 12.76s* | 0.05s | 🏆 Docling (255x plus rapide) |
-| **Simplicité Installation** | 15% | 2/5 | 4/5 | 🏆 Docling |
-| **Simplicité Code** | 10% | 3/5 | 5/5 | 🏆 Docling |
-| **Stabilité** | 5% | 3/5 | 5/5 | 🏆 Docling |
-
-**\* Note :** Moyenne entre premier run (24.63s) et runs suivants (0.88s)
-
-### **Score Global Pondéré**
-
-| Outil | Score | Analyse |
-|-------|-------|---------|
-| **PaddleOCR** | **76.2/100** | ⚡ **Excellent pour vitesse OCR pure** |
-| **Docling** | **88.1/100** | ✅ **Gagnant global : précision + simplicité** |
-
-**Différence :** Docling devance PaddleOCR de **11.9 points**
-
----
-
-## 💡 Recommandations d'Utilisation
-
-### ✅ **Choisir PaddleOCR si :**
-
-1. ⚡ **La vitesse est critique** (traitement temps réel, batch volumineux)
-2. 🌍 **Support de nombreuses langues** requis (80+ langues)
-3. 🎯 **Précision ~98%** acceptable pour votre cas d'usage
-4. 💻 **Environnement contrôlé** (serveur Linux, Docker)
-5. 📷 **Images simples** avec texte clair
-
-**Cas d'usage typiques :**
-- Scanner de cartes de visite en temps réel
-- OCR mobile (applications Android/iOS)
-- Traitement batch de factures/reçus
-- Extraction de plaques d'immatriculation
-
----
-
-### ✅ **Choisir Docling si :**
-
-1. 🎯 **Précision élevée** requise (>95%)
-2. 📄 **Formats variés** (PDF, DOCX, TXT en plus des images)
-3. 🛠️ **Simplicité d'intégration** prioritaire
-4. 📊 **Documents complexes** (tableaux, mises en page avancées)
-5. 🔧 **Maintenance minimale** souhaitée
-
-**Cas d'usage typiques :**
-- Extraction de données de contrats/documents légaux
-- Conversion de documents PDF en Markdown
-- Analyse de rapports financiers
-- Indexation de documents d'entreprise
-
----
-
-## 🔧 Problèmes Rencontrés et Solutions
-
-### **PaddleOCR**
-
-| Problème | Solution Appliquée |
-|----------|-------------------|
-| Erreur oneDNN | Variables d'environnement dans les scripts |
-| Téléchargement modèles | Automatique au premier run (~10MB, 20s) |
-| Incompatibilité numpy 2.x | Installation de numpy==1.26.4 |
-| Parsing complexe résultats | Extraction de `line[1][0]` et `line[1][1]` |
-
-### **Docling**
-
-| Problème | Solution Appliquée |
-|----------|-------------------|
-| Module 'docling_core' manquant | Installation manuelle : `pip install docling-core` |
-| Temps traitement images long | Acceptable pour précision obtenue (13.79s) |
-| Téléchargement modèle OCR | Automatique au premier run |
-
----
-
-## 📊 Données Brutes des Tests - VALEURS RÉELLES
-
-### Tests PaddleOCR
-
-**Test 1 - Image Simple (test_paddleocr.py) :**
-```
-Temps d'initialisation : 24.63s (téléchargement automatique modèles)
-Temps OCR : 1.47s
-Temps total : 26.10s
-Précision : 97.5%
-Éléments détectés : 3
-Confiances : 98.2%, 99.4%, 95.0%
-```
-
-**Test 2 - Texte vers Image (test_06_paddleocr_avec_texte.py) :**
-```
-Temps d'initialisation : 0.88s (modèles déjà téléchargés)
-Temps OCR : 2.09s
-Temps total : 2.97s
-Précision : 98.64%
-Éléments détectés : 11
-Confiances : min 96.84%, max 99.99%, moyenne 98.64%
-```
-
-### Tests Docling
-
-**Test 3 - Image (test_01_docling_avec_image.py) :**
-```
-Temps d'initialisation : 0.05s
-Temps de conversion : 13.79s (téléchargement modèle OCR)
-Temps total : 13.84s
-Caractères extraits : 62
-Structure : Markdown préservée
-```
-
-**Test 4 - Fichier Texte (test_05_docling_avec_texte.py) :**
-```
-Temps d'initialisation : 0.05s
-Temps de conversion : 0.02s
-Temps total : 0.07s
-Caractères extraits : 564
-Structure : Markdown parfaitement préservée
-```
-
----
-
-## 🎯 Conclusion - ANALYSE FINALE DES TESTS RÉELS
-
-### **Gagnant Global : 🏆 Docling (88.1/100)**
-
-**Docling** remporte le benchmark global avec un score de **88.1/100** contre **76.2/100** pour PaddleOCR, principalement grâce à :
-- ✅ Précision supérieure (+0.93 point → 99% vs 98.07%)
-- ✅ Simplicité d'intégration exceptionnelle (4/5 vs 2/5)
-- ✅ Stabilité excellente (5/5 vs 3/5)
-- ✅ Support de formats variés (PDF, DOCX, TXT, Images)
-- ✅ Conversion ultra-rapide de fichiers texte (0.02s)
-- ✅ Initialisation instantanée (0.05s)
-
-**Cependant, PaddleOCR** reste **largement meilleur** pour :
-- ⚡ **OCR d'images :** 7.7x plus rapide en moyenne (1.78s vs 13.79s)
-- 📱 Applications temps réel (1.47s pour images simples)
-- 💰 Traitement batch d'images (2.09s vs 13.79s par image)
-- 🌍 Support multilingue extensif (80+ langues vs 50+)
-
-### **Cas d'Usage Recommandés**
-
-**Utilisez PaddleOCR pour :**
-- Traitement en temps réel d'images
-- Applications nécessitant un OCR rapide (<2s par image)
-- Flux continus de photos (scanning mobile, surveillance)
-- Budget temps de traitement strict
-
-**Utilisez Docling pour :**
-- Documents complexes nécessitant haute précision
-- Conversion de multiples formats (PDF, DOCX, TXT)
-- Projets nécessitant une installation simple et stable
-- Extraction de contenu avec structure Markdown
-
----
-
-## 📝 Méthodologie de Test
-
-### **Configuration Matérielle**
-- CPU : Intel/AMD x64
-- RAM : 16 GB
-- Stockage : SSD
-- OS : Windows 10/11
-
-### **Conditions de Test**
-- Environnement virtuel Python isolé
-- Aucune accélération GPU
-- Tests en conditions réelles (téléchargements inclus)
-- Réseau actif (téléchargement automatique des modèles)
-
-### **Fichiers de Test**
-- Images PNG haute qualité
-- Texte structuré converti en image
-- Documents texte simples
-- Résolutions : 600x200 à 800x600
-
----
-
-## 🔗 Ressources
-
-### **PaddleOCR**
-- GitHub : https://github.com/PaddlePaddle/PaddleOCR
-- Documentation : https://paddlepaddle.github.io/PaddleOCR/
-- Stars : 38k+
-
-### **Docling**
-- GitHub : https://github.com/DS4SD/docling
-- Documentation : https://ds4sd.github.io/docling/
-- Stars : 2k+
-
----
-
-## 📅 Historique
-
-| Date | Version | Changements |
-|------|---------|-------------|
-| 18/06/2026 | 2.0 | Tests réels exécutés, données mises à jour |
-| 18/06/2026 | 1.0 | Rapport initial |
-
----
-
-**Auteur :** Kinza Chaouachi  
-**Contact :** [@Kinzaachaouachi](https://github.com/Kinzaachaouachi)  
-**Projet :** [ocr_project](https://github.com/Kinzaachaouachi/ocr_project)  
-**Tests réalisés le :** 18 juin 2026
-
----
-
-📊 **Rapport HTML interactif disponible :** `benchmark_report.html`  
-🔄 **Données JSON :** `benchmark_results.json`
+🔄 *Rapport mis à jour automatiquement à chaque exécution du script de test global.*
