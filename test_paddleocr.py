@@ -80,10 +80,10 @@ if resultats and resultats[0]:
     print(f"  Confiance moyenne  : {moyenne:.1f}%")
     print(f"  Durée OCR          : {duree:.2f}s")
     print("-" * 60)
-    print("\n  RÉSULTAT : SUCCÈS ✓")
+    print("\n  RÉSULTAT : SUCCÈS [OK]")
 else:
     print("  Aucun texte détecté.")
-    print("\n  RÉSULTAT : ÉCHEC ✗")
+    print("\n  RÉSULTAT : ÉCHEC [FAIL]")
 
 print("\n" + "=" * 60)
 print("   Fin du test PaddleOCR")

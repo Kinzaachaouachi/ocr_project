@@ -3,9 +3,9 @@
 ## 📂 Fichiers Essentiels
 
 ### 📊 Rapports et Résultats
-- **`benchmark_report.html`** - Rapport HTML interactif moderne avec images avant/après
+- **`benchmark_report.html`** - Rapport HTML interactif moderne de benchmark
 - **`BENCHMARK_REPORT.md`** - Rapport de benchmark détaillé (Markdown)
-- **`benchmark_results.json`** - Données réelles des tests exécutés
+- **`benchmark_results.json`** - Données réelles des tests exécutés au format JSON
 
 ### 📖 Documentation
 - **`README.md`** - Documentation principale du projet
@@ -17,52 +17,34 @@
 - **`test_06_paddleocr_avec_texte.py`** - Test PaddleOCR avec texte converti en image
 - **`test_01_docling_avec_image.py`** - Test Docling avec image
 - **`test_05_docling_avec_texte.py`** - Test Docling avec fichier texte
+- **`test_easyocr.py`** - Test EasyOCR avec image simple
+- **`test_trocr.py`** - Test TrOCR avec image simple (architecture Transformers)
 
 ### 🛠️ Scripts Utilitaires
-- **`generate_final_report.py`** - Générateur du rapport HTML moderne (données réelles)
-- **`generate_benchmark_html.py`** - Générateur de rapport (réexécute les tests)
+- **`run_all_benchmarks.py`** - Script principal de benchmark (exécute les 4 modèles en isolation, calcule la similarité de Levenshtein et met à jour automatiquement le JSON, le rapport Markdown et le rapport HTML interactif).
 
 ### 📁 Dossiers
 - **`demo_images/`** - Image de démonstration utilisée dans les tests
-  - `demo_text.png` - Image utilisée pour test Docling
-- **`corpus_test/`** - 10 images de test variées
-  - Images de 01 à 10 (texte simple, multicolore, petit, grand, nombres, etc.)
-  - `resultats_docling.json` - Résultats des tests sur le corpus
+  - `demo_text.png` - Image de démo pour Docling, EasyOCR et TrOCR
+- **`corpus_test/`** - 10 images de test variées pour les benchmarks
 - **`venv/`** - Environnement virtuel Python
 - **`.git/`** - Dépôt Git
 
-## 📋 Fichiers Supprimés (Nettoyage)
-
-### ❌ Rapports en doublon
-- `benchmark_report_backup.html`
-- `benchmark_report_old.html`
-- `benchmark_report.html` (ancien, remplacé par la version moderne)
-
-### ❌ Scripts temporaires
-- `update_report.py` - Script temporaire de mise à jour
-- `watch_and_update.py` - Script de surveillance (non utilisé)
-
-### ❌ Code non utilisé
-- `docling_wrapper.py` - Wrapper alternatif non utilisé
-
-### ❌ Documentation redondante
-- `README_HTML_REPORT.md` - Informations déjà dans README.md
-
-### ❌ Dossiers et fichiers temporaires
-- `test_images/` - Dossier d'images générées automatiquement
-- `test_images/sample_text.png` - Image générée par le script
 
 ## 📊 Statistiques du Projet
 
-- **Tests Python** : 4 fichiers
-- **Documentation** : 4 fichiers (README, BENCHMARK_REPORT, README_TESTS, STRUCTURE)
+- **Tests Python** : 6 fichiers (PaddleOCR x2, Docling x2, EasyOCR, TrOCR)
+- **Documentation** : 3 fichiers principaux (README, README_TESTS, STRUCTURE)
 - **Rapports** : 1 HTML + 1 Markdown + 1 JSON
 - **Images de test** : 11 images (1 demo + 10 corpus)
-- **Scripts utilitaires** : 2 fichiers
+- **Scripts utilitaires** : 1 fichier principal (`run_all_benchmarks.py`)
+
+---
 
 ## 🎯 Commandes Utiles
 
-### Exécuter les tests
+### Exécuter les tests individuels
+
 ```bash
 # Activer l'environnement virtuel
 .\venv\Scripts\activate
@@ -74,12 +56,18 @@ python test_06_paddleocr_avec_texte.py
 # Tests Docling
 python test_01_docling_avec_image.py
 python test_05_docling_avec_texte.py
+
+# Test EasyOCR
+python test_easyocr.py
+
+# Test TrOCR
+python test_trocr.py
 ```
 
-### Régénérer le rapport HTML
+### Exécuter le Benchmark Global (et régénérer les rapports HTML/MD)
 ```bash
 .\venv\Scripts\activate
-python generate_final_report.py
+python run_all_benchmarks.py
 ```
 
 ### Ouvrir le rapport HTML
@@ -90,4 +78,4 @@ start benchmark_report.html
 ---
 
 **Projet maintenu par** : Kinza Achaouachi  
-**Dernière mise à jour** : 19 juin 2026
+**Dernière mise à jour** : 23 juin 2026
