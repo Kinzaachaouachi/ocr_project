@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Extraction - Extracteur de Texte Intelligent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ecff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .upload-hint {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-info {
+            background: #f0f2ff;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-details {
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .model-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .model-selector label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .model-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .model-option {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+            font-weight: 500;
+        }
+
+        .model-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .model-option input[type="radio"] {
+            display: none;
+        }
+
+        .model-option input[type="radio"]:checked + label {
+            display: none;
+        }
+
+        .model-option.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-extract {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-extract:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-extract:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #f0f2ff;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-reset:hover {
+            background: #e8ecff;
+        }
+
+        .results-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-box {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 15px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-content {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .error-box {
+            background: #fee;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .error-box.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f0f2ff;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .copy-btn.copied {
+            background: #27ae60;
+        }
+
+        .timing-info {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .timing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .timing-row:last-child {
+            border-bottom: none;
+        }
+
+        .model-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .health-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #27ae60;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .footer {
+            background: #f8f9ff;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>[OCR] Extraction de Texte Intelligent</h1>
+            <p>Extracteur OCR professionnel - 4 modeles disponibles</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                <span class="health-indicator"></span>
+                API en ligne
+            </p>
+        </div>
+
+        <div class="content">
+            <!-- Section Upload -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Cliquez ou deposez votre fichier</div>
+                    <div class="upload-hint">PNG, JPG, PDF (max 50MB)</div>
+                    <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.pdf,.bmp,.tiff,.webp">
+                </div>
+
+                <div class="file-info" id="fileInfo">
+                    <div class="file-details">
+                        Fichier : <span class="file-name" id="fileName">-</span>
+                    </div>
+                    <div class="file-details">
+                        Taille : <span id="fileSize">-</span>
+                    </div>
+                    <div class="file-details">
+                        Format : <span id="fileType">-</span>
+                    </div>
+                </div>
+
+                <div class="model-selector">
+                    <label>Modele OCR - <span id="modelStatus" style="color: #667eea; font-weight: 700;">Auto-detection</span></label>
+                    <div style="background: #e8ecff; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9em; color: #667eea;">
+                        <strong id="modelRecommendation">Selectionnez un fichier pour voir la recommandation</strong>
+                    </div>
+                    <div class="model-options">
+                        <div class="model-option active" id="option-auto">
+                            <div style="cursor: pointer; padding: 10px; text-align: center; font-weight: 500;">Auto [Recommande]</div>
+                        </div>
+                        <div class="model-option">
+                            <input type="radio" id="model-paddleocr" name="model" value="paddleocr">
+                            <label>PaddleOCR</label>
+                            <div style="cursor: pointer; padding: 10px; text-align: center; font-weight: 500;">PaddleOCR</div>
+                        </div>
+                        <div class="model-option">
+                            <input type="radio" id="model-docling" name="model" value="docling">
+                            <label>Docling</label>
+                            <div style="cursor: pointer; padding: 10px; text-align: center; font-weight: 500;">Docling</div>
+                        </div>
+                        <div class="model-option">
+                            <input type="radio" id="model-easyocr" name="model" value="easyocr">
+                            <label>EasyOCR</label>
+                            <div style="cursor: pointer; padding: 10px; text-align: center; font-weight: 500;">EasyOCR</div>
+                        </div>
+                        <div class="model-option">
+                            <input type="radio" id="model-trocr" name="model" value="trocr">
+                            <label>TrOCR</label>
+                            <div style="cursor: pointer; padding: 10px; text-align: center; font-weight: 500;">TrOCR</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-extract" id="extractBtn" disabled>Extraire le texte</button>
+                    <button class="btn-reset" id="resetBtn">Reinitialiser</button>
+                </div>
+            </div>
+
+            <!-- Section Resultats -->
+            <div class="results-section">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Extraction en cours...</div>
+                </div>
+
+                <div class="error-box" id="errorBox">
+                    <strong>Erreur :</strong>
+                    <span id="errorMessage"></span>
+                </div>
+
+                <div class="result-box" id="resultBox">
+                    <div class="result-title">
+                        <span class="model-badge" id="modelBadge">PaddleOCR</span>
+                        Texte extrait
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab(0)">Texte</button>
+                        <button class="tab" onclick="switchTab(1)">Statistiques</button>
+                        <button class="tab" onclick="switchTab(2)">Performance</button>
+                    </div>
+
+                    <div class="tab-content active">
+                        <div class="result-content" id="textContent"></div>
+                        <button class="copy-btn" id="copyBtn">Copier le texte</button>
+                    </div>
+
+                    <div class="tab-content">
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">Caracteres</div>
+                                <div class="stat-value" id="charCount">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Mots</div>
+                                <div class="stat-value" id="wordCount">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Lignes</div>
+                                <div class="stat-value" id="lineCount">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Paragraphes</div>
+                                <div class="stat-value" id="paragraphCount">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content">
+                        <div class="timing-info">
+                            <div class="timing-row">
+                                <span>Initialisation du modele :</span>
+                                <strong id="initTime">-</strong>
+                            </div>
+                            <div class="timing-row">
+                                <span>Extraction :</span>
+                                <strong id="ocrTime">-</strong>
+                            </div>
+                            <div class="timing-row">
+                                <span>Temps modele total :</span>
+                                <strong id="totalTime">-</strong>
+                            </div>
+                            <div class="timing-row">
+                                <span>Temps reel (wall time) :</span>
+                                <strong id="wallTime">-</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>OCR Extraction - Projet de Stage | Comparaison PaddleOCR, Docling, EasyOCR, TrOCR</p>
+            <p style="font-size: 0.85em; margin-top: 10px; color: #999;">
+                Auteur : Kinza Achaouachi | GitHub : @Kinzaachaouachi
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const extractBtn = document.getElementById('extractBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loading = document.getElementById('loading');
+        const errorBox = document.getElementById('errorBox');
+        const resultBox = document.getElementById('resultBox');
+        const textContent = document.getElementById('textContent');
+        const copyBtn = document.getElementById('copyBtn');
+        const modelRecommendation = document.getElementById('modelRecommendation');
+        const modelStatus = document.getElementById('modelStatus');
+
+        let selectedFile = null;
+        let extractedText = '';
+        let autoModel = 'paddleocr'; // Modèle auto par défaut
+        let isAutoMode = true;
+
+        // Configuration des modèles optimaux par type de fichier
+        const MODEL_RECOMMENDATIONS = {
+            image: {
+                optimal: 'paddleocr',
+                reason: 'PaddleOCR est optimal pour les images [rapide et precis]'
+            },
+            pdf: {
+                optimal: 'docling',
+                reason: 'Docling est optimal pour les PDF [structure preservee]'
+            },
+            txt: {
+                optimal: 'docling',
+                reason: 'Docling est optimal pour les fichiers texte [conversion Markdown]'
+            }
+        };
+
+        // Upload Area - Click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Upload Area - Drag & Drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        // File Input Change
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function getFileTypeFromExtension(filename) {
+            const ext = filename.toLowerCase().split('.').pop();
+            const imageExts = ['png', 'jpg', 'jpeg', 'bmp', 'tiff', 'webp'];
+            const pdfExts = ['pdf'];
+            const txtExts = ['txt'];
+
+            if (imageExts.includes(ext)) return 'image';
+            if (pdfExts.includes(ext)) return 'pdf';
+            if (txtExts.includes(ext)) return 'txt';
+            return null;
+        }
+
+        function updateModelRecommendation(fileType) {
+            if (!fileType) {
+                modelRecommendation.textContent = 'Format non reconnu';
+                modelStatus.textContent = 'Manuel';
+                isAutoMode = false;
+                return;
+            }
+
+            const rec = MODEL_RECOMMENDATIONS[fileType];
+            if (rec) {
+                autoModel = rec.optimal;
+                modelRecommendation.textContent = rec.reason;
+                modelStatus.textContent = 'Auto-detecte';
+                isAutoMode = true;
+                updateAutoModelSelection();
+            }
+        }
+
+        function updateAutoModelSelection() {
+            // Désélectionner tous les radios
+            document.querySelectorAll('input[name="model"]').forEach(r => r.checked = false);
+            
+            // Réinitialiser tous les model-option
+            document.querySelectorAll('.model-option').forEach(o => {
+                o.classList.remove('active');
+            });
+
+            // Marquer l'auto comme actif
+            if (isAutoMode) {
+                document.getElementById('option-auto').classList.add('active');
+            }
+        }
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                selectedFile = file;
+                displayFileInfo(file);
+                
+                // Déterminer le type de fichier et recommander un modèle
+                const fileType = getFileTypeFromExtension(file.name);
+                updateModelRecommendation(fileType);
+                
+                extractBtn.disabled = false;
+                hideError();
+                resultBox.classList.remove('show');
+            }
+        }
+
+        function displayFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileType').textContent = file.type || 'Inconnu';
+            fileInfo.classList.add('show');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function getSelectedModel() {
+            if (isAutoMode) {
+                return autoModel;
+            }
+            return document.querySelector('input[name="model"]:checked')?.value || autoModel;
+        }
+
+        // Extract Button
+        extractBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const model = getSelectedModel();
+            await extractText(selectedFile, model);
+        });
+
+        async function extractText(file, model) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model', model);
+
+            loading.classList.add('show');
+            resultBox.classList.remove('show');
+            hideError();
+            extractBtn.disabled = true;
+
+            try {
+                const response = await fetch('/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data, model);
+                } else {
+                    showError(data.detail || 'Erreur lors de l\'extraction');
+                }
+            } catch (error) {
+                showError('Erreur reseau : ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+                extractBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data, model) {
+            extractedText = data.text || '';
+
+            // Update model badge
+            const modelNames = {
+                'paddleocr': 'PaddleOCR',
+                'docling': 'Docling',
+                'easyocr': 'EasyOCR',
+                'trocr': 'TrOCR'
+            };
+            document.getElementById('modelBadge').textContent = modelNames[model] || model;
+
+            // Display text
+            textContent.textContent = extractedText;
+
+            // Update statistics
+            const lines = extractedText.split('\n').filter(l => l.trim());
+            const paragraphs = extractedText.split('\n\n').filter(p => p.trim());
+            
+            document.getElementById('charCount').textContent = data.char_count || extractedText.length;
+            document.getElementById('wordCount').textContent = data.word_count || extractedText.split(/\s+/).filter(w => w).length;
+            document.getElementById('lineCount').textContent = lines.length;
+            document.getElementById('paragraphCount').textContent = paragraphs.length;
+
+            // Update timing
+            if (data.timing) {
+                document.getElementById('initTime').textContent = (data.timing.init_time_s || 0).toFixed(2) + 's';
+                document.getElementById('ocrTime').textContent = (data.timing.ocr_time_s || 0).toFixed(2) + 's';
+                document.getElementById('totalTime').textContent = (data.timing.total_model_time_s || 0).toFixed(2) + 's';
+                document.getElementById('wallTime').textContent = (data.timing.wall_time_s || 0).toFixed(2) + 's';
+            }
+
+            resultBox.classList.add('show');
+        }
+
+        // Copy Button
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(extractedText).then(() => {
+                copyBtn.textContent = 'Copie !';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copier le texte';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+
+        // Reset Button
+        resetBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            selectedFile = null;
+            fileInfo.classList.remove('show');
+            resultBox.classList.remove('show');
+            errorBox.classList.remove('show');
+            extractBtn.disabled = true;
+            loading.classList.remove('show');
+            modelRecommendation.textContent = 'Selectionnez un fichier pour voir la recommandation';
+            modelStatus.textContent = 'Auto-detection';
+            isAutoMode = true;
+            updateAutoModelSelection();
+        });
+
+        // Model Selection - Manuel
+        document.querySelectorAll('.model-option').forEach((option, index) => {
+            option.addEventListener('click', () => {
+                // Si c'est l'option "auto"
+                if (option.id === 'option-auto') {
+                    isAutoMode = true;
+                    updateAutoModelSelection();
+                } else {
+                    // Sélection manuel
+                    document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
+                    option.classList.add('active');
+                    option.querySelector('input').checked = true;
+                    isAutoMode = false;
+                    modelStatus.textContent = 'Manuel';
+                }
+            });
+        });
+
+        // Error Handling
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            errorBox.classList.add('show');
+        }
+
+        function hideError() {
+            errorBox.classList.remove('show');
+        }
+
+        // Tab Switching
+        function switchTab(index) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.querySelectorAll('.tab-content')[index].classList.add('active');
+            document.querySelectorAll('.tab')[index].classList.add('active');
+        }
+    </script>
+</body>
+</html>

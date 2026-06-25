@@ -22,8 +22,9 @@ from pathlib import Path
 from datetime import datetime
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # ─── Initialisation de l'application ─────────────────────────────────────────
 
@@ -42,6 +43,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Monter les fichiers statiques
+api_dir = Path(__file__).parent
+static_dir = api_dir / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # Chemin absolu vers le worker OCR
 WORKER_PATH = Path(__file__).parent / "worker.py"
@@ -134,6 +141,15 @@ def run_worker(model: str, file_path: str, file_type: str) -> dict:
 
 # ─── ENDPOINTS ───────────────────────────────────────────────────────────────
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
+        "<text y='.9em' font-size='90'>📄</text></svg>"
+    )
+    return Response(content=svg, media_type="image/svg+xml")
+
+
 @app.get("/", response_class=HTMLResponse, tags=["Général"])
 async def root():
     """Page d'accueil de l'API avec liens vers la documentation."""
@@ -144,11 +160,11 @@ async def root():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>API OCR - Extraction de Texte</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body {
-                font-family: 'Inter', sans-serif;
+                font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
                 background: radial-gradient(circle at top left, #1e1b4b, #0f172a 50%, #020617);
                 color: #f8fafc;
                 min-height: 100vh;

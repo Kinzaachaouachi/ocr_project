@@ -1,0 +1,23 @@
+# OCR engines (sujet de stage)
+paddleocr==2.7.0.3
+paddlepaddle==2.6.2
+docling==2.10.0
+docling-core
+
+# Image / PDF processing
+numpy==1.26.4
+opencv-python==4.6.0.66
+pillow
+pymupdf
+img2pdf
+
+# Optional OCR models (benchmark étendu)
+easyocr==1.7.2
+transformers
+torch
+torchvision
+
+# API REST
+fastapi
+uvicorn
+python-multipart
