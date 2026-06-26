@@ -1,8 +1,3 @@
-"""
-TEST DOCLING MULTIFORMAT - Test Docling sur plusieurs types de fichiers
-Auteur : Kinza Achaouachi
-Description : Test complet de Docling avec images, texte et documents variés
-"""
 
 import os
 import sys
@@ -19,7 +14,6 @@ print("=" * 80)
 results_dir = Path("test_results")
 results_dir.mkdir(exist_ok=True)
 
-# ── Étape 1 : Préparation des fichiers de test ──────────────
 print("\n[1/6] Préparation des fichiers de test...")
 
 test_files = []
@@ -30,35 +24,6 @@ if not text_file.exists():
     print(f"    Création du fichier texte : {text_file}")
     text_file.parent.mkdir(exist_ok=True)
     
-    text_content = """DOCUMENT DE TEST MULTIFORMAT
-
-Titre Principal
-===============
-
-Ceci est un document texte de test pour Docling.
-
-Sections:
----------
-1. Introduction
-2. Contenu principal
-3. Conclusion
-
-Paragraphe 1:
-Docling est excellent pour extraire du texte structuré.
-
-Paragraphe 2:
-Les fichiers texte sont une bonne base de test.
-
-Listes:
-- Premier élément
-- Deuxième élément
-- Troisième élément
-
-Conclusion:
-Test multifomat réussi.
-
-Fin du document.
-"""
     with open(text_file, 'w', encoding='utf-8') as f:
         f.write(text_content)
 
@@ -92,7 +57,6 @@ print(f"    {len(test_files)} fichiers de test préparés")
 for i, tf in enumerate(test_files, 1):
     print(f"    [{i}] {tf['type']}: {tf['description']}")
 
-# ── Étape 2 : Initialisation de Docling ──────────────
 print("\n[2/6] Initialisation de DocumentConverter...")
 
 try:
@@ -112,7 +76,6 @@ except Exception as e:
     print("    Installation : pip install docling docling-core")
     sys.exit(1)
 
-# ── Étape 3 : Tests sur chaque fichier ──────────────
 print("\n[3/6] Exécution des tests sur chaque fichier...")
 print("-" * 80)
 
@@ -225,7 +188,6 @@ for file_type, type_res in type_results.items():
         print(f"      [Temps] Temps moyen : {avg_time:.2f}s")
         print(f"      [Note] Caracteres moyens : {avg_chars:.0f}")
 
-# ── Étape 5 : Statistiques globales ──────────────
 print("\n[5/6] Statistiques globales...")
 print("-" * 80)
 
@@ -241,7 +203,6 @@ print(f"      [Cible] Taux de succes : {(succès_total + partiels_total)/len(res
 print(f"      [Temps] Temps total : {total_time:.2f}s")
 print(f"      [Temps] Temps initialisation : {init_time:.2f}s")
 
-# ── Étape 6 : Sauvegarde des résultats ──────────────
 print("\n[6/6] Sauvegarde des résultats...")
 
 results_file = results_dir / "docling_multiformat_results.json"
@@ -258,7 +219,6 @@ with open(results_file, 'w', encoding='utf-8') as f:
 
 print(f"    [Fichier] Resultats sauvegardes : {results_file}")
 
-# ── Conclusion ────────────────────────────────────
 print("\n" + "=" * 80)
 print("   CONCLUSION DU TEST DOCLING MULTIFORMAT")
 print("=" * 80)
@@ -280,5 +240,5 @@ print("  - Parfait pour conversion vers Markdown/HTML")
 print("  - Moins adapte aux images OCR simples")
 
 print("\n" + "=" * 80)
-print("   TEST TERMINÉ - Kinza Achaouachi")
+print("   TEST TERMINÉ - Kinza Chaouachi")
 print("=" * 80)

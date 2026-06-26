@@ -1,6 +1,6 @@
 """
 Script de test pour PaddleOCR
-Auteur : Kinza Achaouachi
+Auteur : Kinza Chaouachi
 Description : Test simple de PaddleOCR avec une image générée automatiquement
 """
 

@@ -1,8 +1,3 @@
-"""
-TEST EASYOCR MULTIFORMAT - Test EasyOCR sur plusieurs types d'images
-Auteur : Kinza Achaouachi
-Description : Test complet d'EasyOCR avec images variées et multi-langues
-"""
 
 import os
 import sys
@@ -14,14 +9,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 print("=" * 80)
-print("   TEST EASYOCR MULTIFORMAT - Kinza Achaouachi")
+print("   TEST EASYOCR MULTIFORMAT - Kinza Chaouachi")
 print("=" * 80)
 
 # Créer le dossier de résultats
 results_dir = Path("test_results")
 results_dir.mkdir(exist_ok=True)
 
-# ── Étape 1 : Préparation des images de test ──────────────
 print("\n[1/6] Préparation des images de test...")
 
 test_images = []
@@ -110,7 +104,6 @@ for img in test_images:
 for cat, count in categories.items():
     print(f"    • {cat}: {count} images")
 
-# ── Étape 2 : Initialisation d'EasyOCR ──────────────
 print("\n[2/6] Initialisation d'EasyOCR...")
 
 try:
@@ -118,7 +111,6 @@ try:
     
     import easyocr
     
-    # Initialiser avec français et anglais (multi-langues)
     reader = easyocr.Reader(['fr', 'en'], gpu=False)
     
     init_time = time.time() - init_start
@@ -134,7 +126,6 @@ except Exception as e:
     print("    Note : EasyOCR nécessite torch")
     sys.exit(1)
 
-# ── Étape 3 : Tests sur chaque image ──────────────
 print("\n[3/6] Exécution des tests sur chaque image...")
 print("-" * 80)
 
@@ -245,7 +236,6 @@ for i, test_image in enumerate(test_images, 1):
 
 total_time = time.time() - total_start
 
-# ── Étape 4 : Résultats par catégorie ──────────────
 print("\n[4/6] Résultats par catégorie de difficulté...")
 print("-" * 80)
 
@@ -282,7 +272,6 @@ for difficulty, diff_res in sorted(difficulty_results.items()):
     print(f"      [Stats] Confiance moyenne : {avg_conf:.1f}%")
     print(f"      [Recherche] Detections moyennes : {avg_detections:.1f}")
 
-# ── Étape 5 : Statistiques globales ──────────────
 print("\n[5/6] Statistiques globales...")
 print("-" * 80)
 
@@ -308,7 +297,6 @@ print(f"      [Recherche] Detections moyennes : {avg_global_detections:.1f}")
 print(f"      [Temps] Temps total : {total_time:.2f}s")
 print(f"      [Temps] Temps initialisation : {init_time:.2f}s")
 
-# ── Étape 6 : Sauvegarde des résultats ──────────────
 print("\n[6/6] Sauvegarde des résultats...")
 
 results_file = results_dir / "easyocr_multiformat_results.json"
@@ -328,7 +316,6 @@ with open(results_file, 'w', encoding='utf-8') as f:
 
 print(f"    [Fichier] Resultats sauvegardes : {results_file}")
 
-# ── Conclusion ────────────────────────────────────
 print("\n" + "=" * 80)
 print("   CONCLUSION DU TEST EASYOCR MULTIFORMAT")
 print("=" * 80)
@@ -366,5 +353,5 @@ print("  - Support automatique des accents")
 print("  - Detection automatique de la langue")
 
 print("\n" + "=" * 80)
-print("   TEST TERMINÉ - Kinza Achaouachi")
+print("   TEST TERMINÉ - Kinza Chaouachi")
 print("=" * 80)

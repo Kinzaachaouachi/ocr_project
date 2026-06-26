@@ -25,7 +25,7 @@ os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", required=True, choices=["paddleocr", "docling", "easyocr", "trocr"])
 parser.add_argument("--file", required=True)
-parser.add_argument("--type", required=True, choices=["image", "pdf", "txt"])
+parser.add_argument("--type", required=True, choices=["image", "pdf", "txt", "docx", "xlsx"])
 args = parser.parse_args()
 
 file_path = args.file

@@ -1,8 +1,3 @@
-"""
-Script de test pour EasyOCR
-Auteur : Kinza Achaouachi (mis à jour)
-Description : Test simple d'EasyOCR avec une image de démonstration
-"""
 
 import os
 import sys

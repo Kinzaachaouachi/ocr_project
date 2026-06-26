@@ -58,7 +58,9 @@ PYTHON_EXE = sys.executable
 ALLOWED_EXTENSIONS = {
     "image": [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"],
     "pdf": [".pdf"],
-    "txt": [".txt"]
+    "txt": [".txt"],
+    "docx": [".docx", ".doc"],
+    "xlsx": [".xlsx", ".xls"]
 }
 
 MODELS_INFO = {
@@ -71,8 +73,8 @@ MODELS_INFO = {
     },
     "docling": {
         "name": "Docling",
-        "description": "Analyse documentaire native (PDF, DOCX, TXT, Images). Produit du Markdown structuré.",
-        "supported_formats": ["image", "pdf", "txt"],
+        "description": "Analyse documentaire native (PDF, DOCX, XLSX, TXT, Images). Produit du Markdown structuré.",
+        "supported_formats": ["image", "pdf", "txt", "docx", "xlsx"],
         "typical_accuracy": "~96%",
         "typical_speed": "~12s (inférence)"
     },
@@ -152,130 +154,9 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse, tags=["Général"])
 async def root():
-    """Page d'accueil de l'API avec liens vers la documentation."""
-    html = """
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>API OCR - Extraction de Texte</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-                font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-                background: radial-gradient(circle at top left, #1e1b4b, #0f172a 50%, #020617);
-                color: #f8fafc;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 40px 20px;
-            }
-            .container { max-width: 900px; width: 100%; }
-            h1 {
-                font-size: 3em;
-                font-weight: 800;
-                background: linear-gradient(135deg, #a5b4fc, #6366f1 50%, #4338ca);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                margin-bottom: 10px;
-                letter-spacing: -0.02em;
-            }
-            .subtitle { color: #94a3b8; font-size: 1.1em; margin-bottom: 50px; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
-            .card {
-                background: rgba(30, 41, 59, 0.7);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 16px;
-                padding: 24px;
-                backdrop-filter: blur(16px);
-                transition: transform 0.2s, border-color 0.2s;
-                text-decoration: none;
-                color: inherit;
-                display: block;
-            }
-            .card:hover { transform: translateY(-4px); border-color: rgba(99,102,241,0.4); }
-            .card-icon { font-size: 2em; margin-bottom: 12px; }
-            .card-title { font-size: 1.1em; font-weight: 700; margin-bottom: 6px; }
-            .card-desc { color: #94a3b8; font-size: 0.9em; line-height: 1.5; }
-            .badge {
-                display: inline-block;
-                background: rgba(16, 185, 129, 0.15);
-                border: 1px solid rgba(16, 185, 129, 0.3);
-                color: #34d399;
-                padding: 4px 12px;
-                border-radius: 9999px;
-                font-size: 0.8em;
-                font-weight: 600;
-                margin-bottom: 30px;
-            }
-            .models { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-            .model-tag {
-                background: rgba(99,102,241,0.1);
-                border: 1px solid rgba(99,102,241,0.2);
-                border-radius: 10px;
-                padding: 10px 14px;
-                font-size: 0.85em;
-                font-weight: 600;
-                color: #a5b4fc;
-            }
-            footer { text-align: center; margin-top: 40px; color: #475569; font-size: 0.85em; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="badge">● API en ligne</div>
-            <h1>API OCR</h1>
-            <p class="subtitle">Extraction automatique de texte depuis images et PDF — PaddleOCR · Docling · EasyOCR · TrOCR</p>
-
-            <div class="grid">
-                <a href="/docs" class="card">
-                    <div class="card-icon">📖</div>
-                    <div class="card-title">Documentation Swagger</div>
-                    <div class="card-desc">Interface interactive pour tester tous les endpoints directement dans le navigateur.</div>
-                </a>
-                <a href="/redoc" class="card">
-                    <div class="card-icon">📋</div>
-                    <div class="card-title">Documentation ReDoc</div>
-                    <div class="card-desc">Documentation complète générée automatiquement avec schémas de réponses.</div>
-                </a>
-                <a href="/health" class="card">
-                    <div class="card-icon">💚</div>
-                    <div class="card-title">Health Check</div>
-                    <div class="card-desc">Vérifier que l'API est opérationnelle et obtenir les informations de version.</div>
-                </a>
-                <a href="/models" class="card">
-                    <div class="card-icon">🤖</div>
-                    <div class="card-title">Modèles disponibles</div>
-                    <div class="card-desc">Liste complète des modèles OCR avec leurs formats supportés et performances.</div>
-                </a>
-            </div>
-
-            <div style="background: rgba(30,41,59,0.5); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; margin-bottom: 30px;">
-                <div style="font-weight: 700; margin-bottom: 16px; color: #e2e8f0;">🚀 Endpoint principal</div>
-                <code style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 12px 16px; display: block; color: #a5b4fc; font-size: 0.95em;">
-                    POST /extract<br>
-                    &nbsp;&nbsp;file: &lt;image.png | document.pdf | fichier.txt&gt;<br>
-                    &nbsp;&nbsp;model: paddleocr | docling | easyocr | trocr
-                </code>
-            </div>
-
-            <div style="font-weight: 600; margin-bottom: 12px; color: #94a3b8;">Modèles OCR intégrés :</div>
-            <div class="models">
-                <div class="model-tag">🔴 PaddleOCR — Images &amp; PDF</div>
-                <div class="model-tag">🟠 Docling — PDF, TXT, Images</div>
-                <div class="model-tag">🟢 EasyOCR — Images &amp; PDF</div>
-                <div class="model-tag">🟣 TrOCR — Images (ligne unique)</div>
-            </div>
-
-            <footer>Projet de stage — Kinza Achaouachi · Évaluation d'outils OCR open source</footer>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html)
+    """Redirection vers l'interface web dynamique OCR."""
+    # Rediriger automatiquement vers l'interface dynamique
+    return FileResponse(path=static_dir / "index.html", media_type="text/html")
 
 
 @app.get("/health", tags=["Général"])
@@ -301,13 +182,13 @@ async def list_models():
 
 @app.post("/extract", tags=["Extraction OCR"])
 async def extract_text(
-    file: UploadFile = File(..., description="Fichier à traiter (image PNG/JPG, PDF, ou TXT)"),
+    file: UploadFile = File(..., description="Fichier à traiter (image PNG/JPG, PDF, TXT, DOCX, ou XLSX)"),
     model: str = Form(..., description="Modèle OCR à utiliser : paddleocr | docling | easyocr | trocr")
 ):
     """
-    Extrait le texte d'un fichier (image, PDF ou TXT) avec le modèle OCR choisi.
+    Extrait le texte d'un fichier (image, PDF, TXT, DOCX, ou XLSX) avec le modèle OCR choisi.
 
-    - **file** : Le fichier à analyser (PNG, JPG, JPEG, BMP, TIFF, WEBP, PDF, TXT)
+    - **file** : Le fichier à analyser (PNG, JPG, JPEG, BMP, TIFF, WEBP, PDF, TXT, DOCX, DOC, XLSX, XLS)
     - **model** : Le moteur OCR à utiliser (`paddleocr`, `docling`, `easyocr`, `trocr`)
 
     Retourne le texte extrait, les temps d'exécution, et les métadonnées.
@@ -326,7 +207,7 @@ async def extract_text(
         raise HTTPException(
             status_code=400,
             detail=f"Extension de fichier non supportée : '{Path(file.filename).suffix}'. "
-                   f"Extensions acceptées : .png, .jpg, .jpeg, .bmp, .tiff, .webp, .pdf, .txt"
+                   f"Extensions acceptées : .png, .jpg, .jpeg, .bmp, .tiff, .webp, .pdf, .txt, .docx, .doc, .xlsx, .xls"
         )
 
     # Vérifier la compatibilité modèle ↔ format
@@ -386,3 +267,185 @@ async def extract_text(
         },
         "processed_at": datetime.now().isoformat()
     }
+
+
+@app.post("/translate", tags=["Traduction"])
+async def translate_file_or_text(
+    target_lang: str = Form(..., description="Langue cible : en, es, de, it, ar, fr, pt, ja, zh, ar, ru, ko, tr, nl, pl, vi"),
+    file: UploadFile = File(None, description="Fichier à traduire (Image/PDF/TXT/DOCX/XLSX)"),
+    text: str = Form(None, description="Texte à traduire"),
+    model: str = Form("auto", description="Modèle OCR : auto|paddleocr|docling|easyocr|trocr"),
+):
+    """
+    Traduit du texte ou le contenu d'un fichier (Image/PDF/TXT/DOCX/XLSX).
+    
+    Supporte:
+    - Fichiers: Images (PNG, JPG, etc), PDF, Fichiers texte (TXT), Documents Word (DOCX), Classeurs Excel (XLSX)
+    - Langues: en, es, de, it, ar, fr, pt, ja, zh, ru, ko, tr, nl, pl, vi
+    - Modèles: auto-détection ou spécifier (paddleocr, docling, easyocr, trocr)
+    """
+    import urllib.parse
+    import urllib.request
+    
+    # Valider la langue cible
+    allowed_langs = {"en", "es", "de", "it", "ar", "fr", "pt", "ja", "zh", "ru", "ko", "tr", "nl", "pl", "vi"}
+    if target_lang not in allowed_langs:
+        raise HTTPException(status_code=400, detail=f"Langue non supportée. Langues disponibles: {', '.join(sorted(allowed_langs))}")
+    
+    # Étape 1: Extraire le texte
+    extracted_text = ""
+    file_name = ""
+    file_type_used = "text"
+    model_used = "direct"
+    
+    if file:
+        # ── Traiter le fichier uploadé ──
+        file_name = file.filename
+        file_type = detect_file_type(file_name)
+        
+        if file_type is None:
+            raise HTTPException(status_code=400, detail=f"Type de fichier non supporté. Acceptés: .png, .jpg, .jpeg, .bmp, .tiff, .webp, .pdf, .txt, .docx, .doc, .xlsx, .xls")
+        
+        # Auto-sélectionner le modèle
+        selected_model = model
+        if selected_model == "auto" or selected_model not in MODELS_INFO:
+            if file_type == "image":
+                selected_model = "paddleocr"
+            elif file_type == "pdf":
+                selected_model = "docling"
+            elif file_type == "txt":
+                selected_model = "docling"
+            elif file_type == "docx":
+                selected_model = "docling"
+            elif file_type == "xlsx":
+                selected_model = "docling"
+            else:
+                selected_model = "paddleocr"  # Par défaut
+        
+        # Vérifier que le modèle existe maintenant
+        if selected_model not in MODELS_INFO:
+            raise HTTPException(status_code=400, detail=f"Modèle inconnu: {selected_model}")
+        
+        supported = MODELS_INFO[selected_model]["supported_formats"]
+        if file_type not in supported:
+            raise HTTPException(status_code=422, detail=f"Modèle '{selected_model}' ne supporte pas '{file_type}'. Supportés: {supported}")
+        
+        # Extraire le texte du fichier
+        suffix = Path(file_name).suffix.lower()
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=".") as tmp:
+                content = await file.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            result = run_worker(selected_model, tmp_path, file_type)
+            
+            if result.get("status") == "error":
+                raise HTTPException(status_code=500, detail=f"Erreur extraction: {result.get('error')}")
+            
+            extracted_text = result.get("text", "")
+            file_type_used = file_type
+            model_used = selected_model
+            
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+    
+    elif text:
+        # ── Utiliser le texte fourni ──
+        extracted_text = text
+        file_type_used = "text"
+        model_used = "direct"
+    
+    else:
+        raise HTTPException(status_code=400, detail="Fournir soit un fichier, soit du texte à traduire")
+    
+    # Étape 2: Vérifier qu'il y a du texte
+    if not extracted_text.strip():
+        raise HTTPException(status_code=400, detail="Aucun texte à traduire (fichier ou texte vide)")
+    
+    # Étape 3: Traduire
+    try:
+        # Limiter le texte pour éviter les erreurs de quota API
+        # Support des gros documents jusqu'à 100,000 caractères
+        text_to_translate = extracted_text[:100000]  # Limiter à 100000 caractères max
+        encoded_text = urllib.parse.quote(text_to_translate)
+        
+        # MyMemory ne supporte pas "auto", on utilise "fr" par défaut
+        source_lang = "fr"
+        
+        # Construire l'URL avec l'email pour augmenter le quota
+        url = f"https://api.mymemory.translated.net/get?q={encoded_text}&langpair={source_lang}|{target_lang}&de=kinza.achaouachi@example.com"
+        
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        )
+        
+        with urllib.request.urlopen(req, timeout=15) as response:
+            translation_data = json.loads(response.read().decode('utf-8'))
+        
+        # Vérifier la réponse
+        response_status = translation_data.get("responseStatus")
+        response_data = translation_data.get("responseData", {})
+        translated = response_data.get("translatedText", "")
+        
+        # MyMemory retourne 200 même en cas d'erreur partielle
+        if response_status == 200 or (response_status == 403 and translated):
+            # Si le texte traduit contient "MYMEMORY WARNING", c'est un avertissement de quota
+            if "MYMEMORY WARNING" in translated or "QUOTA" in translated.upper():
+                # Retourner le texte original avec un avertissement
+                return {
+                    "status": "quota_exceeded",
+                    "original_text": extracted_text[:300],
+                    "translated_text": extracted_text[:300],  # Retourner l'original
+                    "warning": "Quota API dépassé. Texte original retourné.",
+                    "source_lang": source_lang,
+                    "target_lang": target_lang,
+                    "file_name": file_name if file_name else None,
+                    "file_type": file_type_used,
+                    "model_used": model_used,
+                    "char_count": len(extracted_text),
+                    "word_count": len(extracted_text.split()),
+                    "translated_at": datetime.now().isoformat()
+                }
+            
+            return {
+                "status": "success",
+                "original_text": extracted_text[:300],
+                "translated_text": translated,
+                "source_lang": source_lang,
+                "target_lang": target_lang,
+                "file_name": file_name if file_name else None,
+                "file_type": file_type_used,
+                "model_used": model_used,
+                "char_count": len(extracted_text),
+                "word_count": len(extracted_text.split()),
+                "translated_at": datetime.now().isoformat()
+            }
+        else:
+            # Erreur API
+            error_msg = translation_data.get("responseDetails", "Erreur inconnue")
+            raise HTTPException(
+                status_code=503, 
+                detail=f"API MyMemory: {error_msg}. Essayez plus tard ou avec un texte plus court."
+            )
+    
+    except urllib.error.HTTPError as e:
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Erreur HTTP {e.code}: API traduction temporairement indisponible. Réessayez dans quelques secondes."
+        )
+    except urllib.error.URLError as e:
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Connexion impossible à l'API de traduction: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Erreur traduction: {str(e)}. Vérifiez votre connexion Internet."
+        )

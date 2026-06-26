@@ -1,8 +1,4 @@
-"""
-Script de test pour TrOCR (Transformer-based OCR)
-Auteur : Kinza Achaouachi (mis à jour)
-Description : Test simple de TrOCR avec une image de démonstration
-"""
+
 
 import os
 import sys

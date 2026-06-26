@@ -1,167 +1,245 @@
 # -*- coding: utf-8 -*-
-r"""
-Script de test de l'API OCR REST (FastAPI)
-Lance les requetes vers http://localhost:8000
+"""
+Test Complet de l'API OCR REST - Tous les Endpoints
+Teste les 6 endpoints avec tous les modèles et formats
 
-Prerequis : le serveur doit tourner dans un autre terminal :
-  venv/Scripts/uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload
+Prérequis : Le serveur doit tourner
+  uvicorn api.main:app --host 127.0.0.1 --port 8000
 """
 
-import json
+import requests
 import time
-import urllib.request
-import os
-import sys
+from pathlib import Path
 
-API_URL = "http://localhost:8000"
+API_URL = "http://127.0.0.1:8000"
 
-def test_get(endpoint, description):
-    print(f"\n{'='*70}")
-    print(f"TEST: {description}")
-    print(f"GET {API_URL}{endpoint}")
-    print("-"*70)
-    try:
-        r = urllib.request.urlopen(f"{API_URL}{endpoint}")
-        data = json.loads(r.read())
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-        print("[OK]")
-        return True
-    except Exception as e:
-        print(f"[ERREUR] {e}")
-        return False
+def print_header(title):
+    print("\n" + "="*70)
+    print(f"  {title}")
+    print("="*70)
 
-
-def test_extract(file_path, model, description):
-    print(f"\n{'='*70}")
-    print(f"TEST: {description}")
-    print(f"POST {API_URL}/extract  |  file={file_path}  |  model={model}")
+def print_test(number, total, name):
+    print(f"\n[{number}/{total}] {name}")
     print("-"*70)
 
-    if not os.path.exists(file_path):
-        print(f"[SKIP] Fichier introuvable : {file_path}")
-        return False
 
+def test_health():
+    """Test 1: GET /health"""
+    print_test(1, 11, "GET /health - Status API")
+    
     try:
-        import http.client
-        import mimetypes
-        from urllib.parse import urlparse
-
-        # Construire la requete multipart manuellement
-        boundary = "----PythonTestBoundary123456"
-        filename = os.path.basename(file_path)
-        mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
-
-        with open(file_path, "rb") as f:
-            file_data = f.read()
-
-        body = b""
-        # Champ "file"
-        body += f"--{boundary}\r\n".encode()
-        body += f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode()
-        body += f"Content-Type: {mime_type}\r\n\r\n".encode()
-        body += file_data
-        body += b"\r\n"
-        # Champ "model"
-        body += f"--{boundary}\r\n".encode()
-        body += f'Content-Disposition: form-data; name="model"\r\n\r\n'.encode()
-        body += model.encode()
-        body += b"\r\n"
-        body += f"--{boundary}--\r\n".encode()
-
-        parsed = urlparse(f"{API_URL}/extract")
-        conn = http.client.HTTPConnection(parsed.hostname, parsed.port)
-        headers = {
-            "Content-Type": f"multipart/form-data; boundary={boundary}"
-        }
-
-        t0 = time.time()
-        conn.request("POST", "/extract", body=body, headers=headers)
-        response = conn.getresponse()
-        wall_time = round(time.time() - t0, 2)
-
-        raw = response.read().decode("utf-8")
-        status_code = response.status
-
-        try:
-            data = json.loads(raw)
-            print(f"Status HTTP : {status_code}")
-            print(f"Temps total (wall) : {wall_time}s")
-            print(json.dumps(data, indent=2, ensure_ascii=False))
-        except Exception:
-            print(f"Status HTTP : {status_code}")
-            print(f"Reponse brute : {raw[:500]}")
-
-        conn.close()
-
-        if status_code == 200:
-            print("[OK]")
+        response = requests.get(f"{API_URL}/health", timeout=5)
+        print(f"Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"✅ API Status: {data['status']}")
+            print(f"✅ Version: {data['version']}")
+            print(f"✅ Models: {data['models_available']}")
             return True
         else:
-            print(f"[ERREUR] Status {status_code}")
+            print(f"❌ Error: {response.text}")
             return False
-
     except Exception as e:
-        print(f"[ERREUR] {e}")
+        print(f"❌ Exception: {str(e)}")
         return False
 
 
-# ─── EXECUTION DES TESTS ──────────────────────────────────────────────────────
+def test_models():
+    """Test 2: GET /models"""
+    print_test(2, 11, "GET /models - Liste des Modèles")
+    
+    try:
+        response = requests.get(f"{API_URL}/models", timeout=5)
+        print(f"Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"✅ Total models: {data['total']}")
+            for model_id, info in data['models'].items():
+                print(f"✅ {info['name']}: {', '.join(info['supported_formats'])}")
+            return True
+        else:
+            print(f"❌ Error: {response.text}")
+            return False
+    except Exception as e:
+        print(f"❌ Exception: {str(e)}")
+        return False
 
-print("="*70)
-print("       TEST COMPLET DE L'API OCR REST (FastAPI)")
-print(f"       Serveur : {API_URL}")
-print("="*70)
 
-results = []
+def test_extract(model, file_path, description):
+    """Test extraction avec un modèle spécifique"""
+    
+    if not Path(file_path).exists():
+        print(f"⚠️ File not found: {file_path}")
+        return False
+    
+    try:
+        with open(file_path, 'rb') as f:
+            files = {'file': (Path(file_path).name, f)}
+            data = {'model': model}
+            
+            t0 = time.time()
+            response = requests.post(f"{API_URL}/extract", files=files, data=data, timeout=60)
+            wall_time = round(time.time() - t0, 2)
+        
+        print(f"Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"✅ Model: {result['model']}")
+            print(f"✅ File type: {result['file_type']}")
+            print(f"✅ Characters: {result['char_count']}")
+            print(f"✅ Words: {result['word_count']}")
+            print(f"✅ Time: {wall_time}s")
+            print(f"✅ Text preview: {result['text'][:60]}...")
+            return True
+        else:
+            error = response.json()
+            print(f"❌ Error: {error.get('detail', 'Unknown error')}")
+            return False
+    except Exception as e:
+        print(f"❌ Exception: {str(e)}")
+        return False
 
-# 1. Health Check
-results.append(("GET /health", test_get("/health", "Health Check")))
 
-# 2. Liste des modeles
-results.append(("GET /models", test_get("/models", "Liste des modeles OCR")))
+def test_translate():
+    """Test 10: POST /translate"""
+    print_test(10, 11, "POST /translate - Traduction Texte")
+    
+    try:
+        data = {
+            'text': 'Bonjour, ceci est un test de traduction.',
+            'target_lang': 'en',
+            'model': 'paddleocr'
+        }
+        
+        response = requests.post(f"{API_URL}/translate", data=data, timeout=20)
+        print(f"Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"✅ Original: {result['original_text'][:50]}...")
+            print(f"✅ Translated: {result['translated_text']}")
+            print(f"✅ Language: {result['source_lang']} → {result['target_lang']}")
+            return True
+        else:
+            error = response.json()
+            print(f"❌ Error: {error.get('detail', 'Unknown error')}")
+            return False
+    except Exception as e:
+        print(f"❌ Exception: {str(e)}")
+        return False
 
-# 3. Extraction Image avec PaddleOCR
-results.append(("PaddleOCR + Image",
-    test_extract("demo_images/demo_text.png", "paddleocr", "PaddleOCR sur image demo")))
 
-# 4. Extraction Image avec EasyOCR
-results.append(("EasyOCR + Image",
-    test_extract("demo_images/demo_text.png", "easyocr", "EasyOCR sur image demo")))
+def test_translate_file():
+    """Test 11: POST /translate avec fichier"""
+    print_test(11, 11, "POST /translate - Traduction Fichier")
+    
+    file_path = "demo_images/demo_text.png"
+    
+    if not Path(file_path).exists():
+        print(f"⚠️ File not found: {file_path}")
+        return False
+    
+    try:
+        with open(file_path, 'rb') as f:
+            files = {'file': (Path(file_path).name, f)}
+            data = {
+                'target_lang': 'es',
+                'model': 'paddleocr'
+            }
+            
+            response = requests.post(f"{API_URL}/translate", files=files, data=data, timeout=30)
+        
+        print(f"Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"✅ File: {result.get('file_name', 'N/A')}")
+            print(f"✅ Original preview: {result['original_text'][:50]}...")
+            print(f"✅ Translated preview: {result['translated_text'][:50]}...")
+            print(f"✅ Language: {result['source_lang']} → {result['target_lang']}")
+            return True
+        else:
+            error = response.json()
+            print(f"❌ Error: {error.get('detail', 'Unknown error')}")
+            return False
+    except Exception as e:
+        print(f"❌ Exception: {str(e)}")
+        return False
 
-# 5. Extraction Image avec Docling
-results.append(("Docling + Image",
-    test_extract("demo_images/demo_text.png", "docling", "Docling sur image demo")))
 
-# 6. Extraction Image avec TrOCR
-results.append(("TrOCR + Image",
-    test_extract("demo_images/demo_text.png", "trocr", "TrOCR sur image demo")))
+# ═══════════════════════════════════════════════════════════════════════════
+# EXECUTION DES TESTS
+# ═══════════════════════════════════════════════════════════════════════════
 
-# 7. Extraction PDF avec PaddleOCR
-results.append(("PaddleOCR + PDF",
-    test_extract("test_files/sample_document.pdf", "paddleocr", "PaddleOCR sur PDF")))
-
-# 8. Extraction PDF avec Docling
-results.append(("Docling + PDF",
-    test_extract("test_files/sample_document.pdf", "docling", "Docling sur PDF")))
-
-# 9. Extraction TXT avec Docling
-results.append(("Docling + TXT",
-    test_extract("test_files/sample_text.txt", "docling", "Docling sur fichier texte")))
-
-# ─── RESUME ──────────────────────────────────────────────────────────────────
-print("\n" + "="*70)
-print("                        RESUME DES TESTS API")
-print("="*70)
-ok = 0
-fail = 0
-for name, passed in results:
-    status = "[OK]    " if passed else "[ERREUR]"
-    print(f"  {status}  {name}")
-    if passed:
-        ok += 1
+def main():
+    print_header("TEST COMPLET API OCR - TOUS LES ENDPOINTS")
+    print(f"API URL: {API_URL}")
+    print("Assurez-vous que le serveur tourne:")
+    print("  uvicorn api.main:app --host 127.0.0.1 --port 8000")
+    
+    results = []
+    
+    # Test 1-2: Endpoints simples
+    results.append(("GET /health", test_health()))
+    results.append(("GET /models", test_models()))
+    
+    # Test 3-6: Extraction Image avec les 4 modèles
+    print_test(3, 11, "POST /extract - PaddleOCR + Image")
+    results.append(("PaddleOCR + Image", 
+        test_extract("paddleocr", "demo_images/demo_text.png", "PaddleOCR sur image")))
+    
+    print_test(4, 11, "POST /extract - EasyOCR + Image")
+    results.append(("EasyOCR + Image", 
+        test_extract("easyocr", "demo_images/demo_text.png", "EasyOCR sur image")))
+    
+    print_test(5, 11, "POST /extract - Docling + Image")
+    results.append(("Docling + Image", 
+        test_extract("docling", "demo_images/demo_text.png", "Docling sur image")))
+    
+    print_test(6, 11, "POST /extract - TrOCR + Image")
+    results.append(("TrOCR + Image", 
+        test_extract("trocr", "demo_images/demo_text.png", "TrOCR sur image")))
+    
+    # Test 7-9: Extraction autres formats
+    print_test(7, 11, "POST /extract - PaddleOCR + PDF")
+    results.append(("PaddleOCR + PDF", 
+        test_extract("paddleocr", "test_files/sample_document.pdf", "PaddleOCR sur PDF")))
+    
+    print_test(8, 11, "POST /extract - Docling + PDF")
+    results.append(("Docling + PDF", 
+        test_extract("docling", "test_files/sample_document.pdf", "Docling sur PDF")))
+    
+    print_test(9, 11, "POST /extract - Docling + TXT")
+    results.append(("Docling + TXT", 
+        test_extract("docling", "test_files/sample_text.txt", "Docling sur texte")))
+    
+    # Test 10-11: Traduction
+    results.append(("POST /translate (text)", test_translate()))
+    results.append(("POST /translate (file)", test_translate_file()))
+    
+    # Résumé
+    print_header("RÉSUMÉ DES TESTS")
+    
+    passed = sum(1 for _, result in results if result)
+    total = len(results)
+    
+    for test_name, result in results:
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"  {status}  {test_name}")
+    
+    print("\n" + "="*70)
+    print(f"  Résultat: {passed}/{total} tests réussis ({int(passed/total*100)}%)")
+    print("="*70)
+    
+    if passed == total:
+        print("\n  🎉 TOUS LES TESTS PASSENT - API 100% FONCTIONNELLE!")
     else:
-        fail += 1
+        print(f"\n  ⚠️ {total - passed} test(s) échoué(s)")
+        print("  Vérifiez que le serveur est démarré et que les fichiers de test existent.")
 
-print("-"*70)
-print(f"  Total : {ok} OK / {fail} ERREUR(S) sur {len(results)} tests")
-print("="*70)
+
+if __name__ == "__main__":
+    main()

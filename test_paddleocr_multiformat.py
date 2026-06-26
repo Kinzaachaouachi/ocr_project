@@ -1,8 +1,3 @@
-"""
-TEST PADDLEOCR MULTIFORMAT - Test PaddleOCR sur plusieurs types d'images
-Auteur : Kinza Achaouachi
-Description : Test complet de PaddleOCR avec images variées
-"""
 
 import os
 import sys
@@ -14,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 print("=" * 80)
-print("   TEST PADDLEOCR MULTIFORMAT - Kinza Achaouachi")
+print("   TEST PADDLEOCR MULTIFORMAT - Kinza Chaouachi")
 print("=" * 80)
 
 # Configuration pour Windows
@@ -26,7 +21,6 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 results_dir = Path("test_results")
 results_dir.mkdir(exist_ok=True)
 
-# ── Étape 1 : Préparation des images de test ──────────────
 print("\n[1/6] Préparation des images de test...")
 
 test_images = []
@@ -93,7 +87,6 @@ for i, img in enumerate(test_images[:5], 1):  # Afficher les 5 premières
 if len(test_images) > 5:
     print(f"    ... et {len(test_images)-5} autres images")
 
-# ── Étape 2 : Initialisation de PaddleOCR ──────────────
 print("\n[2/6] Initialisation de PaddleOCR...")
 
 try:
@@ -128,7 +121,6 @@ except Exception as e:
     print("    Note : PaddleOCR nécessite numpy 1.26.4 (incompatible numpy 2.x)")
     sys.exit(1)
 
-# ── Étape 3 : Tests sur chaque image ──────────────
 print("\n[3/6] Exécution des tests sur chaque image...")
 print("-" * 80)
 
@@ -229,7 +221,6 @@ for i, test_image in enumerate(test_images, 1):
 
 total_time = time.time() - total_start
 
-# ── Étape 4 : Résultats par difficulté ──────────────
 print("\n[4/6] Résultats par niveau de difficulté...")
 print("-" * 80)
 
@@ -260,7 +251,6 @@ for difficulty, diff_res in difficulty_results.items():
         print(f"      [Stats] Confiance moyenne : {avg_conf:.1f}%")
         print(f"      [Recherche] Detections moyennes : {avg_detections:.1f}")
 
-# ── Étape 5 : Statistiques globales ──────────────
 print("\n[5/6] Statistiques globales...")
 print("-" * 80)
 
@@ -285,7 +275,6 @@ print(f"      [Temps] Temps moyen par image : {avg_global_time:.2f}s")
 print(f"      [Temps] Temps total : {total_time:.2f}s")
 print(f"      [Temps] Temps initialisation : {init_time:.2f}s")
 
-# ── Étape 6 : Sauvegarde des résultats ──────────────
 print("\n[6/6] Sauvegarde des résultats...")
 
 results_file = results_dir / "paddleocr_multiformat_results.json"
@@ -304,7 +293,6 @@ with open(results_file, 'w', encoding='utf-8') as f:
 
 print(f"    [Fichier] Resultats sauvegardes : {results_file}")
 
-# ── Conclusion ────────────────────────────────────
 print("\n" + "=" * 80)
 print("   CONCLUSION DU TEST PADDLEOCR MULTIFORMAT")
 print("=" * 80)
