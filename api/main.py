@@ -490,7 +490,7 @@ async def extract_text(
     suffix = Path(file.filename).suffix.lower()
     tmp_path = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=".") as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
@@ -644,7 +644,7 @@ async def extract_all_models(
     client_ip = request.client.host if request else "unknown"
     
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=".") as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             file_content = await file.read()
             tmp.write(file_content)
             tmp_path = tmp.name
@@ -883,7 +883,8 @@ async def extract_all_models(
 
 @app.post("/translate", tags=["Traduction"])
 async def translate_file_or_text(
-    target_lang: str = Form(..., description="Langue cible : en, es, de, it, ar, fr, pt, ja, zh, ar, ru, ko, tr, nl, pl, vi"),
+    target_lang: str = Form(..., description="Langue cible : en, es, de, it, ar, fr, pt, ja, zh, ru, ko, tr, nl, pl, vi"),
+    source_lang: str = Form("auto", description="Langue source : auto|fr|en|es|de|it|ar|pt|ja|zh|ru|ko|tr|nl|pl|vi"),
     file: UploadFile = File(None, description="Fichier à traduire (Image/PDF/TXT/DOCX/XLSX)"),
     text: str = Form(None, description="Texte à traduire"),
     model: str = Form("auto", description="Modèle OCR : auto|paddleocr|docling|easyocr|trocr"),
@@ -899,16 +900,20 @@ async def translate_file_or_text(
     import urllib.parse
     import urllib.request
     
-    # Valider la langue cible
+    # Valider la langue cible et source
     allowed_langs = {"en", "es", "de", "it", "ar", "fr", "pt", "ja", "zh", "ru", "ko", "tr", "nl", "pl", "vi"}
     if target_lang not in allowed_langs:
         raise HTTPException(status_code=400, detail=f"Langue non supportée. Langues disponibles: {', '.join(sorted(allowed_langs))}")
+    if source_lang != "auto" and source_lang not in allowed_langs:
+        raise HTTPException(status_code=400, detail=f"Langue source non supportée. Langues disponibles: auto, {', '.join(sorted(allowed_langs))}")
     
     # Étape 1: Extraire le texte
     extracted_text = ""
     file_name = ""
     file_type_used = "text"
     model_used = "direct"
+    source_lang_used = source_lang
+    source_confidence = None
     
     if file:
         # ── Traiter le fichier uploadé ──
@@ -946,7 +951,7 @@ async def translate_file_or_text(
         suffix = Path(file_name).suffix.lower()
         tmp_path = None
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=".") as tmp:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
                 content = await file.read()
                 tmp.write(content)
                 tmp_path = tmp.name
@@ -981,14 +986,21 @@ async def translate_file_or_text(
     try:
         # Limiter le texte pour éviter les erreurs de quota API
         # Support des gros documents jusqu'à 100,000 caractères
-        text_to_translate = extracted_text[:100000]  # Limiter à 100000 caractères max
+        text_to_translate = extracted_text[:100000]
         encoded_text = urllib.parse.quote(text_to_translate)
-        
-        # MyMemory ne supporte pas "auto", on utilise "fr" par défaut
-        source_lang = "fr"
-        
+
+        # Détecter la langue source si demandé
+        if source_lang_used == "auto":
+            detected_lang, detected_score = detect_language_from_text(extracted_text)
+            if detected_lang in allowed_langs:
+                source_lang_used = detected_lang
+                source_confidence = detected_score
+            else:
+                source_lang_used = "en"
+                source_confidence = 0.5
+
         # Construire l'URL avec l'email pour augmenter le quota
-        url = f"https://api.mymemory.translated.net/get?q={encoded_text}&langpair={source_lang}|{target_lang}&de=kinza.achaouachi@example.com"
+        url = f"https://api.mymemory.translated.net/get?q={encoded_text}&langpair={source_lang_used}|{target_lang}&de=kinza.achaouachi@example.com"
         
         req = urllib.request.Request(
             url,
@@ -1015,7 +1027,8 @@ async def translate_file_or_text(
                     "original_text": extracted_text[:300],
                     "translated_text": extracted_text[:300],  # Retourner l'original
                     "warning": "Quota API dépassé. Texte original retourné.",
-                    "source_lang": source_lang,
+                    "source_lang": source_lang_used,
+                    "source_confidence": source_confidence,
                     "target_lang": target_lang,
                     "file_name": file_name if file_name else None,
                     "file_type": file_type_used,
@@ -1029,7 +1042,8 @@ async def translate_file_or_text(
                 "status": "success",
                 "original_text": extracted_text[:300],
                 "translated_text": translated,
-                "source_lang": source_lang,
+                "source_lang": source_lang_used,
+                "source_confidence": source_confidence,
                 "target_lang": target_lang,
                 "file_name": file_name if file_name else None,
                 "file_type": file_type_used,

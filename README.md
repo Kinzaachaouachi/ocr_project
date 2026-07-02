@@ -1,27 +1,42 @@
-﻿# OCR Project
+# 📄 OCR Project - Évaluation d'Outils OCR Open Source
 
-Documentation du projet OCR avec extraction multi-modèles, API FastAPI, interface web, benchmarks et comparaisons.
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![PaddleOCR](https://img.shields.io/badge/PaddleOCR-2.7.0.3-green.svg)](https://github.com/PaddlePaddle/PaddleOCR)
+[![Docling](https://img.shields.io/badge/Docling-2.10.0-orange.svg)](https://github.com/DS4SD/docling)
+[![EasyOCR](https://img.shields.io/badge/EasyOCR-1.7.2-red.svg)](https://github.com/JaidedAI/EasyOCR)
+[![TrOCR](https://img.shields.io/badge/TrOCR-Transformers-purple.svg)](https://huggingface.co/docs/transformers/model_doc/trocr)
+[![FastAPI](https://img.shields.io/badge/FastAPI-REST%20API-brightgreen.svg)](https://fastapi.tiangolo.com/)
+
+Projet d'évaluation et comparaison de plusieurs solutions OCR open source avec : API REST, interface web, scripts de tests et benchmark.
+
+---
 
 ## Présentation
 
-Ce projet rassemble plusieurs moteurs OCR dans une interface unifiée :
-- `PaddleOCR`
-- `Docling`
-- `EasyOCR`
-- `TrOCR`
+Ce projet regroupe plusieurs moteurs OCR et expose une API et une interface web pour tester et comparer leurs résultats :
 
-Il inclut :
-- une API REST FastAPI pour l'extraction OCR et la traduction,
-- une interface web réactive dans `api/static/index_multi.html`,
-- des scripts de test et de benchmark,
-- une comparaison de résultats avec le benchmark externe `olmOCR-Bench`.
+- PaddleOCR
+- Docling
+- EasyOCR
+- TrOCR
+
+Il fournit également : scripts de test, génération de rapports de benchmark et utilitaires pour détecter la langue et analyser la confiance des sorties.
+
+## Objectifs
+
+- Intégrer et comparer 4 moteurs OCR open source
+- Supporter plusieurs formats (images, PDF, TXT, DOCX, XLSX)
+- Proposer une API REST et une interface web interactive
+- Fournir une suite de tests et un benchmark reproductible
 
 ## Prérequis
 
 - Python 3.10+
-- Windows (PowerShell ou CMD)
+- Windows (PowerShell ou CMD) — le projet peut fonctionner sur Linux mais les scripts fournis ciblent Windows
 - Environnement virtuel Python recommandé
 - Connexion Internet pour télécharger les modèles au premier lancement
+
+---
 
 ## Installation
 
@@ -32,169 +47,156 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-## Lancer l'API
+Si vous rencontrez des conflits de dépendances (erreurs mentionnant `requests`, `urllib3` ou `charset-normalizer`), exécutez :
+
+```powershell
+pip install 'requests>=2.28' 'urllib3>=1.26' 'charset-normalizer==2.1.1'
+```
+
+Si la conversion PDF (Docling) échoue, installez `PyMuPDF` :
+
+```powershell
+pip install pymupdf
+```
+
+> ⚠️ Toujours activer l'environnement virtuel avant d'exécuter les tests ou démarrer l'API :
+>
+> ```powershell
+> .\venv\Scripts\activate
+> ```
+
+---
+
+## Démarrage rapide (copy/paste)
 
 ```powershell
 cd C:\Users\MSI\Desktop\ocr_project
 .\venv\Scripts\activate
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Lancer le serveur API
+uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Ouvrir l'interface dans le navigateur
+Start-Process "http://localhost:8000"
 ```
 
-Puis ouvrir :
+---
 
-```text
-http://localhost:8000/
+## Endpoints principaux
+
+- `GET /` : page web principale
+- `GET /docs` : Swagger UI
+- `GET /health` : statut de l'API et base de données
+- `GET /models` : informations sur les modèles disponibles
+- `POST /extract` : extraction OCR (multipart: `file`, `model`)
+- `POST /extract-all` : extraction OCR avec tous les modèles (multipart: `file`)
+- `POST /translate` : traduction (texte ou fichier)
+
+Exemple `curl` pour extraire avec Docling :
+
+```bash
+curl -X POST "http://localhost:8000/extract" \
+  -F "file=@test_files/sample_text.txt" \
+  -F "model=docling"
 ```
 
-## Endpoints disponibles
+---
 
-- `GET /` : interface web principale (`index_multi.html`)
-- `GET /health` : vérifie le statut de l'API et la connexion à la base de données
-- `GET /benchmark` : rapport local du benchmark comparatif des modèles
-- `GET /benchmark/olm` : rapport externe `olmOCR-Bench`
-- `GET /models` : liste des modèles disponibles et leurs formats supportés
-- `GET /history` : historique des extractions stockées
-- `GET /history/stats` : statistiques d'usage de l'API
-- `POST /extract` : extraction OCR avec un modèle choisi
-- `POST /extract-all` : extraction OCR simultanée avec tous les modèles disponibles
-- `POST /translate` : traduction de texte extrait ou de fichier
+## Interface Web
 
-## Modes d'extraction
+La page principale charge `api/static/index_multi.html`. Après upload d'un fichier, l'interface appelle `/extract-all` et affiche les résultats de chaque modèle, la langue détectée, et des métriques de confiance.
 
-### Extraction simple
+Fonctionnalités : prévisualisation, comparaison multi-modèles, traduction intégrée, export texte.
 
-`POST /extract` accepte les fichiers suivants :
-- images : `.png`, `.jpg`, `.jpeg`, `.bmp`, `.tiff`, `.webp`
-- PDF : `.pdf`
-- texte : `.txt`
-- Word : `.docx`, `.doc`
-- Excel : `.xlsx`, `.xls`
+---
 
-Modèles : `paddleocr`, `docling`, `easyocr`, `trocr`.
+## Tests et benchmark
 
-### Extraction multi-modèles
+Le dépôt contient plusieurs scripts de test et d'orchestration :
 
-`POST /extract-all` exécute l'extraction avec tous les moteurs disponibles et renvoie :
-- résultats classés
-- langue détectée
-- modèles recommandés
-- score de qualité et temps de traitement
+- Tests simples par modèle (image / texte)
+- Tests multiformat (benchmark par modèle)
+- `run_all_multiformat_tests.py` et `run_all_benchmarks.py`
 
-## Scripts de test et benchmark
+Commandes utiles :
 
-### Tests unitaires par modèle
+```powershell
+# Tests simples images
+python test_paddleocr.py
+python test_docling.py
+python test_easyocr.py
+python test_trocr.py
 
-- `python test_paddleocr.py`
-- `python test_docling.py`
-- `python test_easyocr.py`
-- `python test_trocr.py`
+# Tests simples texte
+python test_paddleocr_texte.py
+python test_docling_texte.py
+python test_easyocr_texte.py
+python test_trocr_texte.py
 
-### Tests texte
+# Tests multiformat
+python test_paddleocr_multiformat.py
+python test_docling_multiformat.py
+python test_easyocr_multiformat.py
+python test_trocr_multiformat.py
 
-- `python test_paddleocr_texte.py`
-- `python test_docling_texte.py`
-- `python test_easyocr_texte.py`
-- `python test_trocr_texte.py`
-
-### Tests multiformat
-
-- `python test_paddleocr_multiformat.py`
-- `python test_docling_multiformat.py`
-- `python test_easyocr_multiformat.py`
-- `python test_trocr_multiformat.py`
-
-### Orchestration multi-tests
-
-- `python run_all_multiformat_tests.py` : exécute tous les tests multiformat disponibles
-- `python run_all_benchmarks.py` : benchmark comparatif local de PaddleOCR, Docling, EasyOCR et TrOCR
-
-### Benchmark olmOCR-Bench
-
-- `python generate_olm_report.py` : génère `olm_benchmark_report.html` à partir de la matrice externe `api/olm_benchmark_matrix.py`
-- `GET /benchmark/olm` dans l'API ouvrira ce rapport si le fichier existe
-
-## Structure du projet
-
-```text
-ocr_project/
-├── api/                          # API REST et logique OCR
-│   ├── main.py                   # Application FastAPI
-│   ├── worker.py                 # Worker OCR isolé en sous-processus
-│   ├── model_matrix.py           # Scores et matrice de modèles internes
-│   ├── language_detector.py      # Détection de langue du texte/fichier
-│   ├── confidence_analyzer.py    # Calcul de la confiance OCR
-│   ├── database.py               # Base SQLite/MySQL et historique
-│   ├── olm_benchmark_matrix.py   # Matrice de référence externe olmOCR-Bench
-│   └── static/                   # Frontend de l'interface
-│       ├── app.js
-│       ├── index_multi.html
-│       └── index.html
-├── corpus_test/                  # Corpus d'images de test
-├── demo_images/                  # Images de démonstration
-├── test_files/                   # Fichiers texte/doc et PDF de test
-├── test_results/                 # Résultats JSON des benchmarks
-├── test_paddleocr.py
-├── test_paddleocr_texte.py
-├── test_paddleocr_multiformat.py
-├── test_docling.py
-├── test_docling_texte.py
-├── test_docling_multiformat.py
-├── test_easyocr.py
-├── test_easyocr_texte.py
-├── test_easyocr_multiformat.py
-├── test_trocr.py
-├── test_trocr_texte.py
-├── test_trocr_multiformat.py
-├── test_api.py
-├── run_all_benchmarks.py
-├── run_all_multiformat_tests.py
-├── generate_olm_report.py
-├── benchmark_report.html          # Rapport local des 4 modèles
-├── olm_benchmark_report.html      # Rapport externe olmOCR-Bench
-├── benchmark_results.json
-├── BENCHMARK_REPORT.md
-├── requirements.txt
-└── README.md
+# Orchestration complète
+python run_all_multiformat_tests.py
+python run_all_benchmarks.py
 ```
 
-## Notes importantes
+Les résultats sont sauvegardés dans `test_results/` et `benchmark_results.json`.
 
-- `api/worker.py` isole chaque moteur OCR dans un sous-processus pour éviter les conflits de bibliothèques (PyTorch vs PaddlePaddle) sur Windows.
-- `Docling` supporte davantage de formats (`TXT`, `DOCX`, `XLSX`) que les autres moteurs.
-- `TrOCR` est meilleur sur les lignes isolées et peut être lent à initialiser.
-- `easyocr` et `paddleocr` sont les meilleurs pour les images multi-langues et les textes courants.
+---
 
-## Dépannage rapide
+## Notes de dépannage rapides
 
-### Erreur `ModuleNotFoundError`
-
-Vérifier que l'environnement virtuel est activé :
+- `ModuleNotFoundError`: activez l'environnement virtuel
 
 ```powershell
 .\venv\Scripts\activate
 ```
 
-### Timeout 300s
+- Timeout worker (300s): fichier trop volumineux ou initialisation lente — réduire la résolution ou tester un fichier plus petit.
 
-Si un worker se termine avec `timeout after 300 seconds`, le fichier est trop lourd ou le modèle met trop de temps à initialiser.
+- `ngrok` hors-line (`ERR_NGROK_3200`): relancez le tunnel avec `ngrok http 8000` et vérifiez l'URL publique.
 
-- Réduisez la résolution de l'image
-- Testez un fichier plus petit
-- Relancez après avoir téléchargé les modèles
+- `uvicorn --reload` redémarre continuellement : évitez de créer des fichiers temporaires dans le répertoire du projet (le reloader surveille les modifications). Le code a été modifié pour utiliser le répertoire temporaire système.
 
-### Rapport olyOCR-Bench
+---
 
-Pour générer le rapport externe `olmOCR-Bench` :
+## Changements récents
 
-```powershell
-python generate_olm_report.py
+- `api/worker.py` : correction d'une indentation erronée qui provoquait des plantages.
+- `api/worker.py` : initialisation de `PaddleOCR` rendue tolérante à l'argument `show_log` pour compatibilité.
+- `api/main.py` : création des fichiers temporaires dans le répertoire temporaire système (évite les redémarrages du reloader).
+
+---
+
+## Structure du projet (résumé)
+
+```
+ocr_project/
+├── api/
+│   ├── main.py
+│   ├── worker.py
+│   ├── model_matrix.py
+│   ├── language_detector.py
+│   ├── confidence_analyzer.py
+│   ├── database.py
+│   └── static/
+│       ├── app.js
+│       ├── index_multi.html
+│       └── index.html
+├── test_files/
+├── test_results/
+├── demo_images/
+├── run_all_benchmarks.py
+├── run_all_multiformat_tests.py
+├── requirements.txt
+└── README.md
 ```
 
-Puis ouvrez :
-
-```text
-http://localhost:8000/benchmark/olm
-```
+---
 
 ## Auteur
 

@@ -324,10 +324,35 @@ function createResultCard(result, isBest, index, detectedLanguage) {
                         <div class="meta-value">${result.timing.ocr_time_s.toFixed(2)}s</div>
                     </div>
                 </div>
-                <div class="result-actions">
-                    <button class="action-btn copy-btn" data-index="${index}" title="Copier">📋</button>
-                    <button class="action-btn edit-btn" data-index="${index}" title="Éditer">✏️</button>
-                    <button class="action-btn save-btn" data-index="${index}" title="Sauvegarder">💾</button>
+                <div class="action-row">
+                    <div class="result-actions">
+                        <button class="action-btn copy-btn" data-index="${index}" title="Copier">📋</button>
+                        <button class="action-btn edit-btn" data-index="${index}" title="Éditer">✏️</button>
+                        <button class="action-btn save-btn" data-index="${index}" title="Sauvegarder">💾</button>
+                    </div>
+                    <div class="translate-row">
+                    <select class="translate-select" id="translate-select-${index}" aria-label="Choisir la langue de traduction">
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="es">Español</option>
+                        <option value="de">Deutsch</option>
+                        <option value="it">Italiano</option>
+                        <option value="pt">Português</option>
+                        <option value="ar">العربية</option>
+                        <option value="zh">中文</option>
+                        <option value="ru">Русский</option>
+                        <option value="ko">한국어</option>
+                        <option value="ja">日本語</option>
+                        <option value="tr">Türkçe</option>
+                        <option value="nl">Nederlands</option>
+                        <option value="pl">Polski</option>
+                        <option value="vi">Tiếng Việt</option>
+                    </select>
+                    <button class="action-btn translate-btn" data-index="${index}" title="Traduire">🌐</button>
+                </div>
+                <div class="translation-panel" id="translation-panel-${index}" style="display:none; margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <div class="translation-title" style="font-weight:600; margin-bottom:0.5rem;">Traduction :</div>
+                    <div class="translation-text" id="translation-text-${index}" style="white-space: pre-wrap; color: #0f172a;"></div>
                 </div>
             </div>
         </div>
@@ -462,6 +487,54 @@ function activateButtons() {
             
             btn.textContent = '✓';
             setTimeout(() => { btn.textContent = '💾'; }, 1500);
+        });
+    });
+
+    // Boutons Traduire
+    document.querySelectorAll('.translate-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const index = e.target.closest('.action-btn').dataset.index;
+            const textDiv = document.getElementById(`text-${index}`);
+            const targetLang = document.getElementById(`translate-select-${index}`).value;
+            const translatePanel = document.getElementById(`translation-panel-${index}`);
+            const translationText = document.getElementById(`translation-text-${index}`);
+
+            const originalText = textDiv.innerText.trim();
+            if (!originalText) {
+                translationText.textContent = 'Aucun texte à traduire.';
+                translatePanel.style.display = 'block';
+                return;
+            }
+
+            btn.textContent = '⏳';
+            btn.disabled = true;
+            translationText.textContent = 'Traduction en cours...';
+            translatePanel.style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                formData.append('text', originalText);
+                formData.append('target_lang', targetLang);
+                formData.append('source_lang', 'auto');
+
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Erreur de traduction');
+                }
+
+                const data = await response.json();
+                translationText.textContent = data.translated_text || 'Aucune traduction disponible.';
+            } catch (err) {
+                translationText.textContent = `Erreur traduction: ${err.message}`;
+            } finally {
+                btn.textContent = '🌐';
+                btn.disabled = false;
+            }
         });
     });
 }

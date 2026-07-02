@@ -56,7 +56,12 @@ if args.model == "paddleocr":
     try:
         t0 = time.time()
         from paddleocr import PaddleOCR
-        ocr = PaddleOCR(use_angle_cls=True, lang="fr", use_gpu=False, show_log=False)
+        # Certains builds de paddleocr n'acceptent plus l'argument `show_log`.
+        # On tente d'abord avec, puis on retombe sur une initialisation sans cet argument.
+        try:
+            ocr = PaddleOCR(use_angle_cls=True, lang="fr", use_gpu=False, show_log=False)
+        except TypeError:
+            ocr = PaddleOCR(use_angle_cls=True, lang="fr", use_gpu=False)
         init_time = round(time.time() - t0, 2)
 
         tmp_files = []
@@ -70,25 +75,25 @@ if args.model == "paddleocr":
         t0 = time.time()
         all_lines = []
         word_confidence_data = []
-        
+
         for img in targets:
             res = ocr.ocr(img, cls=True)
             if res and res[0]:
                 # Trier les lignes par position verticale pour préserver l'ordre
                 sorted_lines = sorted(res[0], key=lambda x: x[0][0][1])
-                
+
                 prev_y = None
                 for line in sorted_lines:
                     text = line[1][0]
                     confidence = line[1][1]
                     y_pos = line[0][0][1]
-                    
+
                     # Détecter les lignes vides (grand écart vertical)
                     if prev_y is not None and (y_pos - prev_y) > 50:
                         all_lines.append("")
-                    
+
                     all_lines.append(text)
-                    
+
                     # Stocker la confiance par mot
                     words = text.split()
                     for word in words:
@@ -96,9 +101,9 @@ if args.model == "paddleocr":
                             "word": word,
                             "confidence": round(confidence, 2)
                         })
-                    
+
                     prev_y = y_pos
-                    
+
         ocr_time = round(time.time() - t0, 2)
         cleanup_tmp(tmp_files)
 
