@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Benchmark Comparatif des 4 Modèles OCR
+Teste PaddleOCR, Docling, EasyOCR et TrOCR
+Génère un rapport HTML avec matrice de benchmark
+"""
+
 import os
 import sys
 import time
@@ -9,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from PIL import Image, ImageDraw
 
+# Suppression des avertissements
 os.environ["FLAGS_use_mkldnn"] = "0"
 os.environ["PADDLE_DISABLE_MKLDNN"] = "1"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -34,7 +43,9 @@ CORPUS_SAMPLES = [
     {"file": "10_ligne_unique.png", "size": (420, 70), "lines": ["OCR test rapide"]},
 ]
 
+
 def levenshtein_distance(s1, s2):
+    """Calcule la distance de Levenshtein entre deux chaînes."""
     if len(s1) < len(s2):
         return levenshtein_distance(s2, s1)
     if len(s2) == 0:
@@ -50,7 +61,9 @@ def levenshtein_distance(s1, s2):
         previous_row = current_row
     return previous_row[-1]
 
+
 def calculate_accuracy(recognized, ground_truth):
+    """Calcule la précision OCR par distance de Levenshtein."""
     def normalize(t):
         return ' '.join(re.sub(r'[^a-z0-9\s]', '', t.lower()).split())
     norm_rec = normalize(recognized)
@@ -60,7 +73,9 @@ def calculate_accuracy(recognized, ground_truth):
     dist = levenshtein_distance(norm_rec, norm_gt)
     return round((1 - dist / max(len(norm_rec), len(norm_gt))) * 100, 1)
 
+
 def _draw_text_image(size, lines, color=(0, 0, 0)):
+    """Crée une image de test avec du texte."""
     img = Image.new("RGB", size, color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     y = 20
@@ -69,14 +84,18 @@ def _draw_text_image(size, lines, color=(0, 0, 0)):
         y += 35
     return img
 
+
 def ensure_demo_image():
+    """Crée l'image de démo si elle n'existe pas."""
     demo_path = Path(DEFAULT_IMAGE)
     demo_path.parent.mkdir(parents=True, exist_ok=True)
     if not demo_path.exists():
         _draw_text_image((700, 200), GROUND_TRUTH.split("\n")).save(demo_path)
     return str(demo_path)
 
+
 def ensure_corpus_test():
+    """Crée les images de corpus de test."""
     CORPUS_DIR.mkdir(parents=True, exist_ok=True)
     ground_truth = {}
     for sample in CORPUS_SAMPLES:
@@ -91,19 +110,14 @@ def ensure_corpus_test():
         json.dump(ground_truth, f, indent=2, ensure_ascii=False)
     return ground_truth
 
-def run_model_on_image(model, image_file):
-    cmd = [sys.executable, __file__, "--run", model, "--image", str(image_file)]
-    res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
-    for line in res.stdout.strip().split("\n"):
-        if line.strip().startswith("{") and line.strip().endswith("}"):
-            return json.loads(line)
-    return {"status": "error", "error": "No JSON detected"}
 
+# Parser pour arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--run", choices=["paddleocr", "docling", "easyocr", "trocr"])
 parser.add_argument("--image", default=None)
 args = parser.parse_args()
 
+# Mode exécution d'un modèle spécifique
 if args.run:
     target_image = args.image or ensure_demo_image()
     if not os.path.exists(target_image):
@@ -131,7 +145,13 @@ if args.run:
             converter = DocumentConverter()
             init_time = time.time() - t0
             t0 = time.time()
-            res_doc = converter.convert(target_image)
+            
+            # Docling nécessite un chemin valide, pas une URL
+            # Convertir l'image en chemin absolu
+            import os
+            abs_path = os.path.abspath(target_image)
+            
+            res_doc = converter.convert(abs_path)
             text = res_doc.document.export_to_markdown().strip()
             ocr_time = time.time() - t0
             print(json.dumps({"status": "success", "init_time": init_time, "ocr_time": ocr_time, "text": text}))
@@ -172,7 +192,9 @@ if args.run:
             print(json.dumps({"status": "error", "error": str(e)}))
     sys.exit(0)
 
+
 def main():
+    """Fonction principale - Benchmark de tous les modèles."""
     print("="*80)
     print(" BENCHMARK COMPARATIF DES 4 MODELES OCR")
     print("="*80)
@@ -186,13 +208,16 @@ def main():
     for model in models:
         print(f"Execution {model}...")
         cmd = [sys.executable, __file__, "--run", model]
-        res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=300)
         
         json_data = None
         for line in res.stdout.strip().split("\n"):
             if line.strip().startswith("{"):
-                json_data = json.loads(line)
-                break
+                try:
+                    json_data = json.loads(line)
+                    break
+                except:
+                    continue
         
         if json_data and json_data["status"] == "success":
             acc = calculate_accuracy(json_data["text"], GROUND_TRUTH)
@@ -204,13 +229,13 @@ def main():
                 "accuracy": acc,
                 "text": json_data["text"]
             }
-            print(f"  Precision: {acc}% | Temps: {stats[model]['ocr_time']}s")
+            print(f"  ✓ Précision: {acc}% | Temps: {stats[model]['ocr_time']}s")
         else:
             stats[model] = {"status": "error", "error": "Failed"}
-            print(f"  ERREUR")
+            print(f"  ✗ ERREUR")
     
     print("\n" + "="*80)
-    print("RESULTATS")
+    print("RESULTATS FINAUX")
     print("="*80)
     print(f"| {'Modele':<15} | {'Init (s)':<10} | {'OCR (s)':<10} | {'Total (s)':<10} | {'Precision (%)':<15} |")
     print("-"*80)
@@ -223,6 +248,7 @@ def main():
             print(f"| {model.upper():<15} | {'ERROR':<10} | {'ERROR':<10} | {'ERROR':<10} | {'0.0':<15} |")
     print("="*80)
     
+    # Sauvegarder les résultats
     results = {
         "timestamp": datetime.now().strftime("%d %B %Y %H:%M:%S"),
         "stats": stats
@@ -231,7 +257,9 @@ def main():
     with open("benchmark_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
-    print("\nFichier sauvegarde: benchmark_results.json")
+    print("\n✓ Fichier sauvegardé: benchmark_results.json")
+    print("✓ Rapport HTML disponible: http://127.0.0.1:8000/benchmark")
+
 
 if __name__ == "__main__":
     main()

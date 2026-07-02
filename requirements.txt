@@ -21,3 +21,13 @@ torchvision
 fastapi
 uvicorn
 python-multipart
+
+# Base de données MySQL
+sqlalchemy==2.0.23
+pymysql==1.1.0
+cryptography==41.0.7
+alembic==1.13.1
+
+# Détection de langue
+langdetect==1.0.9
+pycld2==0.41

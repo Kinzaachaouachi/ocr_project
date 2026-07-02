@@ -21,10 +21,26 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, Depends
 from fastapi.responses import HTMLResponse, JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+
+# Import de la base de données
+from .database import init_db, get_db, OCRHistory
+# Import de la matrice de modèles
+from .model_matrix import MODEL_MATRIX, calculate_overall_score, get_model_info
+# Import du détecteur de langue
+from .language_detector import (
+    detect_language_from_text, 
+    detect_language_from_filename,
+    get_best_models_for_language,
+    get_language_name,
+    detect_language_by_charset
+)
+# Import de l'analyseur de confiance
+from .confidence_analyzer import analyze_text_confidence, annotate_text_with_confidence
 
 # ─── Initialisation de l'application ─────────────────────────────────────────
 
@@ -35,6 +51,16 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Initialiser la base de données au démarrage
+@app.on_event("startup")
+async def startup_event():
+    try:
+        init_db()
+        print("✓ Base de données connectée et initialisée")
+    except Exception as e:
+        print(f"⚠ Erreur de connexion à la base de données: {e}")
+        print("  L'API fonctionnera sans sauvegarde d'historique")
 
 # Autoriser toutes les origines (CORS) pour faciliter les tests frontend
 app.add_middleware(
@@ -125,7 +151,7 @@ def run_worker(model: str, file_path: str, file_type: str) -> dict:
         capture_output=True,
         text=True,
         encoding="utf-8",
-        timeout=300  # 5 minutes max
+        timeout=900  # 15 minutes max
     )
 
     # Chercher la première ligne JSON dans la sortie
@@ -154,21 +180,133 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse, tags=["Général"])
 async def root():
-    """Redirection vers l'interface web dynamique OCR."""
-    # Rediriger automatiquement vers l'interface dynamique
-    return FileResponse(path=static_dir / "index.html", media_type="text/html")
+    """Interface OCR multi-modèles avec extraction automatique."""
+    return FileResponse(path=static_dir / "index_multi.html", media_type="text/html")
 
 
 @app.get("/health", tags=["Général"])
-async def health_check():
-    """Vérifie que l'API est opérationnelle."""
+async def health_check(db: Session = Depends(get_db)):
+    """Vérifie que l'API est opérationnelle et teste la connexion à la base de données."""
+    
+    # Test de base de données
+    db_status = "disconnected"
+    db_records = 0
+    db_error = None
+    
+    try:
+        # Tester la connexion et compter les enregistrements
+        db_records = db.query(OCRHistory).count()
+        db_status = "connected"
+        print(f"✓ Base de données: {db_records} enregistrements")
+    except Exception as e:
+        db_status = "error" 
+        db_error = str(e)
+        print(f"⚠ Erreur base de données: {e}")
+    
     return {
         "status": "ok",
         "api": "OCR REST API",
         "version": "1.0.0",
         "timestamp": datetime.now().isoformat(),
-        "models_available": list(MODELS_INFO.keys())
+        "models_available": list(MODELS_INFO.keys()),
+        "database": {
+            "status": db_status,
+            "records_count": db_records,
+            "error": db_error
+        }
     }
+
+
+@app.get("/benchmark", response_class=HTMLResponse, tags=["Général"])
+async def benchmark_report():
+    """Affiche le rapport de benchmark comparatif des modèles OCR."""
+    benchmark_file = Path("benchmark_report.html")
+    if benchmark_file.exists():
+        with open(benchmark_file, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        
+        return HTMLResponse(content=html_content, status_code=200)
+
+    else:
+        return HTMLResponse(
+            content="""
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Benchmark - Non disponible</title>
+                <style>
+                    body { font-family: system-ui; display: flex; justify-content: center; align-items: center; 
+                           min-height: 100vh; background: #F8FAFC; margin: 0; }
+                    .message { text-align: center; padding: 2rem; background: white; border-radius: 12px; 
+                              box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; }
+                    h1 { color: #2563EB; margin-bottom: 1rem; }
+                    p { color: #475569; margin-bottom: 1.5rem; }
+                    code { background: #F1F5F9; padding: 0.25rem 0.5rem; border-radius: 4px; 
+                          font-family: monospace; }
+                    a { color: #2563EB; text-decoration: none; font-weight: 600; }
+                    a:hover { text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <div class="message">
+                    <h1>📊 Rapport de Benchmark</h1>
+                    <p>Le rapport de benchmark n'a pas encore été généré.</p>
+                    <p>Pour générer le rapport, exécutez :</p>
+                    <code>python run_all_benchmarks.py</code>
+                    <p style="margin-top: 1.5rem;"><a href="/">← Retour à l'extraction</a></p>
+                </div>
+            </body>
+            </html>
+            """,
+            status_code=200
+        )
+
+
+@app.get("/benchmark/olm", response_class=HTMLResponse, tags=["Général"])
+async def olm_benchmark_report():
+    """Affiche le rapport de benchmark olmOCR-Bench complet."""
+    olm_file = Path("olm_benchmark_report.html")
+    if olm_file.exists():
+        with open(olm_file, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content, status_code=200)
+    else:
+        return HTMLResponse(
+            content="""
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>olmOCR-Bench - Non disponible</title>
+                <style>
+                    body { font-family: system-ui; display: flex; justify-content: center; align-items: center; 
+                           min-height: 100vh; background: #F8FAFC; margin: 0; }
+                    .message { text-align: center; padding: 2rem; background: white; border-radius: 12px; 
+                              box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; }
+                    h1 { color: #2563EB; margin-bottom: 1rem; }
+                    p { color: #475569; margin-bottom: 1.5rem; }
+                    code { background: #F1F5F9; padding: 0.25rem 0.5rem; border-radius: 4px; 
+                          font-family: monospace; }
+                    a { color: #2563EB; text-decoration: none; font-weight: 600; }
+                    a:hover { text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <div class="message">
+                    <h1>📊 olmOCR-Bench</h1>
+                    <p>Le rapport olmOCR-Bench n'a pas encore été généré.</p>
+                    <p>Pour générer le rapport, exécutez :</p>
+                    <code>python generate_olm_report.py</code>
+                    <p style="margin-top: 1.5rem;"><a href="/">← Retour à l'extraction</a></p>
+                </div>
+            </body>
+            </html>
+            """,
+            status_code=200
+        )
 
 
 @app.get("/models", tags=["Modèles"])
@@ -180,10 +318,136 @@ async def list_models():
     }
 
 
+@app.get("/history", tags=["Historique"])
+async def get_ocr_history(
+    limit: int = 20,
+    model: str = None,
+    status: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère l'historique des extractions OCR depuis la base de données.
+    
+    - **limit** : Nombre maximum d'enregistrements à retourner (par défaut: 20, max: 100)
+    - **model** : Filtrer par modèle OCR (paddleocr, docling, easyocr, trocr)
+    - **status** : Filtrer par statut (success, error, unsupported)
+    """
+    
+    # Limiter la requête
+    if limit > 100:
+        limit = 100
+    
+    try:
+        query = db.query(OCRHistory)
+        
+        # Filtres optionnels
+        if model:
+            query = query.filter(OCRHistory.model_id == model)
+        if status:
+            query = query.filter(OCRHistory.status == status)
+        
+        # Trier par date décroissante et limiter
+        records = query.order_by(OCRHistory.processed_at.desc()).limit(limit).all()
+        
+        # Convertir en dictionnaire
+        history = []
+        for record in records:
+            history.append({
+                "id": record.id,
+                "filename": record.filename,
+                "file_type": record.file_type,
+                "model_id": record.model_id,
+                "model_name": record.model_name,
+                "char_count": record.char_count,
+                "word_count": record.word_count,
+                "ocr_time_s": record.ocr_time_s,
+                "status": record.status,
+                "error_message": record.error_message,
+                "processed_at": record.processed_at.isoformat() if record.processed_at else None,
+                "client_ip": record.client_ip,
+                "text_preview": record.extracted_text[:200] + "..." if record.extracted_text and len(record.extracted_text) > 200 else record.extracted_text
+            })
+        
+        return {
+            "status": "success",
+            "count": len(history),
+            "filters": {
+                "model": model,
+                "status": status,
+                "limit": limit
+            },
+            "history": history
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur accès base de données: {str(e)}")
+
+
+@app.get("/history/stats", tags=["Historique"])  
+async def get_ocr_stats(db: Session = Depends(get_db)):
+    """Retourne des statistiques d'usage de l'API OCR."""
+    
+    try:
+        # Statistiques globales
+        total_extractions = db.query(OCRHistory).count()
+        successful_extractions = db.query(OCRHistory).filter(OCRHistory.status == "success").count()
+        failed_extractions = db.query(OCRHistory).filter(OCRHistory.status == "error").count()
+        
+        # Statistiques par modèle
+        from sqlalchemy import func
+        model_stats = db.query(
+            OCRHistory.model_id,
+            func.count(OCRHistory.id).label('count'),
+            func.avg(OCRHistory.ocr_time_s).label('avg_time'),
+            func.sum(OCRHistory.char_count).label('total_chars')
+        ).filter(OCRHistory.status == "success").group_by(OCRHistory.model_id).all()
+        
+        # Statistiques par type de fichier
+        file_type_stats = db.query(
+            OCRHistory.file_type,
+            func.count(OCRHistory.id).label('count')
+        ).group_by(OCRHistory.file_type).all()
+        
+        # Dernières extractions
+        recent = db.query(OCRHistory).order_by(OCRHistory.processed_at.desc()).limit(5).all()
+        recent_list = [{
+            "filename": r.filename,
+            "model": r.model_id,
+            "status": r.status,
+            "processed_at": r.processed_at.isoformat() if r.processed_at else None
+        } for r in recent]
+        
+        return {
+            "status": "success",
+            "global_stats": {
+                "total_extractions": total_extractions,
+                "successful_extractions": successful_extractions,
+                "failed_extractions": failed_extractions,
+                "success_rate": round((successful_extractions / total_extractions * 100), 2) if total_extractions > 0 else 0
+            },
+            "model_stats": [{
+                "model_id": stat.model_id,
+                "extractions_count": stat.count,
+                "avg_processing_time_s": round(float(stat.avg_time or 0), 2),
+                "total_characters_processed": stat.total_chars or 0
+            } for stat in model_stats],
+            "file_type_stats": [{
+                "file_type": stat.file_type,
+                "count": stat.count
+            } for stat in file_type_stats],
+            "recent_extractions": recent_list
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur calcul statistiques: {str(e)}")
+
+
 @app.post("/extract", tags=["Extraction OCR"])
 async def extract_text(
     file: UploadFile = File(..., description="Fichier à traiter (image PNG/JPG, PDF, TXT, DOCX, ou XLSX)"),
-    model: str = Form(..., description="Modèle OCR à utiliser : paddleocr | docling | easyocr | trocr")
+    model: str = Form(..., description="Modèle OCR à utiliser : paddleocr | docling | easyocr | trocr"),
+    request: Request = None,
+    db: Session = Depends(get_db)
 ):
     """
     Extrait le texte d'un fichier (image, PDF, TXT, DOCX, ou XLSX) avec le modèle OCR choisi.
@@ -219,6 +483,9 @@ async def extract_text(
                    f"Formats supportés par ce modèle : {supported}"
         )
 
+    # Obtenir l'IP du client
+    client_ip = request.client.host if request else "unknown"
+
     # Sauvegarder le fichier uploadé dans un fichier temporaire
     suffix = Path(file.filename).suffix.lower()
     tmp_path = None
@@ -244,21 +511,95 @@ async def extract_text(
 
     # Gérer les cas d'erreur retournés par le worker
     if result.get("status") == "error":
+        # ═══ SAUVEGARDE ÉCHEC EN BASE ═══
+        try:
+            ocr_entry = OCRHistory(
+                filename=file.filename,
+                file_type=file_type,
+                model_id=model,
+                model_name=MODELS_INFO[model]["name"],
+                extracted_text=None,
+                char_count=0,
+                word_count=0,
+                ocr_time_s=0,
+                status="error",
+                error_message=result.get("error", "Erreur inconnue du worker OCR")[:65535],
+                processed_at=datetime.now(),
+                client_ip=client_ip
+            )
+            db.add(ocr_entry)
+            db.commit()
+            print(f"✓ Sauvegardé échec DB: {model} - {file.filename}")
+        except Exception as db_error:
+            print(f"⚠ Erreur DB échec: {db_error}")
+            db.rollback()
+        
         raise HTTPException(status_code=500, detail=result.get("error", "Erreur inconnue du worker OCR."))
 
     if result.get("status") == "unsupported":
+        # ═══ SAUVEGARDE FORMAT NON SUPPORTÉ ═══
+        try:
+            ocr_entry = OCRHistory(
+                filename=file.filename,
+                file_type=file_type,
+                model_id=model,
+                model_name=MODELS_INFO[model]["name"],
+                extracted_text=None,
+                char_count=0,
+                word_count=0,
+                ocr_time_s=0,
+                status="unsupported",
+                error_message=result.get("reason", "Format non supporté")[:65535],
+                processed_at=datetime.now(),
+                client_ip=client_ip
+            )
+            db.add(ocr_entry)
+            db.commit()
+            print(f"✓ Sauvegardé format non supporté DB: {model} - {file.filename}")
+        except Exception as db_error:
+            print(f"⚠ Erreur DB format non supporté: {db_error}")
+            db.rollback()
+        
         raise HTTPException(status_code=422, detail=result.get("reason", "Format non supporté."))
 
     # Réponse succès
+    text = result.get("text", "")
+    char_count = len(text)
+    word_count = len(text.split())
+    
+    # ═══ SAUVEGARDE SUCCÈS EN BASE ═══
+    try:
+        ocr_entry = OCRHistory(
+            filename=file.filename,
+            file_type=file_type,
+            model_id=model,
+            model_name=MODELS_INFO[model]["name"],
+            extracted_text=text[:65535],  # Limite MySQL TEXT
+            char_count=char_count,
+            word_count=word_count,
+            ocr_time_s=result.get("ocr_time", 0),
+            status="success",
+            error_message=None,
+            processed_at=datetime.now(),
+            client_ip=client_ip
+        )
+        db.add(ocr_entry)
+        db.commit()
+        print(f"✓ Sauvegardé succès DB: {model} - {file.filename}")
+    except Exception as db_error:
+        print(f"⚠ Erreur DB succès: {db_error}")
+        db.rollback()
+        # Ne pas interrompre pour une erreur de DB
+
     return {
         "status": "success",
         "model": MODELS_INFO[model]["name"],
         "model_id": model,
         "file": file.filename,
         "file_type": file_type,
-        "text": result.get("text", ""),
-        "char_count": len(result.get("text", "")),
-        "word_count": len(result.get("text", "").split()),
+        "text": text,
+        "char_count": char_count,
+        "word_count": word_count,
         "timing": {
             "init_time_s": result.get("init_time", 0),
             "ocr_time_s": result.get("ocr_time", 0),
@@ -267,6 +608,277 @@ async def extract_text(
         },
         "processed_at": datetime.now().isoformat()
     }
+
+
+@app.post("/extract-all", tags=["Extraction OCR"])
+async def extract_all_models(
+    file: UploadFile = File(..., description="Fichier à traiter avec tous les modèles"),
+    request: Request = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Extrait le texte avec TOUS les modèles OCR disponibles et retourne les résultats classés.
+    
+    Cette API exécute l'extraction en parallèle avec PaddleOCR, Docling, EasyOCR et TrOCR,
+    détecte automatiquement la langue du document, puis classe les résultats par qualité.
+    
+    - **file** : Le fichier à analyser (PNG, JPG, JPEG, BMP, TIFF, WEBP, PDF, TXT, DOCX, DOC, XLSX, XLS)
+    
+    Retourne les 4 extractions classées du meilleur au moins bon résultat avec détection de langue.
+    """
+    
+    # Valider le type de fichier
+    file_type = detect_file_type(file.filename)
+    if file_type is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Extension de fichier non supportée : '{Path(file.filename).suffix}'"
+        )
+    
+    # Sauvegarder le fichier temporaire
+    suffix = Path(file.filename).suffix.lower()
+    tmp_path = None
+    file_content = None
+    
+    # Obtenir l'IP du client pour la sauvegarde
+    client_ip = request.client.host if request else "unknown"
+    
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=".") as tmp:
+            file_content = await file.read()
+            tmp.write(file_content)
+            tmp_path = tmp.name
+        
+        # Étape 1: Tenter de détecter la langue depuis le nom de fichier
+        detected_lang_from_filename = detect_language_from_filename(file.filename)
+        
+        # Déterminer quels modèles peuvent traiter ce type de fichier
+        available_models = []
+        for model_id, model_info in MODELS_INFO.items():
+            if file_type in model_info["supported_formats"]:
+                available_models.append(model_id)
+        
+        if not available_models:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Aucun modèle ne supporte le format '{file_type}'"
+            )
+        
+        # Exécuter tous les modèles disponibles
+        results = []
+        overall_start = time.time()
+        detected_language = None
+        detected_language_confidence = 0.0
+        
+        for model_id in available_models:
+            try:
+                t_start = time.time()
+                result = run_worker(model_id, tmp_path, file_type)
+                wall_time = round(time.time() - t_start, 2)
+                
+                if result.get("status") == "success":
+                    text = result.get("text", "")
+                    word_confidence_data = result.get("word_confidence", [])
+                    
+                    # Étape 2: Détecter la langue depuis le texte extrait
+                    if text and len(text.strip()) > 20:
+                        try:
+                            lang_code, lang_confidence = detect_language_from_text(text)
+                            # Utiliser la meilleure détection (filename ou texte)
+                            if detected_lang_from_filename:
+                                detected_language = detected_lang_from_filename
+                                detected_language_confidence = 0.95
+                            elif lang_confidence > detected_language_confidence:
+                                detected_language = lang_code
+                                detected_language_confidence = lang_confidence
+                        except Exception:
+                            # Fallback sur détection par charset
+                            if not detected_language:
+                                detected_language, detected_language_confidence = detect_language_by_charset(text)
+                    
+                    char_count = len(text)
+                    word_count = len(text.split())
+                    
+                    # Analyser la confiance globale du texte
+                    confidence_stats = analyze_text_confidence(word_confidence_data)
+                    
+                    # Score basé sur plusieurs facteurs
+                    model_matrix_score = calculate_overall_score(model_id)
+                    
+                    # Score de longueur (plus de texte = potentiellement mieux)
+                    length_score = min(100, (char_count / 10))
+                    
+                    # Score de vitesse (inversé)
+                    speed_score = max(0, 100 - (result.get("ocr_time", 0) * 10))
+                    
+                    # Bonus si le modèle supporte bien la langue détectée
+                    language_bonus = 0
+                    if detected_language and detected_language in MODEL_MATRIX.get(model_id, {}).get("languages", []):
+                        language_bonus = 10
+                    
+                    # Bonus de confiance (score de fiabilité)
+                    confidence_bonus = confidence_stats.get("reliability_score", 75) / 10
+                    
+                    # Score combiné (pondéré)
+                    quality_score = (
+                        model_matrix_score * 0.4 +   # 40% matrice de benchmark
+                        length_score * 0.15 +         # 15% longueur du texte
+                        speed_score * 0.15 +          # 15% vitesse
+                        language_bonus * 0.1 +        # 10% compatibilité langue
+                        confidence_bonus * 0.2        # 20% confiance
+                    )
+                    
+                    results.append({
+                        "model_id": model_id,
+                        "model_name": MODELS_INFO[model_id]["name"],
+                        "status": "success",
+                        "text": text,
+                        "word_confidence": word_confidence_data,
+                        "confidence_stats": confidence_stats,
+                        "char_count": char_count,
+                        "word_count": word_count,
+                        "timing": {
+                            "init_time_s": result.get("init_time", 0),
+                            "ocr_time_s": result.get("ocr_time", 0),
+                            "total_time_s": result.get("total_time", 0),
+                            "wall_time_s": wall_time
+                        },
+                        "quality_score": round(quality_score, 1),
+                        "model_score": model_matrix_score,
+                        "language_support": detected_language in MODEL_MATRIX.get(model_id, {}).get("languages", [])
+                    })
+                    
+                    # ═══ SAUVEGARDE EN BASE DE DONNÉES ═══
+                    try:
+                        ocr_entry = OCRHistory(
+                            filename=file.filename,
+                            file_type=file_type,
+                            model_id=model_id,
+                            model_name=MODELS_INFO[model_id]["name"],
+                            extracted_text=text[:65535],  # Limite MySQL TEXT
+                            char_count=char_count,
+                            word_count=word_count,
+                            ocr_time_s=result.get("ocr_time", 0),
+                            status="success",
+                            error_message=None,
+                            processed_at=datetime.now(),
+                            client_ip=client_ip
+                        )
+                        db.add(ocr_entry)
+                        db.commit()
+                        print(f"✓ Sauvegardé en DB: {model_id} - {file.filename}")
+                    except Exception as db_error:
+                        print(f"⚠ Erreur DB pour {model_id}: {db_error}")
+                        db.rollback()
+                        # Ne pas interrompre le processus pour une erreur de DB
+                else:
+                    # Modèle a échoué
+                    results.append({
+                        "model_id": model_id,
+                        "model_name": MODELS_INFO[model_id]["name"],
+                        "status": "error",
+                        "error": result.get("error", "Erreur inconnue"),
+                        "quality_score": 0
+                    })
+                    
+                    # ═══ SAUVEGARDE ÉCHEC EN BASE ═══
+                    try:
+                        ocr_entry = OCRHistory(
+                            filename=file.filename,
+                            file_type=file_type,
+                            model_id=model_id,
+                            model_name=MODELS_INFO[model_id]["name"],
+                            extracted_text=None,
+                            char_count=0,
+                            word_count=0,
+                            ocr_time_s=0,
+                            status="error",
+                            error_message=result.get("error", "Erreur inconnue")[:65535],
+                            processed_at=datetime.now(),
+                            client_ip=client_ip
+                        )
+                        db.add(ocr_entry)
+                        db.commit()
+                        print(f"✓ Sauvegardé échec DB: {model_id} - {file.filename}")
+                    except Exception as db_error:
+                        print(f"⚠ Erreur DB échec pour {model_id}: {db_error}")
+                        db.rollback()
+            
+            except Exception as e:
+                results.append({
+                    "model_id": model_id,
+                    "model_name": MODELS_INFO[model_id]["name"],
+                    "status": "error",
+                    "error": str(e),
+                    "quality_score": 0
+                })
+                
+                # ═══ SAUVEGARDE EXCEPTION EN BASE ═══
+                try:
+                    ocr_entry = OCRHistory(
+                        filename=file.filename,
+                        file_type=file_type,
+                        model_id=model_id,
+                        model_name=MODELS_INFO[model_id]["name"],
+                        extracted_text=None,
+                        char_count=0,
+                        word_count=0,
+                        ocr_time_s=0,
+                        status="error",
+                        error_message=str(e)[:65535],
+                        processed_at=datetime.now(),
+                        client_ip=client_ip
+                    )
+                    db.add(ocr_entry)
+                    db.commit()
+                    print(f"✓ Sauvegardé exception DB: {model_id} - {file.filename}")
+                except Exception as db_error:
+                    print(f"⚠ Erreur DB exception pour {model_id}: {db_error}")
+                    db.rollback()
+        
+        # Trier par score de qualité (meilleur en premier)
+        results.sort(key=lambda x: x.get("quality_score", 0), reverse=True)
+        
+        overall_time = round(time.time() - overall_start, 2)
+        
+        # Déterminer le meilleur résultat
+        best_result = next((r for r in results if r["status"] == "success"), None)
+        
+        # Si aucune langue n'a été détectée, utiliser français par défaut
+        if not detected_language:
+            detected_language = "fr"
+            detected_language_confidence = 0.5
+        
+        # Obtenir les modèles recommandés pour la langue détectée
+        recommended_models = get_best_models_for_language(detected_language)
+        
+        return {
+            "status": "success",
+            "file": file.filename,
+            "file_type": file_type,
+            "detected_language": {
+                "code": detected_language,
+                "name": get_language_name(detected_language),
+                "confidence": round(detected_language_confidence, 2),
+                "detection_method": "filename" if detected_lang_from_filename else "text_analysis"
+            },
+            "recommended_models": recommended_models,
+            "total_models_tested": len(results),
+            "successful_extractions": sum(1 for r in results if r["status"] == "success"),
+            "best_model": best_result["model_id"] if best_result else None,
+            "best_model_name": best_result["model_name"] if best_result else None,
+            "total_processing_time_s": overall_time,
+            "results": results,
+            "processed_at": datetime.now().isoformat()
+        }
+    
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Délai d'attente dépassé")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur interne : {str(e)}")
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 @app.post("/translate", tags=["Traduction"])

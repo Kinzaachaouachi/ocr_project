@@ -1,8 +1,0 @@
-Bonjour et bienvenue!
-
-Ceci est un fichier texte de test pour évaluer les modèles OCR.
-Les fichiers texte peuvent contenir plusieurs lignes et paragraphes.
-
-Docling supporte les fichiers texte et peut les convertir en Markdown.
-
-À bientôt!

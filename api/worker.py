@@ -1,13 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-API Worker OCR - Exécuté en sous-processus isolé pour chaque modèle.
-Usage interne uniquement (appelé par api/main.py via subprocess).
 
-Arguments :
-    --model  : paddleocr | docling | easyocr | trocr
-    --file   : chemin absolu vers le fichier à traiter
-    --type   : image | pdf | txt
-"""
 
 import sys
 import os
@@ -77,11 +68,37 @@ if args.model == "paddleocr":
                 raise Exception("Impossible de convertir le PDF en images (PyMuPDF requis).")
 
         t0 = time.time()
-        texts = []
+        all_lines = []
+        word_confidence_data = []
+        
         for img in targets:
             res = ocr.ocr(img, cls=True)
             if res and res[0]:
-                texts.append("\n".join([line[1][0] for line in res[0]]))
+                # Trier les lignes par position verticale pour préserver l'ordre
+                sorted_lines = sorted(res[0], key=lambda x: x[0][0][1])
+                
+                prev_y = None
+                for line in sorted_lines:
+                    text = line[1][0]
+                    confidence = line[1][1]
+                    y_pos = line[0][0][1]
+                    
+                    # Détecter les lignes vides (grand écart vertical)
+                    if prev_y is not None and (y_pos - prev_y) > 50:
+                        all_lines.append("")
+                    
+                    all_lines.append(text)
+                    
+                    # Stocker la confiance par mot
+                    words = text.split()
+                    for word in words:
+                        word_confidence_data.append({
+                            "word": word,
+                            "confidence": round(confidence, 2)
+                        })
+                    
+                    prev_y = y_pos
+                    
         ocr_time = round(time.time() - t0, 2)
         cleanup_tmp(tmp_files)
 
@@ -89,7 +106,8 @@ if args.model == "paddleocr":
             "status": "success",
             "model": "PaddleOCR",
             "file_type": file_type,
-            "text": "\n".join(texts),
+            "text": "\n".join(all_lines),
+            "word_confidence": word_confidence_data,
             "init_time": init_time,
             "ocr_time": ocr_time,
             "total_time": round(init_time + ocr_time, 2)
@@ -107,15 +125,32 @@ elif args.model == "docling":
         init_time = round(time.time() - t0, 2)
 
         t0 = time.time()
-        result = converter.convert(file_path)
+        
+        # Docling nécessite un chemin absolu valide
+        abs_file_path = os.path.abspath(file_path)
+        
+        # Convertir le chemin en objet Path pour Docling
+        from pathlib import Path as PathlibPath
+        result = converter.convert(PathlibPath(abs_file_path))
         text = result.document.export_to_markdown().strip()
         ocr_time = round(time.time() - t0, 2)
+
+        # Pour Docling, estimer la confiance à 0.85 (pas de scores individuels disponibles)
+        word_confidence_data = []
+        words = text.split()
+        for word in words:
+            if word.strip():
+                word_confidence_data.append({
+                    "word": word,
+                    "confidence": 0.85
+                })
 
         print(json.dumps({
             "status": "success",
             "model": "Docling",
             "file_type": file_type,
             "text": text,
+            "word_confidence": word_confidence_data,
             "init_time": init_time,
             "ocr_time": ocr_time,
             "total_time": round(init_time + ocr_time, 2)
@@ -144,11 +179,37 @@ elif args.model == "easyocr":
                 raise Exception("Impossible de convertir le PDF en images (PyMuPDF requis).")
 
         t0 = time.time()
-        texts = []
+        all_lines = []
+        word_confidence_data = []
+        
         for img in targets:
             res = reader.readtext(img)
             if res:
-                texts.append("\n".join([line[1] for line in res]))
+                # Trier par position verticale
+                sorted_lines = sorted(res, key=lambda x: x[0][0][1])
+                
+                prev_y = None
+                for line in sorted_lines:
+                    text = line[1]
+                    confidence = line[2]
+                    y_pos = line[0][0][1]
+                    
+                    # Détecter les lignes vides
+                    if prev_y is not None and (y_pos - prev_y) > 50:
+                        all_lines.append("")
+                    
+                    all_lines.append(text)
+                    
+                    # Stocker la confiance par mot
+                    words = text.split()
+                    for word in words:
+                        word_confidence_data.append({
+                            "word": word,
+                            "confidence": round(confidence, 2)
+                        })
+                    
+                    prev_y = y_pos
+                    
         ocr_time = round(time.time() - t0, 2)
         cleanup_tmp(tmp_files)
 
@@ -156,7 +217,8 @@ elif args.model == "easyocr":
             "status": "success",
             "model": "EasyOCR",
             "file_type": file_type,
-            "text": "\n".join(texts),
+            "text": "\n".join(all_lines),
+            "word_confidence": word_confidence_data,
             "init_time": init_time,
             "ocr_time": ocr_time,
             "total_time": round(init_time + ocr_time, 2)
@@ -190,12 +252,24 @@ elif args.model == "trocr":
 
         t0 = time.time()
         texts = []
+        word_confidence_data = []
+        
         for img in targets:
             pil_img = Image.open(img).convert("RGB")
             pixel_values = processor(images=pil_img, return_tensors="pt").pixel_values.to(device)
             generated_ids = model.generate(pixel_values, max_new_tokens=128)
             text_tr = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
             texts.append(text_tr)
+            
+            # TrOCR: confiance estimée à 0.75
+            words = text_tr.split()
+            for word in words:
+                if word.strip():
+                    word_confidence_data.append({
+                        "word": word,
+                        "confidence": 0.75
+                    })
+                    
         ocr_time = round(time.time() - t0, 2)
         cleanup_tmp(tmp_files)
 
@@ -204,6 +278,7 @@ elif args.model == "trocr":
             "model": "TrOCR",
             "file_type": file_type,
             "text": "\n".join(texts),
+            "word_confidence": word_confidence_data,
             "init_time": init_time,
             "ocr_time": ocr_time,
             "total_time": round(init_time + ocr_time, 2)

@@ -1,0 +1,31 @@
+cd c:\Users\MSI\Desktop\ocr_project
+.\venv\Scripts\activate
+
+# PHASE 1: Tests simples
+python test_paddleocr.py
+python test_docling.py
+python test_easyocr.py
+python test_trocr.py
+
+python test_paddleocr_texte.py 
+python test_docling_texte.py 
+python test_easyocr_texte.py 
+python test_trocr_texte.py
+
+
+# PHASE 2: Tests multiformat
+python test_paddleocr_multiformat.py
+python test_docling_multiformat.py
+python test_easyocr_multiformat.py
+python test_trocr_multiformat.py
+
+
+# PHASE 3: Benchmark
+python run_all_benchmarks.py
+
+# PHASE 4: API (2 terminaux)
+# Terminal 1:
+uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Terminal 2:
+python test_api.py
