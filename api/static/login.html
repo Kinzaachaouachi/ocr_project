@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>OCR Intelligence — Connexion</title>
+        <meta
+            name="description"
+            content="Connectez-vous à OCR Intelligence pour extraire du texte avec 4 modèles IA en parallèle."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/theme.css" />
+    </head>
+    <body>
+        <div class="auth-page">
+            <a class="brand auth-top-brand" href="/">
+                <div class="logo">AI</div>
+                <div class="brand-text">OCR Intelligence</div>
+            </a>
+
+            <div class="auth-card" id="loginContainer">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">Connexion</h2>
+                    <p class="auth-subtitle">
+                        Accédez à votre espace d'extraction OCR.
+                    </p>
+                </div>
+
+                <div id="alert" class="alert"></div>
+
+                <form id="loginForm" novalidate>
+                    <div class="field">
+                        <label for="email">Adresse email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            required
+                            autocomplete="email"
+                            placeholder="vous@exemple.com"
+                        />
+                        <div class="error-text" id="email-error"></div>
+                    </div>
+
+                    <div class="field password-field">
+                        <label for="password">Mot de passe</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="••••••••"
+                        />
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('password')"
+                            >👁️</span
+                        >
+                        <div class="error-text" id="password-error"></div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="loginBtn"
+                    >
+                        <span class="spinner-sm" id="loginSpinner"></span>
+                        <span id="loginBtnText">Se connecter</span>
+                    </button>
+                </form>
+
+                <div class="auth-divider"><span>ou</span></div>
+
+                <p class="auth-footer-link">
+                    Pas encore de compte ?
+                    <a href="#" onclick="showRegisterForm()">Créer un compte</a>
+                </p>
+            </div>
+
+            <!-- Formulaire d'inscription (caché par défaut) -->
+            <div class="auth-card" id="registerContainer" style="display: none">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">Créer un compte</h2>
+                    <p class="auth-subtitle">
+                        Quelques informations pour démarrer.
+                    </p>
+                </div>
+
+                <div id="registerAlert" class="alert"></div>
+
+                <form id="registerForm" novalidate>
+                    <div class="field">
+                        <label for="regEmail">Adresse email</label>
+                        <input
+                            type="email"
+                            id="regEmail"
+                            name="email"
+                            required
+                            placeholder="vous@exemple.com"
+                        />
+                        <div class="error-text" id="regEmail-error"></div>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="firstName">Prénom (optionnel)</label>
+                            <input
+                                type="text"
+                                id="firstName"
+                                name="first_name"
+                            />
+                            <div class="error-text" id="firstName-error"></div>
+                        </div>
+
+                        <div class="field">
+                            <label for="lastName">Nom (optionnel)</label>
+                            <input type="text" id="lastName" name="last_name" />
+                            <div class="error-text" id="lastName-error"></div>
+                        </div>
+                    </div>
+
+                    <div class="field password-field">
+                        <label for="regPassword">Mot de passe</label>
+                        <input
+                            type="password"
+                            id="regPassword"
+                            name="password"
+                            required
+                            placeholder="••••••••"
+                        />
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('regPassword')"
+                            >👁️</span
+                        >
+                        <div class="error-text" id="regPassword-error"></div>
+                    </div>
+
+                    <div class="field password-field">
+                        <label for="confirmPassword"
+                            >Confirmer le mot de passe</label
+                        >
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirm_password"
+                            required
+                            placeholder="••••••••"
+                        />
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('confirmPassword')"
+                            >👁️</span
+                        >
+                        <div
+                            class="error-text"
+                            id="confirmPassword-error"
+                        ></div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="registerBtn"
+                    >
+                        <span class="spinner-sm" id="registerSpinner"></span>
+                        <span id="registerBtnText">Créer le compte</span>
+                    </button>
+                </form>
+
+                <div class="auth-divider"><span>ou</span></div>
+
+                <p class="auth-footer-link">
+                    Déjà un compte ?
+                    <a href="#" onclick="showLoginForm()">Se connecter</a>
+                </p>
+            </div>
+        </div>
+
+        <script>
+            // Variables globales
+            const API_BASE = "/api";
+
+            // Validation regex
+            const EMAIL_REGEX =
+                /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+
+            // Fonction pour alterner entre login et inscription
+            function showRegisterForm() {
+                document.getElementById("loginContainer").style.display =
+                    "none";
+                document.getElementById("registerContainer").style.display =
+                    "block";
+            }
+
+            function showLoginForm() {
+                document.getElementById("loginContainer").style.display =
+                    "block";
+                document.getElementById("registerContainer").style.display =
+                    "none";
+            }
+
+            // Fonction pour afficher/masquer le mot de passe
+            function togglePassword(inputId) {
+                const input = document.getElementById(inputId);
+                const toggle = input.nextElementSibling;
+
+                if (input.type === "password") {
+                    input.type = "text";
+                    toggle.textContent = "🙈";
+                } else {
+                    input.type = "password";
+                    toggle.textContent = "👁️";
+                }
+            }
+
+            // Fonctions de validation
+            function validateEmail(email) {
+                if (!email.trim()) {
+                    return "L'email ne peut pas être vide";
+                }
+                if (!EMAIL_REGEX.test(email)) {
+                    return "Format d'email invalide";
+                }
+                return null;
+            }
+
+            function validatePassword(password) {
+                if (!password.trim()) {
+                    return "Le mot de passe ne peut pas être vide";
+                }
+                if (password.length < 6) {
+                    return "Le mot de passe doit contenir au moins 6 caractères";
+                }
+                if (!PASSWORD_REGEX.test(password)) {
+                    return "Le mot de passe doit contenir au moins une lettre et un chiffre";
+                }
+                return null;
+            }
+
+            function validateName(name, fieldName) {
+                if (name && name.trim().length < 2) {
+                    return `Le ${fieldName} doit contenir au moins 2 caractères`;
+                }
+                return null;
+            }
+
+            // Fonction pour afficher les erreurs
+            function showFieldError(fieldId, message) {
+                const field = document.getElementById(fieldId);
+                const errorDiv = document.getElementById(fieldId + "-error");
+
+                if (message) {
+                    field.classList.add("error");
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = "block";
+                } else {
+                    field.classList.remove("error");
+                    errorDiv.style.display = "none";
+                }
+            }
+
+            // Fonction pour afficher les alertes
+            function showAlert(message, type = "error", containerId = "alert") {
+                const alertDiv = document.getElementById(containerId);
+                alertDiv.textContent = message;
+                alertDiv.className = `alert ${type}`;
+                alertDiv.style.display = "block";
+
+                // Auto-masquer après 5 secondes pour les succès
+                if (type === "success") {
+                    setTimeout(() => {
+                        alertDiv.style.display = "none";
+                    }, 5000);
+                }
+            }
+
+            // Fonction pour masquer les alertes
+            function hideAlert(containerId = "alert") {
+                document.getElementById(containerId).style.display = "none";
+            }
+
+            // Gestion du formulaire de connexion
+            document
+                .getElementById("loginForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const email = document.getElementById("email").value;
+                    const password = document.getElementById("password").value;
+
+                    // Validation côté client
+                    let hasErrors = false;
+
+                    const emailError = validateEmail(email);
+                    showFieldError("email", emailError);
+                    if (emailError) hasErrors = true;
+
+                    const passwordError = validatePassword(password);
+                    showFieldError("password", passwordError);
+                    if (passwordError) hasErrors = true;
+
+                    if (hasErrors) return;
+
+                    // UI de chargement
+                    const loginBtn = document.getElementById("loginBtn");
+                    const loginSpinner =
+                        document.getElementById("loginSpinner");
+                    const loginBtnText =
+                        document.getElementById("loginBtnText");
+
+                    loginBtn.disabled = true;
+                    loginSpinner.style.display = "block";
+                    loginBtnText.textContent = "Connexion...";
+                    hideAlert();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/login`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ email, password }),
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            // Stocker le token et les données utilisateur
+                            localStorage.setItem(
+                                "access_token",
+                                data.access_token,
+                            );
+                            localStorage.setItem(
+                                "user",
+                                JSON.stringify(data.user),
+                            );
+                            localStorage.setItem(
+                                "user_info",
+                                JSON.stringify(data.user),
+                            );
+
+                            showAlert(
+                                "Connexion réussie ! Redirection...",
+                                "success",
+                            );
+
+                            // Redirection vers l'application principale
+                            setTimeout(() => {
+                                window.location.href = "/app";
+                            }, 1000);
+                        } else {
+                            showAlert(data.detail || "Erreur de connexion");
+                        }
+                    } catch (error) {
+                        console.error("Erreur de connexion:", error);
+                        showAlert("Erreur de connexion. Veuillez réessayer.");
+                    } finally {
+                        loginBtn.disabled = false;
+                        loginSpinner.style.display = "none";
+                        loginBtnText.textContent = "Se connecter";
+                    }
+                });
+
+            // Gestion du formulaire d'inscription
+            document
+                .getElementById("registerForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const email = document.getElementById("regEmail").value;
+                    const firstName =
+                        document.getElementById("firstName").value;
+                    const lastName = document.getElementById("lastName").value;
+                    const password =
+                        document.getElementById("regPassword").value;
+                    const confirmPassword =
+                        document.getElementById("confirmPassword").value;
+
+                    // Validation côté client
+                    let hasErrors = false;
+
+                    const emailError = validateEmail(email);
+                    showFieldError("regEmail", emailError);
+                    if (emailError) hasErrors = true;
+
+                    const firstNameError = validateName(firstName, "prénom");
+                    showFieldError("firstName", firstNameError);
+                    if (firstNameError) hasErrors = true;
+
+                    const lastNameError = validateName(lastName, "nom");
+                    showFieldError("lastName", lastNameError);
+                    if (lastNameError) hasErrors = true;
+
+                    const passwordError = validatePassword(password);
+                    showFieldError("regPassword", passwordError);
+                    if (passwordError) hasErrors = true;
+
+                    if (password !== confirmPassword) {
+                        showFieldError(
+                            "confirmPassword",
+                            "Les mots de passe ne correspondent pas",
+                        );
+                        hasErrors = true;
+                    } else {
+                        showFieldError("confirmPassword", null);
+                    }
+
+                    if (hasErrors) return;
+
+                    // UI de chargement
+                    const registerBtn = document.getElementById("registerBtn");
+                    const registerSpinner =
+                        document.getElementById("registerSpinner");
+                    const registerBtnText =
+                        document.getElementById("registerBtnText");
+
+                    registerBtn.disabled = true;
+                    registerSpinner.style.display = "block";
+                    registerBtnText.textContent = "Création...";
+                    hideAlert("registerAlert");
+
+                    try {
+                        const response = await fetch(`${API_BASE}/register`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                email,
+                                first_name: firstName || null,
+                                last_name: lastName || null,
+                                password,
+                                confirm_password: confirmPassword,
+                            }),
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            showAlert(
+                                "Compte créé avec succès ! Vous pouvez maintenant vous connecter.",
+                                "success",
+                                "registerAlert",
+                            );
+
+                            // Retourner au formulaire de connexion après 2 secondes
+                            setTimeout(() => {
+                                showLoginForm();
+                                document.getElementById("email").value = email;
+                            }, 2000);
+                        } else {
+                            showAlert(
+                                data.detail ||
+                                    "Erreur lors de la création du compte",
+                                "error",
+                                "registerAlert",
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Erreur d'inscription:", error);
+                        showAlert(
+                            "Erreur de connexion. Veuillez réessayer.",
+                            "error",
+                            "registerAlert",
+                        );
+                    } finally {
+                        registerBtn.disabled = false;
+                        registerSpinner.style.display = "none";
+                        registerBtnText.textContent = "Créer le compte";
+                    }
+                });
+
+            // Pas de redirection automatique - l'utilisateur doit cliquer sur "Se connecter"
+            // Cela permet à la page de login de s'afficher toujours par défaut
+        </script>
+    </body>
+</html>

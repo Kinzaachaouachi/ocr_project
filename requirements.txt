@@ -1,33 +1,44 @@
-# OCR engines (sujet de stage)
+
 paddleocr==2.7.0.3
 paddlepaddle==2.6.2
 docling==2.10.0
 docling-core
 
-# Image / PDF processing
+
+rapidocr==3.8.4
+onnxruntime==1.23.2
+
+
 numpy==1.26.4
 opencv-python==4.6.0.66
 pillow
 pymupdf
 img2pdf
 
-# Optional OCR models (benchmark étendu)
-easyocr==1.7.2
-transformers
-torch
-torchvision
 
-# API REST
+easyocr==1.7.2
+transformers==4.25.0
+# PyTorch CPU pour Windows - installer avec: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+torchvision>=0.15.0
+
+
 fastapi
 uvicorn
 python-multipart
 
-# Base de données MySQL
 sqlalchemy==2.0.23
 pymysql==1.1.0
 cryptography==41.0.7
 alembic==1.13.1
 
-# Détection de langue
+
 langdetect==1.0.9
 pycld2==0.41
+
+# JWT Authentication
+PyJWT==2.8.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+pydantic[email]==2.5.0
+bcrypt==4.0.1

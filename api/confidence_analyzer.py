@@ -1,58 +1,26 @@
-# -*- coding: utf-8 -*-
-"""
-Analyseur de confiance pour les résultats OCR
-Catégorise les mots selon leur niveau de confiance
-"""
 
 from typing import List, Dict, Tuple
 
 
 def categorize_word_by_confidence(confidence: float) -> str:
-    """
-    Catégorise un mot selon son score de confiance.
-    
-    Args:
-        confidence: Score de confiance entre 0 et 1
-        
-    Returns:
-        Catégorie: "high" (noir), "medium" (orange), "low" (rouge)
-    """
     if confidence >= 0.85:
-        return "high"      # Noir - 100% correcte
+        return "high"      
     elif confidence >= 0.60:
-        return "medium"    # Orange - Peut être incorrecte
+        return "medium"    
     else:
-        return "low"       # Rouge - Probablement incorrecte
+        return "low"       
 
 
 def get_color_for_confidence(confidence: float) -> str:
-    """
-    Retourne la couleur CSS correspondant au niveau de confiance.
-    
-    Args:
-        confidence: Score de confiance entre 0 et 1
-        
-    Returns:
-        Code couleur hexadécimal
-    """
     if confidence >= 0.85:
-        return "#0F172A"   # Noir
+        return "#0F172A"   
     elif confidence >= 0.60:
-        return "#F59E0B"   # Orange
+        return "#F59E0B"   
     else:
-        return "#DC2626"   # Rouge
+        return "#DC2626"   
 
 
 def analyze_text_confidence(word_confidence_data: List[Dict]) -> Dict:
-    """
-    Analyse la confiance globale d'un texte extrait.
-    
-    Args:
-        word_confidence_data: Liste de dictionnaires {"word": str, "confidence": float}
-        
-    Returns:
-        Statistiques de confiance
-    """
     if not word_confidence_data:
         return {
             "total_words": 0,
@@ -74,7 +42,6 @@ def analyze_text_confidence(word_confidence_data: List[Dict]) -> Dict:
     
     high_percentage = (high_count / total_words * 100) if total_words > 0 else 0.0
     
-    # Score de fiabilité global (basé sur pourcentage de mots haute confiance)
     reliability_score = round(high_percentage, 1)
     
     return {
@@ -89,27 +56,14 @@ def analyze_text_confidence(word_confidence_data: List[Dict]) -> Dict:
 
 
 def annotate_text_with_confidence(text: str, word_confidence_data: List[Dict]) -> List[Dict]:
-    """
-    Annote chaque mot du texte avec sa catégorie de confiance.
-    
-    Args:
-        text: Texte complet
-        word_confidence_data: Données de confiance par mot
-        
-    Returns:
-        Liste de dictionnaires avec word, confidence, category, color
-    """
     annotated_words = []
     
-    # Créer un mapping des mots avec leur confiance
     confidence_map = {}
     for item in word_confidence_data:
         word = item["word"]
         conf = item["confidence"]
-        # Utiliser le mot en minuscule comme clé pour correspondance insensible à la casse
         confidence_map[word.lower()] = conf
     
-    # Parcourir le texte et annoter chaque mot
     words_in_text = text.split()
     
     for word in words_in_text:
@@ -117,8 +71,8 @@ def annotate_text_with_confidence(text: str, word_confidence_data: List[Dict]) -
         if not clean_word:
             continue
             
-        # Chercher la confiance du mot (insensible à la casse)
-        confidence = confidence_map.get(clean_word.lower(), 0.75)  # Par défaut 0.75
+        
+        confidence = confidence_map.get(clean_word.lower(), 0.75)  
         category = categorize_word_by_confidence(confidence)
         color = get_color_for_confidence(confidence)
         
@@ -133,15 +87,6 @@ def annotate_text_with_confidence(text: str, word_confidence_data: List[Dict]) -
 
 
 def generate_html_colored_text(annotated_words: List[Dict]) -> str:
-    """
-    Génère du HTML avec le texte coloré selon la confiance.
-    
-    Args:
-        annotated_words: Mots annotés avec confiance et couleur
-        
-    Returns:
-        HTML string
-    """
     html_parts = []
     
     for item in annotated_words:
@@ -158,16 +103,6 @@ def generate_html_colored_text(annotated_words: List[Dict]) -> str:
 
 
 def compare_word_confidence_across_models(results: List[Dict], word: str) -> Dict:
-    """
-    Compare la confiance d'un mot spécifique à travers plusieurs modèles.
-    
-    Args:
-        results: Liste des résultats de tous les modèles
-        word: Mot à comparer
-        
-    Returns:
-        Dictionnaire avec la confiance par modèle
-    """
     word_lower = word.lower()
     comparison = {}
     
@@ -177,8 +112,6 @@ def compare_word_confidence_across_models(results: List[Dict], word: str) -> Dic
             
         model_id = result["model_id"]
         word_conf_data = result.get("word_confidence", [])
-        
-        # Chercher le mot dans les données de confiance
         for item in word_conf_data:
             if item["word"].lower() == word_lower:
                 comparison[model_id] = item["confidence"]

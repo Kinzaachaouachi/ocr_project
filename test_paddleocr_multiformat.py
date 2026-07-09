@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -12,12 +11,12 @@ print("=" * 80)
 print("   TEST PADDLEOCR MULTIFORMAT - Kinza Chaouachi")
 print("=" * 80)
 
-# Configuration pour Windows
+
 os.environ["FLAGS_use_mkldnn"] = "0"
 os.environ["PADDLE_DISABLE_MKLDNN"] = "1"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-# Créer le dossier de résultats
+
 results_dir = Path("test_results")
 results_dir.mkdir(exist_ok=True)
 
@@ -25,7 +24,6 @@ print("\n[1/6] Préparation des images de test...")
 
 test_images = []
 
-# Fonction pour estimer la difficulté
 def _estimate_difficulty(filename):
     filename_lower = filename.lower()
     if "simple" in filename_lower:
@@ -41,7 +39,6 @@ def _estimate_difficulty(filename):
     else:
         return "moyen"
 
-# 1. Images du corpus de test (toutes)
 corpus_dir = Path("corpus_test")
 if corpus_dir.exists():
     image_files = list(corpus_dir.glob("*.png"))
@@ -53,7 +50,7 @@ if corpus_dir.exists():
             "expected_difficulty": _estimate_difficulty(img_file.stem)
         })
 
-# 2. Image de démonstration
+
 demo_image = Path("demo_images/demo_text.png")
 if demo_image.exists():
     test_images.append({
@@ -62,8 +59,6 @@ if demo_image.exists():
         "description": "Image démonstration standard",
         "expected_difficulty": "moyen"
     })
-
-# 3. Images générées par les tests précédents
 test_files_dir = Path("test_files")
 if test_files_dir.exists():
     generated_images = list(test_files_dir.glob("*.png"))
@@ -75,7 +70,6 @@ if test_files_dir.exists():
             "expected_difficulty": "facile"
         })
 
-# Mettre à jour les difficultés estimées
 for img in test_images:
     if "expected_difficulty" not in img:
         img["expected_difficulty"] = _estimate_difficulty(Path(img["path"]).stem)
@@ -91,12 +85,11 @@ print("\n[2/6] Initialisation de PaddleOCR...")
 
 try:
     init_start = time.time()
-    
-    # Essayer différents paramètres
+
     try:
         from paddleocr import PaddleOCR
         
-        # Configuration optimisée pour Windows
+       
         ocr = PaddleOCR(
             use_angle_cls=True,
             lang='fr',
@@ -105,23 +98,23 @@ try:
         )
         
         init_time = time.time() - init_start
-        print(f"    [OK] PaddleOCR initialise en {init_time:.2f}s")
+        print(f"     PaddleOCR initialise en {init_time:.2f}s")
         print(f"    Configuration : français, sans GPU, avec classification d'angle")
         
     except TypeError as e:
-        # Essayer avec paramètres simplifiés si erreur
-        print(f"    [!] Erreur de parametres, tentative avec configuration simplifiee...")
+       
+        print(f"     Erreur de parametres, tentative avec configuration simplifiee...")
         ocr = PaddleOCR(lang='fr')
         init_time = time.time() - init_start
-        print(f"    [OK] PaddleOCR initialise (config simplifiee) en {init_time:.2f}s")
+        print(f"    PaddleOCR initialise (config simplifiee) en {init_time:.2f}s")
         
 except Exception as e:
-    print(f"    [X] Erreur d'initialisation : {e}")
+    print(f"     Erreur d'initialisation : {e}")
     print("    Installation : pip install paddleocr paddlepaddle")
     print("    Note : PaddleOCR nécessite numpy 1.26.4 (incompatible numpy 2.x)")
     sys.exit(1)
 
-print("\n[3/6] Exécution des tests sur chaque image...")
+print("\n Exécution des tests sur chaque image...")
 print("-" * 80)
 
 results = []
@@ -140,23 +133,22 @@ for i, test_image in enumerate(test_images, 1):
     }
     
     try:
-        # Vérifier que le fichier existe
+        
         if not Path(test_image['path']).exists():
             image_result["status"] = "échec"
             image_result["error"] = "Fichier non trouvé"
             print(f"      [X] Fichier non trouve")
             continue
         
-        # Mesurer le temps de traitement
         process_start = time.time()
         ocr_result = ocr.ocr(test_image['path'], cls=True)
         process_time = time.time() - process_start
         
-        # Analyser les résultats
+        
         if ocr_result and ocr_result[0]:
             detections = ocr_result[0]
             
-            # Collecter les données
+           
             texts = []
             confidences = []
             for detection in detections:
@@ -167,12 +159,12 @@ for i, test_image in enumerate(test_images, 1):
                         confidences.append(float(text_info[1]))
             
             if texts and confidences:
-                # Calculer les statistiques
+                
                 avg_confidence = sum(confidences) / len(confidences) * 100
                 min_confidence = min(confidences) * 100
                 max_confidence = max(confidences) * 100
                 
-                # Joindre le texte détecté
+            
                 detected_text = " ".join(texts)
                 
                 image_result.update({
@@ -224,7 +216,7 @@ total_time = time.time() - total_start
 print("\n[4/6] Résultats par niveau de difficulté...")
 print("-" * 80)
 
-# Grouper par difficulté
+
 difficulty_results = {}
 for res in results:
     difficulty = res.get("expected_difficulty", "inconnu")

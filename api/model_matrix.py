@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Matrice de benchmark des modèles OCR
-Contient les caractéristiques, avantages et critères de scoring de chaque modèle
-"""
+
 
 MODEL_MATRIX = {
     "paddleocr": {
@@ -11,7 +7,7 @@ MODEL_MATRIX = {
         "provider": "Baidu",
         "description": "Moteur OCR rapide et précis, optimisé pour la production",
         
-        # Avantages
+       
         "advantages": [
             "Très rapide (1-2s par page)",
             "Excellente précision sur texte imprimé",
@@ -21,32 +17,29 @@ MODEL_MATRIX = {
             "Idéal pour le traitement en batch"
         ],
         
-        # Inconvénients
+        
         "disadvantages": [
             "Moins performant sur documents manuscrits",
             "Nécessite des images de bonne qualité",
             "Mise en page complexe parfois approximative"
         ],
         
-        # Critères de scoring (sur 100)
-        "scoring": {
-            "speed": 95,              # Vitesse d'exécution
-            "accuracy_print": 98,     # Précision texte imprimé
-            "accuracy_handwritten": 60,  # Précision manuscrit
-            "multilanguage": 95,      # Support multi-langue
-            "layout_preservation": 75,  # Conservation de la mise en page
-            "ease_of_use": 90,        # Facilité d'utilisation
-            "memory_usage": 85,       # Consommation mémoire (inversé)
-            "confidence_scores": 90   # Fiabilité des scores de confiance
-        },
         
-        # Langues supportées (principales)
+        "scoring": {
+            "speed": 95,              
+            "accuracy_print": 98,     
+            "accuracy_handwritten": 60,  
+            "multilanguage": 95,      
+            "layout_preservation": 75,  
+            "ease_of_use": 90,        
+            "memory_usage": 85,       
+            "confidence_scores": 90   
+        },
+      
         "languages": ["fr", "en", "es", "de", "it", "pt", "ar", "zh", "ja", "ko", "ru"],
         
-        # Formats supportés
         "supported_formats": ["image", "pdf"],
         
-        # Cas d'usage recommandés
         "use_cases": [
             "Documents administratifs",
             "Factures et reçus",
@@ -197,21 +190,12 @@ MODEL_MATRIX = {
 
 
 def calculate_overall_score(model_id: str) -> float:
-    """
-    Calcule le score global d'un modèle basé sur ses critères de scoring.
-    
-    Args:
-        model_id: Identifiant du modèle
-        
-    Returns:
-        Score global sur 100
-    """
+
     if model_id not in MODEL_MATRIX:
         return 0.0
     
     scoring = MODEL_MATRIX[model_id]["scoring"]
     
-    # Pondération des critères (total = 1.0)
     weights = {
         "speed": 0.20,
         "accuracy_print": 0.25,
@@ -228,39 +212,22 @@ def calculate_overall_score(model_id: str) -> float:
 
 
 def get_best_model_for_task(task_type: str, language: str = "fr") -> str:
-    """
-    Recommande le meilleur modèle selon le type de tâche et la langue.
-    
-    Args:
-        task_type: Type de tâche ("document", "image", "handwritten", "multilingual", "fast")
-        language: Code de langue (ISO 639-1)
-        
-    Returns:
-        Identifiant du modèle recommandé
-    """
+
     recommendations = {
-        "document": "docling",      # Documents structurés (PDF, Word)
-        "image": "paddleocr",       # Images générales
-        "handwritten": "trocr",     # Texte manuscrit
-        "multilingual": "easyocr",  # Multi-langue
-        "fast": "paddleocr",        # Vitesse prioritaire
-        "table": "docling",         # Tableaux
-        "invoice": "paddleocr"      # Factures
+        "document": "docling",      
+        "image": "paddleocr",     
+        "handwritten": "trocr",     
+        "multilingual": "easyocr", 
+        "fast": "paddleocr",        
+        "table": "docling",         
+        "invoice": "paddleocr"      
     }
     
     return recommendations.get(task_type, "paddleocr")
 
 
 def rank_models_by_criteria(criteria: str) -> list:
-    """
-    Classe les modèles selon un critère spécifique.
-    
-    Args:
-        criteria: Nom du critère (ex: "speed", "accuracy_print")
-        
-    Returns:
-        Liste de tuples (model_id, score) triée par score décroissant
-    """
+
     rankings = []
     for model_id, data in MODEL_MATRIX.items():
         if criteria in data["scoring"]:
@@ -270,15 +237,7 @@ def rank_models_by_criteria(criteria: str) -> list:
 
 
 def get_model_info(model_id: str) -> dict:
-    """
-    Retourne les informations complètes d'un modèle.
-    
-    Args:
-        model_id: Identifiant du modèle
-        
-    Returns:
-        Dictionnaire avec toutes les informations du modèle
-    """
+
     if model_id not in MODEL_MATRIX:
         return {}
     
@@ -288,15 +247,6 @@ def get_model_info(model_id: str) -> dict:
 
 
 def compare_models(model_ids: list = None) -> dict:
-    """
-    Compare plusieurs modèles sur tous les critères.
-    
-    Args:
-        model_ids: Liste des identifiants de modèles à comparer (None = tous)
-        
-    Returns:
-        Dictionnaire de comparaison
-    """
     if model_ids is None:
         model_ids = list(MODEL_MATRIX.keys())
     
@@ -304,12 +254,10 @@ def compare_models(model_ids: list = None) -> dict:
         "models": {},
         "rankings": {}
     }
-    
-    # Récupérer les infos de chaque modèle
+
     for model_id in model_ids:
         comparison["models"][model_id] = get_model_info(model_id)
     
-    # Créer les classements par critère
     criteria = ["speed", "accuracy_print", "accuracy_handwritten", "multilanguage", 
                 "layout_preservation", "ease_of_use", "confidence_scores"]
     

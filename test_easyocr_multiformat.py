@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -12,7 +11,6 @@ print("=" * 80)
 print("   TEST EASYOCR MULTIFORMAT - Kinza Chaouachi")
 print("=" * 80)
 
-# Créer le dossier de résultats
 results_dir = Path("test_results")
 results_dir.mkdir(exist_ok=True)
 
@@ -20,7 +18,6 @@ print("\n[1/6] Préparation des images de test...")
 
 test_images = []
 
-# Fonction pour estimer la difficulté
 def _estimate_difficulty(filename):
     filename_lower = filename.lower()
     if "simple" in filename_lower or "demo" in filename_lower:
@@ -38,7 +35,6 @@ def _estimate_difficulty(filename):
     else:
         return "standard"
 
-# Fonction pour estimer la difficulté
 def _estimate_difficulty(filename):
     filename_lower = filename.lower()
     if "simple" in filename_lower or "demo" in filename_lower:
@@ -56,7 +52,6 @@ def _estimate_difficulty(filename):
     else:
         return "standard"
 
-# 1. Images du corpus de test (toutes)
 corpus_dir = Path("corpus_test")
 if corpus_dir.exists():
     image_files = list(corpus_dir.glob("*.png"))
@@ -70,7 +65,7 @@ if corpus_dir.exists():
             "language": "fr"  # Principalement français
         })
 
-# 2. Image de démonstration
+
 demo_image = Path("demo_images/demo_text.png")
 if demo_image.exists():
     test_images.append({
@@ -81,7 +76,7 @@ if demo_image.exists():
         "language": "fr/en"
     })
 
-# 3. Images générées par les tests précédents
+
 test_files_dir = Path("test_files")
 if test_files_dir.exists():
     generated_images = list(test_files_dir.glob("*.png"))
@@ -104,7 +99,7 @@ for img in test_images:
 for cat, count in categories.items():
     print(f"    • {cat}: {count} images")
 
-print("\n[2/6] Initialisation d'EasyOCR...")
+print("\n Initialisation d'EasyOCR...")
 
 try:
     init_start = time.time()
@@ -115,7 +110,7 @@ try:
     
     init_time = time.time() - init_start
     
-    print(f"    [OK] EasyOCR initialise en {init_time:.2f}s")
+    print(f"   EasyOCR initialise en {init_time:.2f}s")
     print(f"    Langues : français, anglais")
     print(f"    GPU : Non disponible (utilisation CPU)")
     print("    Note : Message 'Using CPU. Note: This module is much faster with a GPU.' est normal")
@@ -146,38 +141,33 @@ for i, test_image in enumerate(test_images, 1):
     }
     
     try:
-        # Vérifier que le fichier existe
         if not Path(test_image['path']).exists():
             image_result["status"] = "échec"
             image_result["error"] = "Fichier non trouvé"
             print(f"      [X] Fichier non trouve")
             continue
         
-        # Mesurer le temps de traitement
         process_start = time.time()
         ocr_result = reader.readtext(test_image['path'], paragraph=False)
         process_time = time.time() - process_start
         
-        # Analyser les résultats
         if ocr_result:
-            # Collecter les données
+
             texts = []
             confidences = []
             for detection in ocr_result:
-                if len(detection) >= 3:  # Format: [[coords], text, confidence]
+                if len(detection) >= 3: 
                     texts.append(detection[1])
                     confidences.append(float(detection[2]))
             
             if texts and confidences:
-                # Calculer les statistiques
+                
                 avg_confidence = sum(confidences) / len(confidences) * 100
                 min_confidence = min(confidences) * 100
                 max_confidence = max(confidences) * 100
                 
-                # Joindre le texte détecté
-                detected_text = " ".join(texts)
                 
-                # Analyser la longueur des détections
+                detected_text = " ".join(texts)
                 word_count = sum(len(text.split()) for text in texts)
                 avg_word_length = sum(len(text) for text in texts) / len(texts) if texts else 0
                 
@@ -202,7 +192,7 @@ for i, test_image in enumerate(test_images, 1):
                     sample = texts[0][:50] + "..." if len(texts[0]) > 50 else texts[0]
                     print(f"        Exemple : '{sample}'")
                     
-                # Détection spéciale pour certaines catégories
+              
                 if test_image['expected_difficulty'] == 'chiffres':
                     numbers = sum(1 for text in texts if any(c.isdigit() for c in text))
                     print(f"        Chiffres détectés : {numbers}/{len(texts)}")
@@ -239,7 +229,7 @@ total_time = time.time() - total_start
 print("\n[4/6] Résultats par catégorie de difficulté...")
 print("-" * 80)
 
-# Grouper par difficulté
+
 difficulty_results = {}
 for res in results:
     difficulty = res.get("expected_difficulty", "inconnu")

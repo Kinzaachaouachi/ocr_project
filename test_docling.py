@@ -1,5 +1,3 @@
-
-
 import os
 import sys
 import time
@@ -9,7 +7,6 @@ print("=" * 60)
 print("   TEST DOCLING")
 print("=" * 60)
 
-# Chemins des fichiers de test
 test_files = [
     ("demo_images/demo_text.png", "image"),
     ("test_image.png", "image"),
@@ -46,10 +43,10 @@ for file_path, file_type in test_files:
         process_time = time.time() - process_start
         
         char_count = len(text)
-        print(f"      [OK] {process_time:.2f}s - {char_count} caractères")
+        print(f"      {process_time:.2f}s - {char_count} caractères")
         success_count += 1
     except Exception as e:
-        print(f"      [X] Erreur: {str(e)[:50]}")
+        print(f"      Erreur: {str(e)[:50]}")
 
 print("\n[3/3] Résultats")
 print("-" * 60)

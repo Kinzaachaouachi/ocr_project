@@ -1,9 +1,3 @@
-"""
-Script de test pour PaddleOCR - Test Texte
-Auteur : Kinza Chaouachi
-Description : Test simple de PaddleOCR avec un fichier texte
-"""
-
 import os
 import sys
 import time
@@ -37,16 +31,15 @@ try:
         show_log=False
     )
     fin_init = time.time()
-    print(f"    [OK] PaddleOCR prêt en {fin_init - debut_init:.2f}s")
+    print(f"    PaddleOCR prêt en {fin_init - debut_init:.2f}s")
 except Exception as e:
-    print(f"    [X] Erreur: {e}")
+    print(f"   Erreur: {e}")
     sys.exit(1)
 
 print("\n[3/3] Résultats")
 print("-" * 60)
 
 try:
-    # Lire le fichier texte
     with open(test_file, 'r', encoding='utf-8') as f:
         content = f.read()
     

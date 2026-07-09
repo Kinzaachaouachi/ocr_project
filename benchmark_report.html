@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* ─── RESET & TOKENS ────────────────────────────────── */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
@@ -60,7 +59,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ─── PAGE HEADER ──────────────────────────────────────── */
         .site-header {
             background: var(--white);
             border-bottom: 1px solid var(--slate-200);
@@ -89,7 +87,6 @@
             transition: background 0.15s ease;
         }
         .back-btn:hover { background: var(--blue-700); }
-        /* ─── TAB NAVIGATION ─────────────────────────────────── */
         .tab-nav-wrap {
             background: var(--white); border-bottom: 1px solid var(--slate-200);
             position: sticky; top: 0; z-index: 200;
@@ -117,7 +114,6 @@
         .tab-btn.active-local .tab-count { background: var(--blue-100); color: var(--blue-700); }
         .tab-btn.active-olm .tab-count   { background: #ede9fe; color: var(--purple-600); }
 
-        /* ─── TAB PANELS ─────────────────────────────────────── */
         .tab-panel { display: none; }
         .tab-panel.active { display: block; animation: fadeUp 0.3s ease; }
 
@@ -126,10 +122,8 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ─── MAIN CONTAINER ─────────────────────────────────── */
         .main { max-width: 1400px; margin: 0 auto; padding: 36px 24px 60px; }
 
-        /* ─── SECTION CARD ───────────────────────────────────── */
         .card {
             background: var(--white); border-radius: var(--radius-lg);
             border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);
@@ -146,7 +140,6 @@
         .card-subtitle { font-size: 0.82rem; color: var(--slate-400); margin-top: 2px; }
         .card-body { padding: 24px 28px; }
 
-        /* ─── METRICS ROW ─────────────────────────────────────── */
         .metrics-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
@@ -164,8 +157,6 @@
             font-size: 0.7rem; font-weight: 600; color: var(--slate-400);
             text-transform: uppercase; letter-spacing: 0.06em;
         }
-
-        /* ─── TABLES ──────────────────────────────────────────── */
         .table-wrap { overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--slate-200); }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
         thead { background: linear-gradient(to bottom, var(--slate-50), #eef2ff); }
@@ -182,7 +173,6 @@
         tbody tr:hover { background: linear-gradient(to right, var(--blue-100), var(--slate-50)); }
         td:first-child { font-weight: 600; }
 
-        /* ─── BADGES ──────────────────────────────────────────── */
         .badge {
             display: inline-flex; align-items: center; gap: 4px;
             padding: 3px 10px; border-radius: 999px;
@@ -192,7 +182,6 @@
         .badge-warning { background: var(--amber-100); color: var(--amber-700); }
         .badge-danger  { background: var(--red-100);   color: var(--red-700); }
 
-        /* ─── CONCLUSION HIGHLIGHT ────────────────────────────── */
         .conclusion-box {
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border: 1px solid #86efac; border-radius: var(--radius-md);
@@ -207,12 +196,10 @@
         }
         .conclusion-item::before { content: '→'; color: var(--teal-600); font-weight: 700; flex-shrink: 0; }
 
-        /* ─── CHART ───────────────────────────────────────────── */
         .chart-container {
             position: relative; height: 300px; padding: 8px 0;
         }
 
-        /* ─── OLM — TOP MODELS ────────────────────────────────── */
         .top-models { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
         .model-card {
             border: 2px solid var(--slate-200); border-radius: var(--radius-lg);
@@ -252,7 +239,6 @@
             padding: 4px 8px; font-size: 0.75rem; color: var(--slate-600);
         }
 
-        /* ─── OLM SCORE CELLS ─────────────────────────────────── */
         .score-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; text-align: center; }
         .score-excellent { color: #059669; }
         .score-good      { color: #10b981; }
@@ -264,8 +250,6 @@
             background: linear-gradient(135deg, var(--blue-100), #ede9fe);
             color: var(--blue-700);
         }
-
-        /* ─── CRITERIA GRID ───────────────────────────────────── */
         .criteria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
         .criteria-item {
             background: var(--slate-50); border: 1px solid var(--slate-200);
@@ -276,7 +260,6 @@
         .criteria-name { font-weight: 700; font-size: 0.85rem; color: var(--slate-800); margin-bottom: 4px; }
         .criteria-desc { font-size: 0.78rem; color: var(--slate-500); }
 
-        /* ─── FOOTER ────────────────────────────────────────── */
         .site-footer {
             text-align: center; color: var(--slate-400);
             padding: 20px 24px; font-size: 0.75rem;
@@ -284,7 +267,6 @@
             margin-top: 16px;
         }
 
-        /* ─── RESPONSIVE ─────────────────────────────────────── */
         @media (max-width: 768px) {
             .site-header { padding: 14px 16px; }
             .main { padding: 20px 16px 40px; }
@@ -312,7 +294,7 @@
     </div>
 </header>
 
-<!-- ═══ STICKY TABS ════════════════════════════════════════════ -->
+
 <nav class="tab-nav-wrap" aria-label="Navigation des rapports">
     <div class="tab-nav">
         <button class="tab-btn active-local" id="btn-local" onclick="switchTab('local')" aria-selected="true">
@@ -326,13 +308,11 @@
     </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!--  TAB 1 — BENCHMARK LOCAL                                   -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+
 <div id="panel-local" class="tab-panel active">
 <div class="main">
 
-    <!-- Métriques clés -->
+  
     <div class="card">
         <div class="card-header">
             <span class="card-icon">🎯</span>
@@ -372,7 +352,7 @@
         </div>
     </div>
 
-    <!-- Graphique performance -->
+
     <div class="card">
         <div class="card-header">
             <span class="card-icon">📈</span>
@@ -389,7 +369,7 @@
         </div>
     </div>
 
-    <!-- Tableau résultats -->
+   
     <div class="card">
         <div class="card-header">
             <span class="card-icon">📋</span>
@@ -443,7 +423,7 @@
         </div>
     </div>
 
-    <!-- Compatibilité formats -->
+  
     <div class="card">
         <div class="card-header">
             <span class="card-icon">📂</span>
@@ -508,9 +488,7 @@
 </div><!-- /panel-local -->
 
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!--  TAB 2 — olmOCR-Bench                                      -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+
 <div id="panel-olm" class="tab-panel">
 <div class="main">
 
@@ -545,7 +523,7 @@
         </div>
     </div>
 
-    <!-- Top 3 -->
+    
     <div class="card">
         <div class="card-header purple">
             <span class="card-icon">🏆</span>
@@ -615,7 +593,6 @@
         </div>
     </div>
 
-    <!-- Matrice complète -->
     <div class="card">
         <div class="card-header purple">
             <span class="card-icon">📊</span>
@@ -754,7 +731,7 @@
                 </table>
             </div>
 
-            <!-- Legend -->
+           
             <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;font-size:0.78rem;">
                 <span style="color:#059669;font-weight:700;">● ≥ 85 : Excellent</span>
                 <span style="color:#10b981;font-weight:700;">● 75–84 : Bon</span>
@@ -764,7 +741,6 @@
         </div>
     </div>
 
-    <!-- Description critères -->
     <div class="card">
         <div class="card-header purple">
             <span class="card-icon">📖</span>
@@ -814,8 +790,6 @@
 </div><!-- /main -->
 </div><!-- /panel-olm -->
 
-
-<!-- ═══ FOOTER ══════════════════════════════════════════════════ -->
 <footer class="site-footer">
     <p><strong>📊 Dashboard Benchmark OCR — Projet de Stage 2026</strong></p>
     <p>Auteur : <strong>Kinza Chaouachi</strong> &nbsp;|&nbsp; Date : Juin 2026 &nbsp;|&nbsp; Status : ✅ Complet</p>
@@ -823,9 +797,8 @@
 </footer>
 
 
-<!-- ═══ SCRIPTS ═════════════════════════════════════════════════ -->
+
 <script>
-/* ── Tab switching ── */
 function switchTab(tab) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => {
@@ -841,11 +814,9 @@ function switchTab(tab) {
         btn.setAttribute('aria-selected', 'true');
     }
 
-    // Init charts if switching to local
     if (tab === 'local') initCharts();
 }
 
-/* ── Chart.js ── */
 let chartsInited = false;
 
 function initCharts() {
@@ -857,8 +828,6 @@ function initCharts() {
     const colorAmber  = '#f59e0b';
     const colorRed    = '#ef4444';
     const labels      = ['PaddleOCR', 'Docling', 'EasyOCR', 'TrOCR'];
-
-    // Chart temps total
     new Chart(document.getElementById('chartTime'), {
         type: 'bar',
         data: {
@@ -883,7 +852,6 @@ function initCharts() {
         }
     });
 
-    // Chart précision
     new Chart(document.getElementById('chartAcc'), {
         type: 'bar',
         data: {
@@ -909,10 +877,10 @@ function initCharts() {
     });
 }
 
-// Init charts on first load (local tab is active)
+
 window.addEventListener('DOMContentLoaded', initCharts);
 
-// Hash routing
+
 window.addEventListener('DOMContentLoaded', () => {
     if (window.location.hash === '#olm') switchTab('olm');
 });

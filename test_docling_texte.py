@@ -1,9 +1,3 @@
-"""
-Script de test pour Docling - Test Texte
-Auteur : Kinza Chaouachi
-Description : Test simple de Docling avec un fichier texte
-"""
-
 import os
 import sys
 import time
@@ -28,9 +22,9 @@ try:
     from docling.document_converter import DocumentConverter
     converter = DocumentConverter()
     fin_init = time.time()
-    print(f"    [OK] Docling prêt en {fin_init - debut_init:.2f}s")
+    print(f"   Docling prêt en {fin_init - debut_init:.2f}s")
 except Exception as e:
-    print(f"    [X] Erreur: {e}")
+    print(f"   Erreur: {e}")
     sys.exit(1)
 
 print("\n[3/3] Résultats")
@@ -43,14 +37,14 @@ try:
     fin_ocr = time.time()
     
     duree = fin_ocr - debut_ocr
-    print(f"    [OK] Fichier texte converti en {duree:.2f}s")
+    print(f"    Fichier texte converti en {duree:.2f}s")
     print(f"    Caractères : {len(text)}")
     print(f"    Lignes : {len(text.split(chr(10)))}")
     print(f"\n    Contenu :\n    {text[:150]}...")
     print(f"\n    RÉSULTAT : SUCCÈS [OK]")
     
 except Exception as e:
-    print(f"    [X] Erreur: {e}")
+    print(f"    Erreur: {e}")
     print(f"    RÉSULTAT : ÉCHEC [FAIL]")
 
 print("\n" + "=" * 60)

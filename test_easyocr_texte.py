@@ -1,9 +1,3 @@
-"""
-Script de test pour EasyOCR - Test Texte
-Auteur : Kinza Chaouachi
-Description : Test simple de EasyOCR avec un fichier texte
-"""
-
 import os
 import sys
 import time
@@ -37,7 +31,6 @@ print("\n[3/3] Résultats")
 print("-" * 60)
 
 try:
-    # Lire le fichier texte
     with open(test_file, 'r', encoding='utf-8') as f:
         content = f.read()
     

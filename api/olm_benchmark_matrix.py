@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Matrice de Benchmark olmOCR-Bench
-Source: Benchmark complet couvrant plus de 7,000 cas de test sur 1,400 documents
-Critères: ArXiv, Old scans math, Tables, Old scans, Headers & footers, Multi column, Long tiny text, Base, Overall
-"""
-
-# Matrice complète de benchmark olmOCR (scores sur 100)
 OLM_BENCHMARK_MATRIX = {
     "mistral_ocr_api": {
         "name": "Mistral OCR API",
@@ -116,7 +108,7 @@ OLM_BENCHMARK_MATRIX = {
             "base": 99.8,
             "overall": 82.5
         },
-        "std_dev": None,  # Pas de déviation standard fournie
+        "std_dev": None,  
         "rank": 2
     },
     "chandra_ocr": {
@@ -153,7 +145,6 @@ OLM_BENCHMARK_MATRIX = {
     }
 }
 
-# Catégories de critères avec descriptions
 CRITERIA_DESCRIPTIONS = {
     "arxiv": "Documents scientifiques ArXiv (formules mathématiques, graphiques)",
     "old_scans_math": "Anciens documents scannés avec mathématiques",
@@ -166,7 +157,6 @@ CRITERIA_DESCRIPTIONS = {
     "overall": "Score global moyen"
 }
 
-# Noms affichables des critères
 CRITERIA_LABELS = {
     "arxiv": "ArXiv",
     "old_scans_math": "Old scans math",
@@ -181,48 +171,28 @@ CRITERIA_LABELS = {
 
 
 def get_olm_matrix():
-    """Retourne la matrice complète de benchmark olmOCR"""
     return OLM_BENCHMARK_MATRIX
 
 
 def get_top_models(n=5, criteria="overall"):
-    """
-    Retourne les N meilleurs modèles selon un critère spécifique
-    
-    Args:
-        n: Nombre de modèles à retourner
-        criteria: Critère de classement (par défaut: overall)
-    
-    Returns:
-        Liste de tuples (model_id, model_data) triés par score décroissant
-    """
     models = []
     for model_id, data in OLM_BENCHMARK_MATRIX.items():
         score = data["scores"].get(criteria, 0)
         models.append((model_id, data, score))
     
-    # Trier par score décroissant
+  
     models.sort(key=lambda x: x[2], reverse=True)
     
     return [(m[0], m[1]) for m in models[:n]]
 
 
 def compare_with_olm_models(model_name):
-    """
-    Compare un modèle local avec les modèles olmOCR-Bench
-    
-    Args:
-        model_name: Nom du modèle local (paddleocr, docling, easyocr, trocr)
-    
-    Returns:
-        Dict avec position estimée et modèles proches
-    """
-    # Mapping des modèles locaux vers les équivalents olmOCR
+
     local_to_olm = {
         "paddleocr": "paddleocr_vl",
-        "docling": None,  # Pas d'équivalent direct
-        "easyocr": None,  # Pas d'équivalent direct
-        "trocr": None     # Pas d'équivalent direct
+        "docling": None,  
+        "easyocr": None,  
+        "trocr": None     
     }
     
     olm_equivalent = local_to_olm.get(model_name)
@@ -243,25 +213,14 @@ def compare_with_olm_models(model_name):
 
 
 def get_criteria_description(criteria):
-    """Retourne la description d'un critère"""
     return CRITERIA_DESCRIPTIONS.get(criteria, "")
 
 
 def get_criteria_label(criteria):
-    """Retourne le label affiché pour un critère"""
     return CRITERIA_LABELS.get(criteria, criteria)
 
 
 def get_model_strengths(model_id):
-    """
-    Identifie les forces d'un modèle (critères où il excelle)
-    
-    Args:
-        model_id: ID du modèle
-    
-    Returns:
-        Liste des critères où le modèle a un score >= 80
-    """
     if model_id not in OLM_BENCHMARK_MATRIX:
         return []
     
@@ -276,23 +235,13 @@ def get_model_strengths(model_id):
                 "score": score,
                 "description": get_criteria_description(criteria)
             })
-    
-    # Trier par score décroissant
+
     strengths.sort(key=lambda x: x["score"], reverse=True)
     
     return strengths
 
 
 def get_model_weaknesses(model_id):
-    """
-    Identifie les faiblesses d'un modèle (critères où il est faible)
-    
-    Args:
-        model_id: ID du modèle
-    
-    Returns:
-        Liste des critères où le modèle a un score < 60
-    """
     if model_id not in OLM_BENCHMARK_MATRIX:
         return []
     
@@ -308,7 +257,7 @@ def get_model_weaknesses(model_id):
                 "description": get_criteria_description(criteria)
             })
     
-    # Trier par score croissant
+
     weaknesses.sort(key=lambda x: x["score"])
     
     return weaknesses

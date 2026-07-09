@@ -1,14 +1,7 @@
-"""
-Script de test pour PaddleOCR
-Auteur : Kinza Chaouachi
-Description : Test simple de PaddleOCR avec une image générée automatiquement
-"""
-
 import os
 import sys
 import time
 
-# Désactiver oneDNN pour éviter les conflits Windows
 os.environ["FLAGS_use_mkldnn"] = "0"
 os.environ["PADDLE_DISABLE_MKLDNN"] = "1"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -17,10 +10,10 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 print("=" * 60)
-print("   TEST PADDLEOCR - Kinza Achaouachi")
+print("   TEST PADDLEOCR - Kinza chaouachi")
 print("=" * 60)
 
-# ── Étape 1 : Créer une image de test avec du texte ──────────────
+
 print("\n[1/4] Création de l'image de test...")
 
 img = Image.new("RGB", (600, 200), color=(255, 255, 255))
@@ -35,7 +28,7 @@ image_path = "test_image.png"
 img.save(image_path)
 print(f"    Image créée : {image_path} (600x200 px)")
 
-# ── Étape 2 : Initialiser PaddleOCR ──────────────────────────────
+
 print("\n[2/4] Initialisation de PaddleOCR...")
 debut_init = time.time()
 
@@ -43,7 +36,7 @@ from paddleocr import PaddleOCR
 
 ocr = PaddleOCR(
     use_angle_cls=True,
-    lang="fr",          # langue française
+    lang="fr",         
     use_gpu=False,
     show_log=False
 )
@@ -51,7 +44,6 @@ ocr = PaddleOCR(
 fin_init = time.time()
 print(f"    PaddleOCR prêt en {fin_init - debut_init:.2f}s")
 
-# ── Étape 3 : Lancer l'OCR ────────────────────────────────────────
 print("\n[3/4] Reconnaissance du texte en cours...")
 debut_ocr = time.time()
 
@@ -61,7 +53,6 @@ fin_ocr = time.time()
 duree = fin_ocr - debut_ocr
 print(f"    OCR terminé en {duree:.2f}s")
 
-# ── Étape 4 : Afficher les résultats ─────────────────────────────
 print("\n[4/4] Résultats :")
 print("-" * 60)
 

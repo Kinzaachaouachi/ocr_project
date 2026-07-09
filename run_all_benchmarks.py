@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Benchmark Comparatif des 4 Modèles OCR
-Teste PaddleOCR, Docling, EasyOCR et TrOCR
-Génère un rapport HTML avec matrice de benchmark
-"""
 
 import os
 import sys
@@ -17,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from PIL import Image, ImageDraw
 
-# Suppression des avertissements
 os.environ["FLAGS_use_mkldnn"] = "0"
 os.environ["PADDLE_DISABLE_MKLDNN"] = "1"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -45,7 +38,6 @@ CORPUS_SAMPLES = [
 
 
 def levenshtein_distance(s1, s2):
-    """Calcule la distance de Levenshtein entre deux chaînes."""
     if len(s1) < len(s2):
         return levenshtein_distance(s2, s1)
     if len(s2) == 0:
@@ -63,7 +55,6 @@ def levenshtein_distance(s1, s2):
 
 
 def calculate_accuracy(recognized, ground_truth):
-    """Calcule la précision OCR par distance de Levenshtein."""
     def normalize(t):
         return ' '.join(re.sub(r'[^a-z0-9\s]', '', t.lower()).split())
     norm_rec = normalize(recognized)
@@ -75,7 +66,6 @@ def calculate_accuracy(recognized, ground_truth):
 
 
 def _draw_text_image(size, lines, color=(0, 0, 0)):
-    """Crée une image de test avec du texte."""
     img = Image.new("RGB", size, color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     y = 20
@@ -86,7 +76,6 @@ def _draw_text_image(size, lines, color=(0, 0, 0)):
 
 
 def ensure_demo_image():
-    """Crée l'image de démo si elle n'existe pas."""
     demo_path = Path(DEFAULT_IMAGE)
     demo_path.parent.mkdir(parents=True, exist_ok=True)
     if not demo_path.exists():
@@ -95,7 +84,6 @@ def ensure_demo_image():
 
 
 def ensure_corpus_test():
-    """Crée les images de corpus de test."""
     CORPUS_DIR.mkdir(parents=True, exist_ok=True)
     ground_truth = {}
     for sample in CORPUS_SAMPLES:
@@ -111,13 +99,12 @@ def ensure_corpus_test():
     return ground_truth
 
 
-# Parser pour arguments
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--run", choices=["paddleocr", "docling", "easyocr", "trocr"])
 parser.add_argument("--image", default=None)
 args = parser.parse_args()
 
-# Mode exécution d'un modèle spécifique
 if args.run:
     target_image = args.image or ensure_demo_image()
     if not os.path.exists(target_image):
@@ -146,8 +133,6 @@ if args.run:
             init_time = time.time() - t0
             t0 = time.time()
             
-            # Docling nécessite un chemin valide, pas une URL
-            # Convertir l'image en chemin absolu
             import os
             abs_path = os.path.abspath(target_image)
             
@@ -194,7 +179,6 @@ if args.run:
 
 
 def main():
-    """Fonction principale - Benchmark de tous les modèles."""
     print("="*80)
     print(" BENCHMARK COMPARATIF DES 4 MODELES OCR")
     print("="*80)
@@ -229,10 +213,10 @@ def main():
                 "accuracy": acc,
                 "text": json_data["text"]
             }
-            print(f"  ✓ Précision: {acc}% | Temps: {stats[model]['ocr_time']}s")
+            print(f"Précision: {acc}% | Temps: {stats[model]['ocr_time']}s")
         else:
             stats[model] = {"status": "error", "error": "Failed"}
-            print(f"  ✗ ERREUR")
+            print(f"  ERREUR")
     
     print("\n" + "="*80)
     print("RESULTATS FINAUX")
@@ -248,7 +232,6 @@ def main():
             print(f"| {model.upper():<15} | {'ERROR':<10} | {'ERROR':<10} | {'ERROR':<10} | {'0.0':<15} |")
     print("="*80)
     
-    # Sauvegarder les résultats
     results = {
         "timestamp": datetime.now().strftime("%d %B %Y %H:%M:%S"),
         "stats": stats
@@ -257,8 +240,8 @@ def main():
     with open("benchmark_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
-    print("\n✓ Fichier sauvegardé: benchmark_results.json")
-    print("✓ Rapport HTML disponible: http://127.0.0.1:8000/benchmark")
+    print("\n Fichier sauvegardé: benchmark_results.json")
+    print(" Rapport HTML disponible: http://127.0.0.1:8000/benchmark")
 
 
 if __name__ == "__main__":

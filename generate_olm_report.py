@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Génère un rapport HTML de la matrice olmOCR-Bench
-"""
 
 from api.olm_benchmark_matrix import (
     OLM_BENCHMARK_MATRIX,
@@ -14,9 +10,7 @@ from api.olm_benchmark_matrix import (
 )
 
 def generate_olm_report_html():
-    """Génère le rapport HTML olmOCR-Bench"""
-    
-    # En-tête HTML
+
     html = """<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -194,7 +188,6 @@ def generate_olm_report_html():
     <div class="container">
 """
     
-    # Section Top 3
     html += """
         <div class="section">
             <div class="section-header">
@@ -239,8 +232,7 @@ def generate_olm_report_html():
             </div>
         </div>
 """
-    
-    # Matrice complète
+
     html += """
         <div class="section">
             <div class="section-header">
@@ -255,7 +247,6 @@ def generate_olm_report_html():
                                 <th>Modèle</th>
 """
     
-    # En-têtes des critères
     criteria_order = ["arxiv", "old_scans_math", "tables", "old_scans", "headers_footers", "multi_column", "long_tiny_text", "base", "overall"]
     for criteria in criteria_order:
         label = CRITERIA_LABELS[criteria]
@@ -265,8 +256,7 @@ def generate_olm_report_html():
                         </thead>
                         <tbody>
 """
-    
-    # Lignes des modèles (triés par rank)
+   
     models_sorted = sorted(OLM_BENCHMARK_MATRIX.items(), key=lambda x: x[1]["rank"])
     
     for model_id, model_data in models_sorted:
@@ -283,7 +273,6 @@ def generate_olm_report_html():
         for criteria in criteria_order:
             score = model_data["scores"][criteria]
             
-            # Déterminer la classe de couleur
             if score >= 85:
                 color_class = "score-excellent"
             elif score >= 70:
@@ -312,7 +301,6 @@ def generate_olm_report_html():
         </div>
 """
     
-    # Description des critères
     html += """
         <div class="section">
             <div class="section-header">
@@ -323,7 +311,7 @@ def generate_olm_report_html():
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
 """
     
-    for criteria in criteria_order[:-1]:  # Exclude 'overall'
+    for criteria in criteria_order[:-1]: 
         label = CRITERIA_LABELS[criteria]
         desc = CRITERIA_DESCRIPTIONS[criteria]
         html += f"""

@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -10,7 +9,6 @@ print("=" * 80)
 print("   TEST DOCLING MULTIFORMAT - Kinza Achaouachi")
 print("=" * 80)
 
-# Créer le dossier de résultats
 results_dir = Path("test_results")
 results_dir.mkdir(exist_ok=True)
 
@@ -18,7 +16,6 @@ print("\n[1/6] Préparation des fichiers de test...")
 
 test_files = []
 
-# 1. Fichier texte simple
 text_file = Path("test_files/test_document.txt")
 if not text_file.exists():
     print(f"    Création du fichier texte : {text_file}")
@@ -33,18 +30,17 @@ test_files.append({
     "description": "Fichier texte structuré"
 })
 
-# 2. Images du corpus de test
+
 corpus_dir = Path("corpus_test")
 if corpus_dir.exists():
     image_files = list(corpus_dir.glob("*.png"))
-    for i, img_file in enumerate(image_files[:3]):  # Prendre 3 images variées
+    for i, img_file in enumerate(image_files[:3]):  
         test_files.append({
             "type": "Image",
             "path": str(img_file),
             "description": f"Image test {i+1}: {img_file.stem}"
         })
 
-# 3. Image de démonstration
 demo_image = Path("demo_images/demo_text.png")
 if demo_image.exists():
     test_files.append({
@@ -94,23 +90,18 @@ for i, test_file in enumerate(test_files, 1):
     }
     
     try:
-        # Vérifier que le fichier existe
         if not Path(test_file['path']).exists():
             file_result["status"] = "échec"
             file_result["error"] = "Fichier non trouvé"
-            print(f"      [X] Fichier non trouve")
+            print(f"    Fichier non trouve")
             continue
         
-        # Mesurer le temps de traitement
         process_start = time.time()
         result = converter.convert(test_file['path'])
         process_time = time.time() - process_start
         
-        # Extraire le contenu
         if hasattr(result, 'document'):
             doc = result.document
-            
-            # Différentes méthodes d'extraction
             markdown_content = ""
             if hasattr(doc, 'export_to_markdown'):
                 markdown_content = doc.export_to_markdown()
@@ -119,7 +110,6 @@ for i, test_file in enumerate(test_files, 1):
             else:
                 markdown_content = str(doc)
             
-            # Statistiques
             char_count = len(markdown_content)
             lines = [l for l in markdown_content.split('\n') if l.strip()]
             line_count = len(lines)
@@ -159,11 +149,9 @@ for i, test_file in enumerate(test_files, 1):
 
 total_time = time.time() - total_start
 
-# ── Étape 4 : Résultats détaillés ──────────────
 print("\n[4/6] Résultats détaillés par type de fichier...")
 print("-" * 80)
 
-# Grouper par type
 type_results = {}
 for res in results:
     file_type = res["type"]
@@ -178,9 +166,9 @@ for file_type, type_res in type_results.items():
     partiels = [r for r in type_res if r["status"] == "succès_partiel"]
     échecs = [r for r in type_res if r["status"] == "échec"]
     
-    print(f"      [OK] Succes : {len(succès)}")
-    print(f"      [!] Partiels : {len(partiels)}")
-    print(f"      [X] Echecs : {len(échecs)}")
+    print(f"       Succes : {len(succès)}")
+    print(f"     Partiels : {len(partiels)}")
+    print(f"       Echecs : {len(échecs)}")
     
     if succès:
         avg_time = sum(r.get("processing_time", 0) for r in succès) / len(succès)
@@ -195,13 +183,13 @@ succès_total = len([r for r in results if r["status"] == "succès"])
 partiels_total = len([r for r in results if r["status"] == "succès_partiel"])
 échecs_total = len([r for r in results if r["status"] == "échec"])
 
-print(f"    [Stats] TOTAL DES TESTS : {len(results)} fichiers")
-print(f"      [OK] Succes complets : {succès_total}")
-print(f"      [!] Succes partiels : {partiels_total}")
-print(f"      [X] Echecs : {échecs_total}")
-print(f"      [Cible] Taux de succes : {(succès_total + partiels_total)/len(results)*100:.1f}%")
-print(f"      [Temps] Temps total : {total_time:.2f}s")
-print(f"      [Temps] Temps initialisation : {init_time:.2f}s")
+print(f"   TOTAL DES TESTS : {len(results)} fichiers")
+print(f"    Succes complets : {succès_total}")
+print(f"    Succes partiels : {partiels_total}")
+print(f"     Echecs : {échecs_total}")
+print(f"      Taux de succes : {(succès_total + partiels_total)/len(results)*100:.1f}%")
+print(f"     Temps total : {total_time:.2f}s")
+print(f"      Temps initialisation : {init_time:.2f}s")
 
 print("\n[6/6] Sauvegarde des résultats...")
 
@@ -223,16 +211,16 @@ print("\n" + "=" * 80)
 print("   CONCLUSION DU TEST DOCLING MULTIFORMAT")
 print("=" * 80)
 
-print("\n[Info] DOCLING EST EXCELLENT POUR :")
-print("  [OK] Fichiers texte structures")
-print("  [OK] Extraction de documents en Markdown")
-print("  [OK] Conservation de la structure (titres, listes, paragraphes)")
-print("  [OK] Support multi-format (texte, images, PDF, DOCX)")
+print("\n DOCLING EST EXCELLENT POUR :")
+print("   Fichiers texte structures")
+print(" Extraction de documents en Markdown")
+print("   Conservation de la structure (titres, listes, paragraphes)")
+print("  Support multi-format (texte, images, PDF, DOCX)")
 
-print("\n[!] LIMITATIONS :")
-print("  [!] Plus lent pour les images simples")
-print("  [!] Necessite telechargement de modeles au premier lancement")
-print("  [!] Meilleur avec documents structures qu'images brutes")
+print("\n LIMITATIONS :")
+print("  Plus lent pour les images simples")
+print(" Necessite telechargement de modeles au premier lancement")
+print("  Meilleur avec documents structures qu'images brutes")
 
 print("\n[Cible] RECOMMANDATIONS :")
 print("  - Utiliser pour documents PDF/DOCX/textes structures")

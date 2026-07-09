@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Test Complet de l'API OCR REST - Tous les Endpoints
-Teste les 6 endpoints avec tous les modèles et formats
-
-Prérequis : Le serveur doit tourner
-  uvicorn api.main:app --host 127.0.0.1 --port 8000
-"""
-
 import requests
 import time
 from pathlib import Path
@@ -24,7 +15,6 @@ def print_test(number, total, name):
 
 
 def test_health():
-    """Test 1: GET /health"""
     print_test(1, 11, "GET /health - Status API")
     
     try:
@@ -33,20 +23,19 @@ def test_health():
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ API Status: {data['status']}")
-            print(f"✅ Version: {data['version']}")
-            print(f"✅ Models: {data['models_available']}")
+            print(f"API Status: {data['status']}")
+            print(f" Version: {data['version']}")
+            print(f" Models: {data['models_available']}")
             return True
         else:
-            print(f"❌ Error: {response.text}")
+            print(f" Error: {response.text}")
             return False
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f"Exception: {str(e)}")
         return False
 
 
 def test_models():
-    """Test 2: GET /models"""
     print_test(2, 11, "GET /models - Liste des Modèles")
     
     try:
@@ -55,23 +44,23 @@ def test_models():
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ Total models: {data['total']}")
+            print(f"Total models: {data['total']}")
             for model_id, info in data['models'].items():
-                print(f"✅ {info['name']}: {', '.join(info['supported_formats'])}")
+                print(f" {info['name']}: {', '.join(info['supported_formats'])}")
             return True
         else:
-            print(f"❌ Error: {response.text}")
+            print(f" Error: {response.text}")
             return False
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f"Exception: {str(e)}")
         return False
 
 
 def test_extract(model, file_path, description):
-    """Test extraction avec un modèle spécifique"""
+   
     
     if not Path(file_path).exists():
-        print(f"⚠️ File not found: {file_path}")
+        print(f" File not found: {file_path}")
         return False
     
     try:
@@ -87,24 +76,24 @@ def test_extract(model, file_path, description):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Model: {result['model']}")
-            print(f"✅ File type: {result['file_type']}")
-            print(f"✅ Characters: {result['char_count']}")
-            print(f"✅ Words: {result['word_count']}")
-            print(f"✅ Time: {wall_time}s")
-            print(f"✅ Text preview: {result['text'][:60]}...")
+            print(f" Model: {result['model']}")
+            print(f" File type: {result['file_type']}")
+            print(f"Characters: {result['char_count']}")
+            print(f"Words: {result['word_count']}")
+            print(f"Time: {wall_time}s")
+            print(f"Text preview: {result['text'][:60]}...")
             return True
         else:
             error = response.json()
-            print(f"❌ Error: {error.get('detail', 'Unknown error')}")
+            print(f" Error: {error.get('detail', 'Unknown error')}")
             return False
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f" Exception: {str(e)}")
         return False
 
 
 def test_translate():
-    """Test 10: POST /translate"""
+  
     print_test(10, 11, "POST /translate - Traduction Texte")
     
     try:
@@ -119,27 +108,27 @@ def test_translate():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Original: {result['original_text'][:50]}...")
-            print(f"✅ Translated: {result['translated_text']}")
-            print(f"✅ Language: {result['source_lang']} → {result['target_lang']}")
+            print(f" Original: {result['original_text'][:50]}...")
+            print(f" Translated: {result['translated_text']}")
+            print(f" Language: {result['source_lang']} → {result['target_lang']}")
             return True
         else:
             error = response.json()
-            print(f"❌ Error: {error.get('detail', 'Unknown error')}")
+            print(f"Error: {error.get('detail', 'Unknown error')}")
             return False
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f" Exception: {str(e)}")
         return False
 
 
 def test_translate_file():
-    """Test 11: POST /translate avec fichier"""
+    
     print_test(11, 11, "POST /translate - Traduction Fichier")
     
     file_path = "demo_images/demo_text.png"
     
     if not Path(file_path).exists():
-        print(f"⚠️ File not found: {file_path}")
+        print(f" File not found: {file_path}")
         return False
     
     try:
@@ -156,23 +145,20 @@ def test_translate_file():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ File: {result.get('file_name', 'N/A')}")
-            print(f"✅ Original preview: {result['original_text'][:50]}...")
-            print(f"✅ Translated preview: {result['translated_text'][:50]}...")
-            print(f"✅ Language: {result['source_lang']} → {result['target_lang']}")
+            print(f" File: {result.get('file_name', 'N/A')}")
+            print(f"Original preview: {result['original_text'][:50]}...")
+            print(f"Translated preview: {result['translated_text'][:50]}...")
+            print(f"Language: {result['source_lang']} → {result['target_lang']}")
             return True
         else:
             error = response.json()
-            print(f"❌ Error: {error.get('detail', 'Unknown error')}")
+            print(f" Error: {error.get('detail', 'Unknown error')}")
             return False
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f" Exception: {str(e)}")
         return False
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# EXECUTION DES TESTS
-# ═══════════════════════════════════════════════════════════════════════════
 
 def main():
     print_header("TEST COMPLET API OCR - TOUS LES ENDPOINTS")
@@ -182,11 +168,9 @@ def main():
     
     results = []
     
-    # Test 1-2: Endpoints simples
     results.append(("GET /health", test_health()))
     results.append(("GET /models", test_models()))
-    
-    # Test 3-6: Extraction Image avec les 4 modèles
+
     print_test(3, 11, "POST /extract - PaddleOCR + Image")
     results.append(("PaddleOCR + Image", 
         test_extract("paddleocr", "demo_images/demo_text.png", "PaddleOCR sur image")))
@@ -203,7 +187,6 @@ def main():
     results.append(("TrOCR + Image", 
         test_extract("trocr", "demo_images/demo_text.png", "TrOCR sur image")))
     
-    # Test 7-9: Extraction autres formats
     print_test(7, 11, "POST /extract - PaddleOCR + PDF")
     results.append(("PaddleOCR + PDF", 
         test_extract("paddleocr", "test_files/sample_document.pdf", "PaddleOCR sur PDF")))
@@ -215,19 +198,17 @@ def main():
     print_test(9, 11, "POST /extract - Docling + TXT")
     results.append(("Docling + TXT", 
         test_extract("docling", "test_files/sample_text.txt", "Docling sur texte")))
-    
-    # Test 10-11: Traduction
+   
     results.append(("POST /translate (text)", test_translate()))
     results.append(("POST /translate (file)", test_translate_file()))
     
-    # Résumé
     print_header("RÉSUMÉ DES TESTS")
     
     passed = sum(1 for _, result in results if result)
     total = len(results)
     
     for test_name, result in results:
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "PASS" if result else "FAIL"
         print(f"  {status}  {test_name}")
     
     print("\n" + "="*70)
@@ -235,9 +216,9 @@ def main():
     print("="*70)
     
     if passed == total:
-        print("\n  🎉 TOUS LES TESTS PASSENT - API 100% FONCTIONNELLE!")
+        print("\n  TOUS LES TESTS PASSENT - API 100% FONCTIONNELLE!")
     else:
-        print(f"\n  ⚠️ {total - passed} test(s) échoué(s)")
+        print(f"\n  {total - passed} test(s) échoué(s)")
         print("  Vérifiez que le serveur est démarré et que les fichiers de test existent.")
 
 
