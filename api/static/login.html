@@ -83,6 +83,70 @@
                 </p>
             </div>
 
+            <!-- Formulaire de vérification OTP (caché par défaut) -->
+            <div class="auth-card" id="otpContainer" style="display: none">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">🔐 Vérification de sécurité</h2>
+                    <p class="auth-subtitle" id="otpSubtitle">
+                        Un code a été envoyé à votre adresse email.
+                    </p>
+                </div>
+
+                <div id="otpAlert" class="alert"></div>
+
+                <form id="otpForm" novalidate>
+                    <div class="field">
+                        <label for="otpCode">Code de vérification</label>
+                        <input
+                            type="text"
+                            id="otpCode"
+                            name="otp_code"
+                            required
+                            placeholder="000000"
+                            maxlength="6"
+                            inputmode="numeric"
+                            pattern="[0-9]{6}"
+                            autocomplete="one-time-code"
+                            style="font-size: 20px; letter-spacing: 8px; text-align: center; font-weight: 600;"
+                        />
+                        <div class="error-text" id="otpCode-error"></div>
+                        <p style="margin-top: 8px; color: #6B7280; font-size: 13px; text-align: center;">
+                            Entrez le code à 6 chiffres reçu par email
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="verifyOtpBtn"
+                    >
+                        <span class="spinner-sm" id="verifyOtpSpinner"></span>
+                        <span id="verifyOtpBtnText">Vérifier</span>
+                    </button>
+                </form>
+
+                <div class="auth-divider"><span>ou</span></div>
+
+                <div class="otp-actions">
+                    <p class="auth-footer-link" id="resendContainer">
+                        <a href="#" onclick="resendOTP()" id="resendLink">
+                            Renvoyer le code
+                        </a>
+                        <span id="resendCooldown"></span>
+                    </p>
+                    <p class="auth-footer-link">
+                        <a href="#" onclick="backToLogin()">Revenir à la connexion</a>
+                    </p>
+                </div>
+
+                <!-- Info sécurité -->
+                <div class="otp-info">
+                    <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-align: center;">
+                        Code valable 10 minutes
+                    </p>
+                </div>
+            </div>
+
             <!-- Formulaire d'inscription (caché par défaut) -->
             <div class="auth-card" id="registerContainer" style="display: none">
                 <div class="auth-card-header">
@@ -184,15 +248,14 @@
         </div>
 
         <script>
-            // Variables globales
             const API_BASE = "/api";
 
-            // Validation regex
+            
             const EMAIL_REGEX =
                 /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
 
-            // Fonction pour alterner entre login et inscription
+           
             function showRegisterForm() {
                 document.getElementById("loginContainer").style.display =
                     "none";
@@ -207,7 +270,6 @@
                     "none";
             }
 
-            // Fonction pour afficher/masquer le mot de passe
             function togglePassword(inputId) {
                 const input = document.getElementById(inputId);
                 const toggle = input.nextElementSibling;
@@ -221,7 +283,7 @@
                 }
             }
 
-            // Fonctions de validation
+           
             function validateEmail(email) {
                 if (!email.trim()) {
                     return "L'email ne peut pas être vide";
@@ -252,7 +314,6 @@
                 return null;
             }
 
-            // Fonction pour afficher les erreurs
             function showFieldError(fieldId, message) {
                 const field = document.getElementById(fieldId);
                 const errorDiv = document.getElementById(fieldId + "-error");
@@ -267,14 +328,14 @@
                 }
             }
 
-            // Fonction pour afficher les alertes
+            
             function showAlert(message, type = "error", containerId = "alert") {
                 const alertDiv = document.getElementById(containerId);
                 alertDiv.textContent = message;
                 alertDiv.className = `alert ${type}`;
                 alertDiv.style.display = "block";
 
-                // Auto-masquer après 5 secondes pour les succès
+                
                 if (type === "success") {
                     setTimeout(() => {
                         alertDiv.style.display = "none";
@@ -282,12 +343,12 @@
                 }
             }
 
-            // Fonction pour masquer les alertes
+           
             function hideAlert(containerId = "alert") {
                 document.getElementById(containerId).style.display = "none";
             }
 
-            // Gestion du formulaire de connexion
+           
             document
                 .getElementById("loginForm")
                 .addEventListener("submit", async (e) => {
@@ -296,7 +357,7 @@
                     const email = document.getElementById("email").value;
                     const password = document.getElementById("password").value;
 
-                    // Validation côté client
+                    
                     let hasErrors = false;
 
                     const emailError = validateEmail(email);
@@ -309,7 +370,7 @@
 
                     if (hasErrors) return;
 
-                    // UI de chargement
+                  
                     const loginBtn = document.getElementById("loginBtn");
                     const loginSpinner =
                         document.getElementById("loginSpinner");
@@ -333,29 +394,31 @@
                         const data = await response.json();
 
                         if (response.ok) {
-                            // Stocker le token et les données utilisateur
+                           
                             localStorage.setItem(
-                                "access_token",
-                                data.access_token,
+                                "otp_token",
+                                data.otp_token,
                             );
                             localStorage.setItem(
-                                "user",
-                                JSON.stringify(data.user),
-                            );
-                            localStorage.setItem(
-                                "user_info",
-                                JSON.stringify(data.user),
+                                "otp_email_hint",
+                                data.email_hint,
                             );
 
                             showAlert(
-                                "Connexion réussie ! Redirection...",
+                                data.message,
                                 "success",
                             );
 
-                            // Redirection vers l'application principale
+                            
                             setTimeout(() => {
-                                window.location.href = "/app";
-                            }, 1000);
+                                document.getElementById("loginContainer").style.display = "none";
+                                document.getElementById("registerContainer").style.display = "none";
+                                document.getElementById("otpContainer").style.display = "block";
+                                document.getElementById("otpSubtitle").textContent = 
+                                    `Un code a été envoyé à ${data.email_hint}. Il est valable ${Math.floor(data.expires_in / 60)} minutes.`;
+                                document.getElementById("otpCode").focus();
+                                startOtpCooldown();
+                            }, 500);
                         } else {
                             showAlert(data.detail || "Erreur de connexion");
                         }
@@ -369,7 +432,6 @@
                     }
                 });
 
-            // Gestion du formulaire d'inscription
             document
                 .getElementById("registerForm")
                 .addEventListener("submit", async (e) => {
@@ -384,7 +446,7 @@
                     const confirmPassword =
                         document.getElementById("confirmPassword").value;
 
-                    // Validation côté client
+                    
                     let hasErrors = false;
 
                     const emailError = validateEmail(email);
@@ -415,7 +477,7 @@
 
                     if (hasErrors) return;
 
-                    // UI de chargement
+                    
                     const registerBtn = document.getElementById("registerBtn");
                     const registerSpinner =
                         document.getElementById("registerSpinner");
@@ -451,7 +513,7 @@
                                 "registerAlert",
                             );
 
-                            // Retourner au formulaire de connexion après 2 secondes
+                            
                             setTimeout(() => {
                                 showLoginForm();
                                 document.getElementById("email").value = email;
@@ -478,8 +540,237 @@
                     }
                 });
 
-            // Pas de redirection automatique - l'utilisateur doit cliquer sur "Se connecter"
-            // Cela permet à la page de login de s'afficher toujours par défaut
+        
+
+            let otpCooldownCounter = 0;
+            let otpCooldownInterval = null;
+
+          
+            function startOtpCooldown() {
+                otpCooldownCounter = 60;
+                const resendLink = document.getElementById("resendLink");
+                const resendCooldown = document.getElementById("resendCooldown");
+
+             
+                resendLink.style.pointerEvents = "none";
+                resendLink.style.opacity = "0.5";
+
+                
+                otpCooldownInterval = setInterval(() => {
+                    otpCooldownCounter--;
+                    resendCooldown.textContent = ` (${otpCooldownCounter}s)`;
+
+                    if (otpCooldownCounter <= 0) {
+                        clearInterval(otpCooldownInterval);
+                        resendLink.style.pointerEvents = "auto";
+                        resendLink.style.opacity = "1";
+                        resendCooldown.textContent = "";
+                    }
+                }, 1000);
+            }
+
+           
+            async function resendOTP() {
+                const otpToken = localStorage.getItem("otp_token");
+                if (!otpToken) {
+                    showAlert("Session OTP expirée. Veuillez vous reconnecter.", "error", "otpAlert");
+                    return;
+                }
+
+                const resendLink = document.getElementById("resendLink");
+                resendLink.style.pointerEvents = "none";
+                resendLink.style.opacity = "0.5";
+
+                try {
+                    const response = await fetch(`${API_BASE}/resend-otp`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ otp_token: otpToken }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAlert(
+                            "✅ " + data.message,
+                            "success",
+                            "otpAlert",
+                        );
+                      
+                        startOtpCooldown();
+                        
+                        document.getElementById("otpCode").value = "";
+                        document.getElementById("otpCode").focus();
+                    } else {
+                        showAlert(
+                            data.detail || "Impossible de renvoyer le code",
+                            "error",
+                            "otpAlert",
+                        );
+                    }
+                } catch (error) {
+                    console.error("Erreur renvoi OTP:", error);
+                    showAlert(
+                        "Erreur de connexion. Veuillez réessayer.",
+                        "error",
+                        "otpAlert",
+                    );
+                } finally {
+                    resendLink.style.pointerEvents = "auto";
+                    resendLink.style.opacity = "1";
+                }
+            }
+
+            
+            function backToLogin() {
+                localStorage.removeItem("otp_token");
+                localStorage.removeItem("otp_email_hint");
+
+              
+                if (otpCooldownInterval) {
+                    clearInterval(otpCooldownInterval);
+                }
+
+                
+                document.getElementById("otpContainer").style.display = "none";
+                document.getElementById("loginContainer").style.display = "block";
+                document.getElementById("loginForm").reset();
+                hideAlert("otpAlert");
+            }
+
+            
+            document
+                .getElementById("otpForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const otpCode = document.getElementById("otpCode").value.trim();
+                    const otpToken = localStorage.getItem("otp_token");
+
+                    
+                    if (!otpCode || otpCode.length !== 6 || !/^\d{6}$/.test(otpCode)) {
+                        showFieldError("otpCode", "Veuillez entrer 6 chiffres");
+                        return;
+                    }
+
+                    if (!otpToken) {
+                        showAlert("Session OTP expirée. Veuillez vous reconnecter.", "error", "otpAlert");
+                        return;
+                    }
+
+                    showFieldError("otpCode", null);
+
+                    
+                    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+                    const verifyOtpSpinner =
+                        document.getElementById("verifyOtpSpinner");
+                    const verifyOtpBtnText =
+                        document.getElementById("verifyOtpBtnText");
+
+                    verifyOtpBtn.disabled = true;
+                    verifyOtpSpinner.style.display = "block";
+                    verifyOtpBtnText.textContent = "Vérification...";
+                    hideAlert("otpAlert");
+
+                    try {
+                        const response = await fetch(`${API_BASE}/verify-otp`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                otp_token: otpToken,
+                                otp_code: otpCode,
+                            }),
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            
+                            localStorage.setItem(
+                                "access_token",
+                                data.access_token,
+                            );
+                            localStorage.setItem(
+                                "user",
+                                JSON.stringify(data.user),
+                            );
+                            localStorage.setItem(
+                                "user_info",
+                                JSON.stringify(data.user),
+                            );
+
+                           
+                            localStorage.removeItem("otp_token");
+                            localStorage.removeItem("otp_email_hint");
+
+                            
+                            if (otpCooldownInterval) {
+                                clearInterval(otpCooldownInterval);
+                            }
+
+                            showAlert(
+                                " Connexion sécurisée ! Redirection...",
+                                "success",
+                                "otpAlert",
+                            );
+
+                            
+                            setTimeout(() => {
+                                window.location.href = "/app";
+                            }, 1000);
+                        } else {
+                           
+                            if (response.status === 401) {
+                                showAlert(
+                                    data.detail || "Code OTP invalide",
+                                    "error",
+                                    "otpAlert",
+                                );
+                                document.getElementById("otpCode").value = "";
+                                document.getElementById("otpCode").focus();
+                            } else if (response.status === 429) {
+                                showAlert(
+                                    data.detail || "Trop de tentatives",
+                                    "error",
+                                    "otpAlert",
+                                );
+                            } else if (response.status === 404) {
+                                showAlert(
+                                    data.detail || "Session expirée",
+                                    "error",
+                                    "otpAlert",
+                                );
+                                setTimeout(() => backToLogin(), 2000);
+                            } else {
+                                showAlert(
+                                    data.detail || "Erreur lors de la vérification",
+                                    "error",
+                                    "otpAlert",
+                                );
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Erreur vérification OTP:", error);
+                        showAlert(
+                            "Erreur de connexion. Veuillez réessayer.",
+                            "error",
+                            "otpAlert",
+                        );
+                    } finally {
+                        verifyOtpBtn.disabled = false;
+                        verifyOtpSpinner.style.display = "none";
+                        verifyOtpBtnText.textContent = "Vérifier";
+                    }
+                });
+
+          
+            document.getElementById("otpCode").addEventListener("input", (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+            });
         </script>
     </body>
 </html>

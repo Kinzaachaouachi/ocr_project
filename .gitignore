@@ -11,6 +11,16 @@ venv_new/
 env/
 ENV/
 
+# Configuration locale (secrets)
+.env
+.env.local
+.env.*.local
+
+# Base de données locale
+*.db
+*.sqlite
+*.sqlite3
+
 # Images générées par les tests
 test_images/
 test_files/

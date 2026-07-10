@@ -23,6 +23,9 @@ from starlette.concurrency import run_in_threadpool
 
 from . import model_workers
 from .auth import (
+    OTPLoginResponse,
+    OTPVerifyRequest,
+    ResendOTPRequest,
     TokenResponse,
     UserLogin,
     UserRegister,
@@ -33,7 +36,18 @@ from .auth import (
     get_current_user,
 )
 from .confidence_analyzer import analyze_text_confidence, annotate_text_with_confidence
-from .database import OCRHistory, User, create_user, get_db, get_user_by_email, init_db
+from .database import (
+    OCRHistory,
+    User,
+    create_otp_code,
+    create_user,
+    get_db,
+    get_otp_by_token,
+    get_user_by_email,
+    init_db,
+    verify_otp_code,
+)
+from .email_service import OTP_EXPIRY_MINUTES, send_otp_email
 from .language_detector import (
     detect_language_by_charset,
     detect_language_from_filename,
@@ -59,19 +73,19 @@ async def startup_event():
     """Démarrage du serveur sans initialisation des modèles OCR"""
     try:
         init_db()
-        print("✅ Base de données connectée et initialisée")
+        print(" Base de données connectée et initialisée")
     except Exception as e:
         print(f" Erreur de connexion à la base de données: {e}")
         print("   L'API fonctionnera sans sauvegarde d'historique")
 
     
-    print("🚀 Serveur OCR Intelligence démarré !")
+    print(" Serveur OCR Intelligence démarré !")
     print("   Les modèles OCR seront chargés à la première utilisation")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    print("🔄 Arrêt du serveur...")
+    print(" Arrêt du serveur...")
 
 
 app.add_middleware(
@@ -140,7 +154,6 @@ def run_worker(model: str, file_path: str, file_type: str) -> dict:
 
 
     try:
-        # Utilisation directe des fonctions OCR
         if model in model_workers.INFERENCE_FUNCS:
             inference_func = model_workers.INFERENCE_FUNCS[model]
             return inference_func(file_path, file_type)
@@ -150,7 +163,7 @@ def run_worker(model: str, file_path: str, file_type: str) -> dict:
                 "error": f"Modèle '{model}' non supporté"
             }
     except Exception as e:
-        print(f"❌ Erreur {model}: {str(e)}")
+        print(f"Erreur {model}: {str(e)}")
         return {
             "status": "error",
             "error": f"Erreur {model}: {str(e)}"
@@ -237,14 +250,70 @@ async def register_page():
         headers=NO_CACHE_HEADERS,
     )
 
-@app.post("/api/login", response_model=TokenResponse, tags=["Authentification"])
+@app.post("/api/login", response_model=OTPLoginResponse, tags=["Authentification"])
 async def login(login_data: UserLogin, db: Session = Depends(get_db)):
+    """
+    Étape 1 du login : vérifie les credentials, génère et envoie un code OTP.
+    Retourne un otp_token temporaire à utiliser dans /api/verify-otp.
+    """
     try:
         user = authenticate_user(db, login_data.email, login_data.password)
         if not user:
             raise HTTPException(
                 status_code=401, detail="Email ou mot de passe incorrect"
             )
+
+        # Générer et stocker le code OTP
+        otp_token, plain_code = create_otp_code(db, user.id)
+
+        # Envoyer l'email OTP
+        user_name = user.first_name or user.email.split("@")[0]
+        email_sent = send_otp_email(
+            to_email=user.email,
+            otp_code=plain_code,
+            user_name=user_name,
+            expires_minutes=OTP_EXPIRY_MINUTES,
+        )
+
+        if not email_sent:
+            raise HTTPException(
+                status_code=503,
+                detail="Impossible d'envoyer l'email de vérification. Veuillez réessayer.",
+            )
+
+        # Masquer l'email pour la réponse (sécurité)
+        parts = user.email.split("@")
+        local = parts[0]
+        masked_local = local[0] + "***" if len(local) > 1 else "***"
+        email_hint = f"{masked_local}@{parts[1]}"
+
+        return OTPLoginResponse(
+            otp_token=otp_token,
+            email_hint=email_hint,
+            expires_in=OTP_EXPIRY_MINUTES * 60,
+            message=f"Un code de vérification a été envoyé à {email_hint}",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
+
+
+@app.post("/api/verify-otp", response_model=TokenResponse, tags=["Authentification"])
+async def verify_otp(verify_data: OTPVerifyRequest, db: Session = Depends(get_db)):
+    """
+    Étape 2 du login : valide le code OTP et retourne le JWT final.
+    """
+    try:
+        user_id, error = verify_otp_code(db, verify_data.otp_token, verify_data.otp_code)
+
+        if error:
+            raise HTTPException(status_code=401, detail=error)
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user or not user.is_active:
+            raise HTTPException(status_code=401, detail="Compte introuvable ou désactivé")
 
         user.last_login = datetime.now()
         db.commit()
@@ -264,8 +333,72 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            expires_in=24 * 60 * 60,  
+            expires_in=24 * 60 * 60,
             user=user_info,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
+
+
+@app.post("/api/resend-otp", response_model=OTPLoginResponse, tags=["Authentification"])
+async def resend_otp(resend_data: ResendOTPRequest, db: Session = Depends(get_db)):
+    """
+    Renvoie un nouveau code OTP. Cooldown 60 secondes minimum entre deux envois.
+    """
+    try:
+        from datetime import timedelta
+
+        otp = get_otp_by_token(db, resend_data.otp_token)
+        if not otp:
+            raise HTTPException(
+                status_code=404,
+                detail="Session OTP introuvable ou expirée. Veuillez vous reconnecter.",
+            )
+
+        # Cooldown : vérifier que l'OTP actuel a été créé il y a au moins 60s
+        from datetime import datetime as dt
+        elapsed = (dt.now() - otp.created_at).total_seconds()
+        if elapsed < 60:
+            wait = int(60 - elapsed)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Veuillez patienter {wait} seconde(s) avant de renvoyer le code.",
+            )
+
+        user = db.query(User).filter(User.id == otp.user_id).first()
+        if not user or not user.is_active:
+            raise HTTPException(status_code=401, detail="Compte introuvable ou désactivé")
+
+        # Générer un nouveau code (invalide l'ancien automatiquement)
+        new_otp_token, plain_code = create_otp_code(db, user.id)
+
+        user_name = user.first_name or user.email.split("@")[0]
+        email_sent = send_otp_email(
+            to_email=user.email,
+            otp_code=plain_code,
+            user_name=user_name,
+            expires_minutes=OTP_EXPIRY_MINUTES,
+        )
+
+        if not email_sent:
+            raise HTTPException(
+                status_code=503,
+                detail="Impossible d'envoyer l'email de vérification.",
+            )
+
+        parts = user.email.split("@")
+        local = parts[0]
+        masked_local = local[0] + "***" if len(local) > 1 else "***"
+        email_hint = f"{masked_local}@{parts[1]}"
+
+        return OTPLoginResponse(
+            otp_token=new_otp_token,
+            email_hint=email_hint,
+            expires_in=OTP_EXPIRY_MINUTES * 60,
+            message=f"Un nouveau code a été envoyé à {email_hint}",
         )
 
     except HTTPException:
@@ -691,9 +824,9 @@ async def extract_text(
             )
             db.add(ocr_entry)
             db.commit()
-            print(f"✓ Sauvegardé échec DB: {model} - {file.filename}")
+            print(f"Sauvegardé échec DB: {model} - {file.filename}")
         except Exception as db_error:
-            print(f"⚠ Erreur DB échec: {db_error}")
+            print(f" Erreur DB échec: {db_error}")
             db.rollback()
 
         raise HTTPException(
@@ -740,7 +873,7 @@ async def extract_text(
             file_type=file_type,
             model_id=model,
             model_name=MODELS_INFO[model]["name"],
-            extracted_text=text[:65535],  # Limite MySQL TEXT
+            extracted_text=text[:65535], 
             char_count=char_count,
             word_count=word_count,
             ocr_time_s=result.get("ocr_time", 0),
@@ -929,9 +1062,9 @@ async def extract_all_models(
                         )
                         db.add(ocr_entry)
                         db.commit()
-                        print(f"✓ Sauvegardé échec DB: {model_id} - {file.filename}")
+                        print(f" Sauvegardé échec DB: {model_id} - {file.filename}")
                     except Exception as db_error:
-                        print(f"⚠ Erreur DB échec pour {model_id}: {db_error}")
+                        print(f"Erreur DB échec pour {model_id}: {db_error}")
                         db.rollback()
 
             except Exception as e:

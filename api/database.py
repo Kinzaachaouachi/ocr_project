@@ -1,6 +1,8 @@
 import hashlib
 import os
-from datetime import datetime
+import random
+import secrets
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy import (
@@ -10,6 +12,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    SmallInteger,
     String,
     Text,
     create_engine,
@@ -71,6 +74,7 @@ class User(Base):
 
    
     ocr_history = relationship("OCRHistory", back_populates="user")
+    otp_codes = relationship("OTPCode", back_populates="user")
 
     def set_password(self, password: str):
       
@@ -91,6 +95,31 @@ class User(Base):
             return stored_hash == password_hash
         except (ValueError, TypeError, AttributeError):
             return False
+
+
+class OTPCode(Base):
+    __tablename__ = "otp_codes"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+  
+    otp_token = Column(String(128), unique=True, index=True, nullable=False)
+   
+    code_hash = Column(String(128), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False)
+    attempts = Column(SmallInteger, default=0)
+    created_at = Column(DateTime, default=datetime.now)
+
+    user = relationship("User", back_populates="otp_codes")
+
+    def check_code(self, code: str) -> bool:
+        code_hash = hashlib.sha256(code.encode()).hexdigest()
+        return self.code_hash == code_hash
+
+    @property
+    def is_expired(self) -> bool:
+        return datetime.now() > self.expires_at
 
 
 class OCRHistory(Base):
@@ -185,6 +214,71 @@ def get_db() -> Session:
         yield db
     finally:
         db.close()
+
+
+OTP_EXPIRY_MINUTES = 10
+OTP_MAX_ATTEMPTS = 3
+
+
+def create_otp_code(db: Session, user_id: int) -> tuple[str, str]:
+
+    db.query(OTPCode).filter(
+        OTPCode.user_id == user_id,
+        OTPCode.is_used == False, 
+    ).update({"is_used": True})
+
+    plain_code = "{:06d}".format(random.SystemRandom().randint(0, 999999))
+    code_hash = hashlib.sha256(plain_code.encode()).hexdigest()
+    otp_token = secrets.token_urlsafe(32)
+
+    otp = OTPCode(
+        user_id=user_id,
+        otp_token=otp_token,
+        code_hash=code_hash,
+        expires_at=datetime.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
+        is_used=False,
+        attempts=0,
+    )
+    db.add(otp)
+    db.commit()
+    db.refresh(otp)
+    return otp_token, plain_code
+
+
+def verify_otp_code(db: Session, otp_token: str, plain_code: str):
+    otp = db.query(OTPCode).filter(
+        OTPCode.otp_token == otp_token,
+        OTPCode.is_used == False,  # noqa: E712
+    ).first()
+
+    if not otp:
+        return None, "Token OTP invalide ou déjà utilisé"
+
+    if otp.is_expired:
+        return None, "Code OTP expiré. Veuillez vous reconnecter."
+
+    if otp.attempts >= OTP_MAX_ATTEMPTS:
+        return None, "Trop de tentatives. Veuillez vous reconnecter."
+
+    otp.attempts += 1
+    db.commit()
+
+    if not otp.check_code(plain_code):
+        remaining = OTP_MAX_ATTEMPTS - otp.attempts
+        if remaining <= 0:
+            return None, "Code incorrect. Nombre maximum de tentatives atteint."
+        return None, f"Code incorrect. {remaining} tentative(s) restante(s)."
+
+    otp.is_used = True
+    db.commit()
+    return otp.user_id, None
+
+
+def get_otp_by_token(db: Session, otp_token: str) -> Optional[OTPCode]:
+    return db.query(OTPCode).filter(
+        OTPCode.otp_token == otp_token,
+        OTPCode.is_used == False,  # noqa: E712
+    ).first()
 
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:

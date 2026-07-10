@@ -498,3 +498,92 @@ a {
         padding: 1.85rem 1.4rem;
     }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   STYLES OTP - Vérification en deux étapes
+   ═══════════════════════════════════════════════════════════════ */
+
+#otpCode {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    letter-spacing: 0.5em;
+    text-align: center;
+    font-weight: 700;
+    padding: 12px 16px;
+}
+
+.otp-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+}
+
+.otp-actions .auth-footer-link {
+    margin: 0;
+}
+
+.otp-info {
+    background: var(--blue-50);
+    border-left: 4px solid var(--blue-600);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-top: 1.2rem;
+}
+
+#resendCooldown {
+    color: var(--slate-500);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Spinner au centre du bouton */
+.spinner-sm {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--white);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 6px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* États du champ OTP */
+#otpCode:focus {
+    border-color: var(--indigo-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+#otpCode.error {
+    border-color: var(--red-600);
+    background: var(--red-50);
+}
+
+#otpCode.error:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    #otpCode {
+        font-size: 1.5rem;
+        letter-spacing: 0.3em;
+    }
+
+    .otp-actions {
+        gap: 0.6rem;
+    }
+}

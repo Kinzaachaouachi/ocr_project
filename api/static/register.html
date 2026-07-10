@@ -366,10 +366,6 @@
                 const token = localStorage.getItem("access_token");
                 if (!token) return;
 
-                // Garde-fou anti-boucle : si cette page se recharge en rafale
-                // (ex. outil de live-reload, extension, cache agressif) on
-                // arrête les redirections automatiques au lieu de marteler
-                // /api/me et /app indéfiniment.
                 const now = Date.now();
                 const lastAttempt = parseInt(
                     sessionStorage.getItem("auth_redirect_at") || "0",

@@ -119,6 +119,31 @@ class TokenResponse(BaseModel):
     user: UserResponse
 
 
+
+
+class OTPLoginResponse(BaseModel):
+    otp_token: str
+    email_hint: str   
+    expires_in: int  
+    message: str
+
+
+class OTPVerifyRequest(BaseModel):
+    otp_token: str
+    otp_code: str
+
+    @validator("otp_code")
+    def validate_otp_code(cls, v):
+        v = v.strip()
+        if not v.isdigit() or len(v) != 6:
+            raise ValueError("Le code OTP doit contenir exactement 6 chiffres")
+        return v
+
+
+class ResendOTPRequest(BaseModel):
+    otp_token: str
+
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
     to_encode = data.copy()

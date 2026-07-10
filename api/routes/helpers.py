@@ -66,7 +66,7 @@ def run_worker(model: str, file_path: str, file_type: str) -> dict:
                 "error": f"Modèle '{model}' non supporté",
             }
     except Exception as e:
-        print(f"❌ Erreur {model}: {str(e)}")
+        print(f" Erreur {model}: {str(e)}")
         return {
             "status": "error",
             "error": f"Erreur {model}: {str(e)}",

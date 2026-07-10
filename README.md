@@ -11,15 +11,33 @@ Application web OCR intelligente permettant d'extraire, comparer, traduire et sa
 
 ## ✨ Nouvelles Fonctionnalités 2024
 
+### 🔐 Authentification à Deux Facteurs (2FA/OTP)
+- **Vérification par email OTP** après login réussi
+- **Code à 6 chiffres** envoyé automatiquement par email
+- **Expiration de 10 minutes** avec limitation à 3 tentatives
+- **Interface simplifiée** pour saisie du code
+- **Renvoi de code** avec cooldown de 60 secondes
+- **Sécurité renforcée** : tokens OTP uniques et hashés
+
+### 📧 Système d'Envoi d'Email Intelligent
+- **Auto-détection du fournisseur email** (Gmail, Outlook, Yahoo, ProtonMail)
+- **Configuration SMTP automatique** basée sur le domaine
+- **Support multi-domaines** : peut envoyer vers n'importe quel domaine email
+- **Templates HTML professionnels** pour les emails OTP
+- **Mode développement** pour tester sans configuration SMTP
+- **Gestion des erreurs SMTP** avec messages détaillés
+
 ### 🔐 Page de Login par Défaut
 - **Login configuré comme page d'accueil** à la racine `/`
-- **Redirection automatique** vers l'interface OCR après connexion
+- **Redirection automatique** vers l'interface OCR après vérification OTP
 - **Authentification sécurisée** avec validation complète
+- **Interface moderne et responsive** avec prévisualisation du mot de passe
 
 ### 🖼️ Améliorations OCR pour Fichiers Scannés
 - **Preprocessing automatique** avec OpenCV et PIL
 - **Amélioration du contraste** avec CLAHE (Contrast Limited Adaptive Histogram Equalization)
 - **Débruitage intelligent** pour éliminer le bruit des scans
+- **Sharpening adaptatif** pour améliorer la netteté
 - **Binarisation adaptative** pour optimiser le contraste texte/fond
 - **Configuration optimisée** des modèles pour documents de faible qualité
 
@@ -146,12 +164,17 @@ Dépendances importantes :
 - `sqlalchemy`, `pymysql` pour la base ;
 - `PyJWT` pour les tokens JWT ;
 - `pydantic[email]` pour la validation email ;
+- `python-dotenv` pour charger les variables `.env` ;
 - `paddleocr`, `docling`, `easyocr`, `transformers`, `torch` pour les moteurs OCR ;
-- `rapidocr` et `onnxruntime` pour accélérer Docling.
+- `rapidocr` et `onnxruntime` pour accélérer Docling ;
+- `opencv-python`, `pillow` pour le preprocessing d'images ;
+- `langdetect`, `pycld2` pour la détection de langue.
 
 ---
 
 ## Configuration
+
+### Variables d'environnement pour la base de données
 
 Les variables d'environnement principales sont optionnelles. Sans configuration, le projet tente MySQL local avec `root` sans mot de passe puis bascule vers SQLite si MySQL est indisponible.
 
@@ -164,7 +187,66 @@ Les variables d'environnement principales sont optionnelles. Sans configuration,
 | `DB_NAME` | `ocr_database` | Nom de la base |
 | `JWT_SECRET_KEY` | clé locale par défaut | Secret de signature JWT |
 
-Exemple PowerShell :
+### Configuration SMTP pour l'envoi d'emails OTP
+
+Pour activer l'envoi réel d'emails OTP, créer un fichier `.env` à la racine du projet :
+
+```env
+SMTP_USER=votre.email@gmail.com
+SMTP_PASSWORD=votre_mot_de_passe_app
+SMTP_FROM_NAME=OCR Intelligence
+```
+
+#### 📧 Configuration Gmail (Recommandé)
+
+1. **Activer la validation en 2 étapes** sur votre compte Google
+2. **Générer un mot de passe d'application** :
+   - Aller sur https://myaccount.google.com/apppasswords
+   - Sélectionner "Autre (nom personnalisé)"
+   - Copier le mot de passe généré (16 caractères)
+3. **Ajouter au fichier `.env`** :
+   ```env
+   SMTP_USER=kinza.chaouachi04@gmail.com
+   SMTP_PASSWORD=abcd efgh ijkl mnop
+   ```
+
+#### 📧 Configuration Outlook/Hotmail
+
+1. **Activer l'authentification SMTP** dans les paramètres Outlook
+2. **Ajouter au fichier `.env`** :
+   ```env
+   SMTP_USER=votre.email@outlook.com
+   SMTP_PASSWORD=votre_mot_de_passe
+   ```
+
+#### 📧 Configuration Yahoo
+
+1. **Générer un mot de passe d'application** dans les paramètres Yahoo
+2. **Ajouter au fichier `.env`** :
+   ```env
+   SMTP_USER=votre.email@yahoo.com
+   SMTP_PASSWORD=votre_mot_de_passe_app
+   ```
+
+#### 🔧 Configuration SMTP Manuelle (Optionnelle)
+
+Pour un serveur SMTP personnalisé, ajouter également :
+
+```env
+SMTP_HOST=smtp.exemple.com
+SMTP_PORT=587
+```
+
+> **Note** : Si seuls `SMTP_USER` et `SMTP_PASSWORD` sont configurés, le système détecte automatiquement le serveur SMTP basé sur le domaine de l'email (Gmail, Outlook, Yahoo, ProtonMail).
+
+#### 🧪 Mode Développement (Sans Email)
+
+Sans fichier `.env`, l'application fonctionne en **mode développement** :
+- Les codes OTP sont affichés dans la console serveur
+- Aucun email n'est envoyé
+- Idéal pour le développement et les tests
+
+Exemple PowerShell pour configuration manuelle :
 
 ```powershell
 $env:DB_HOST = "localhost"
@@ -181,7 +263,7 @@ $env:JWT_SECRET_KEY = "change-moi-en-production"
 
 ## Base de données
 
-Le fichier `api/database.py` définit deux tables principales.
+Le fichier `api/database.py` définit trois tables principales.
 
 ### Table `users`
 
@@ -199,6 +281,28 @@ last_login
 ```
 
 Le mot de passe n'est pas stocké en clair. Il est hashé avec un salt via PBKDF2-HMAC-SHA256.
+
+### Table `otp_codes`
+
+Nouvelle table pour la vérification OTP :
+
+```text
+id
+user_id
+otp_token (jeton opaque pour identifier la session OTP)
+code_hash (hash SHA256 du code à 6 chiffres)
+expires_at
+is_used
+attempts (nombre de tentatives, max 3)
+created_at
+```
+
+**Fonctionnalités** :
+- Code OTP à 6 chiffres hashé en SHA256
+- Expiration automatique après 10 minutes
+- Limitation à 3 tentatives
+- Token OTP unique pour chaque session
+- Auto-invalidation des anciens codes non utilisés
 
 ### Table `ocr_history`
 
@@ -221,10 +325,11 @@ processed_at
 client_ip
 ```
 
-La relation importante :
+Les relations importantes :
 
 ```text
 ocr_history.user_id -> users.id
+otp_codes.user_id -> users.id
 ```
 
 Le backend sauvegarde chaque extraction avec :
@@ -301,7 +406,36 @@ L'interface principale contient :
 
 ---
 
-## Authentification JWT
+## Authentification JWT avec OTP
+
+### Flux d'authentification complet
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant API
+    participant DB
+    participant Email
+
+    User->>Frontend: Saisir email + password
+    Frontend->>API: POST /api/login
+    API->>DB: Vérifier credentials
+    DB-->>API: User validé
+    API->>DB: Créer code OTP
+    API->>Email: Envoyer code OTP
+    Email-->>User: Email avec code 6 chiffres
+    API-->>Frontend: otp_token + email_hint
+    
+    Frontend->>User: Afficher écran OTP
+    User->>Frontend: Saisir code OTP
+    Frontend->>API: POST /api/verify-otp
+    API->>DB: Vérifier code OTP
+    DB-->>API: Code valide
+    API->>DB: Marquer OTP utilisé
+    API-->>Frontend: access_token JWT
+    Frontend->>User: Redirection vers /app
+```
 
 ### Création d'un compte
 
@@ -343,7 +477,7 @@ Réponse :
 }
 ```
 
-### Connexion
+### Connexion (Étape 1 : Login)
 
 Endpoint :
 
@@ -358,6 +492,83 @@ Body :
 {
   "email": "user@example.com",
   "password": "Password123"
+}
+```
+
+Réponse :
+
+```json
+{
+  "otp_token": "abc123...",
+  "email_hint": "u***@example.com",
+  "expires_in": 600,
+  "message": "Un code de vérification a été envoyé à u***@example.com"
+}
+```
+
+### Vérification OTP (Étape 2 : Vérifier le code)
+
+Endpoint :
+
+```http
+POST /api/verify-otp
+Content-Type: application/json
+```
+
+Body :
+
+```json
+{
+  "otp_token": "abc123...",
+  "otp_code": "416359"
+}
+```
+
+Réponse en cas de succès :
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer",
+  "expires_in": 86400,
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "first_name": "User",
+    "last_name": "Example"
+  }
+}
+```
+
+Erreurs possibles :
+- Code incorrect (avec tentatives restantes)
+- Code expiré (après 10 minutes)
+- Trop de tentatives (après 3 échecs)
+- Token OTP invalide
+
+### Renvoyer un code OTP
+
+Endpoint :
+
+```http
+POST /api/resend-otp
+Content-Type: application/json
+```
+
+Body :
+
+```json
+{
+  "otp_token": "abc123..."
+}
+```
+
+Réponse :
+
+```json
+{
+  "message": "Un nouveau code a été envoyé",
+  "expires_in": 600
 }
 ```
 
@@ -390,11 +601,13 @@ Authorization: Bearer <access_token>
 
 | Méthode | Route | Description |
 |---|---|---|
-| `GET` | `/` | Page login |
+| `GET` | `/` | Page login (par défaut) |
 | `GET` | `/register` | Page register |
 | `GET` | `/app` | Page application, contrôle JWT côté client |
-| `POST` | `/api/login` | Connexion, retourne JWT |
-| `POST` | `/api/register` | Inscription, retourne JWT |
+| `POST` | `/api/login` | **Étape 1** : Connexion, retourne otp_token |
+| `POST` | `/api/verify-otp` | **Étape 2** : Vérification OTP, retourne JWT |
+| `POST` | `/api/resend-otp` | Renvoyer un nouveau code OTP |
+| `POST` | `/api/register` | Inscription, retourne JWT (pas de OTP) |
 | `GET` | `/docs` | Swagger UI |
 | `GET` | `/redoc` | Documentation ReDoc |
 | `GET` | `/benchmark` | Rapport benchmark HTML |
@@ -570,6 +783,7 @@ python generate_olm_report.py
 
 ---
 
+
 ## Scripts de test
 
 Tests simples :
@@ -616,42 +830,45 @@ python test_api.py
 
 ```text
 ocr_project/
+├── .env                           # Configuration SMTP (à créer)
 ├── api/
 │   ├── __init__.py
-│   ├── auth.py                    # Validation login/register + JWT
+│   ├── auth.py                    # Validation login/register + JWT + OTP
 │   ├── auth_simple.py             # Ancien/alternatif, non principal
 │   ├── confidence_analyzer.py     # Analyse de confiance
-│   ├── database.py                # SQLAlchemy, users, ocr_history, migrations
+│   ├── database.py                # SQLAlchemy, users, otp_codes, ocr_history
+│   ├── email_service.py           # ✨ NOUVEAU : Envoi emails OTP avec auto-détection SMTP
 │   ├── language_detector.py       # Détection de langue
-│   ├── main.py                    # FastAPI, routes, auth, OCR, historique
+│   ├── main.py                    # FastAPI, routes, auth OTP, OCR, historique
 │   ├── model_matrix.py            # Scores/capacités modèles
-│   ├── model_workers.py           # Workers persistants optimisés
+│   ├── model_workers.py           # ✨ AMÉLIORATION : Workers avec preprocessing images
 │   ├── olm_benchmark_matrix.py    # Données OLM benchmark
 │   ├── worker.py                  # Worker subprocess fallback
 │   └── static/
 │       ├── app.js                 # Frontend OCR + headers JWT
 │       ├── index_multi.html       # Interface principale
-│       ├── login.html             # Login + inscription intégrée
-│       └── register.html          # Inscription séparée
-├── corpus_test/
-├── demo_images/
-├── test_files/
-├── test_images/
-├── test_results/
-├── benchmark_report.html
-├── benchmark_results.json
-├── generate_olm_report.py
-├── olm_benchmark_report.html
-├── requirements.txt
-├── run_all_benchmarks.py
-├── run_all_multiformat_tests.py
-├── run_public_api.ps1
-├── test_api.py
-├── test_docling.py
-├── test_easyocr.py
-├── test_paddleocr.py
-├── test_trocr.py
-└── README.md
+│       ├── login.html             # ✨ AMÉLIORATION : Login + OTP + inscription
+│       ├── register.html          # Inscription séparée
+│       └── theme.css              # Styles avec support OTP
+├── corpus_test/                   # Images de test pour benchmark
+├── demo_images/                   # Images de démonstration
+├── test_files/                    # Fichiers de test (PDF, TXT, DOCX)
+├── test_images/                   # Images de test OCR
+├── test_results/                  # Résultats des tests multiformat
+├── benchmark_report.html          # Rapport benchmark principal
+├── benchmark_results.json         # Résultats benchmark JSON
+├── generate_olm_report.py         # Génération rapport OLM
+├── olm_benchmark_report.html      # Rapport OLM benchmark
+├── requirements.txt               # ✨ Dépendances (+ python-dotenv)
+├── run_all_benchmarks.py          # Exécution benchmarks
+├── run_all_multiformat_tests.py   # Tests multiformat
+├── run_public_api.ps1             # Script PowerShell lancement
+├── test_api.py                    # Tests API
+├── test_docling.py                # Test Docling
+├── test_easyocr.py                # Test EasyOCR
+├── test_paddleocr.py              # Test PaddleOCR
+├── test_trocr.py                  # Test TrOCR
+└── README.md                      # ✨ Documentation complète (ce fichier)
 ```
 
 
