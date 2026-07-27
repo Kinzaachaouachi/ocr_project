@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extraction OCR - OCR Intelligence</title>
-    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727j">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -114,10 +114,10 @@
             <h1 class="page-title">Extraction OCR</h1>
             <p class="page-description">Extrayez du texte avec 4 moteurs OCR en parallèle</p>
             <div class="model-badges">
-                <span class="model-badge-item badge-primary">🏆 PaddleOCR</span>
+                <span class="model-badge-item badge-primary">🚀 PaddleOCR</span>
                 <span class="model-badge-item badge-success">📄 Docling</span>
-                <span class="model-badge-item badge-warning">👁️ EasyOCR</span>
-                <span class="model-badge-item badge-info">🤖 TrOCR</span>
+                <span class="model-badge-item badge-warning">🔍 EasyOCR</span>
+                <span class="model-badge-item badge-info">✍️ TrOCR</span>
             </div>
         </header>
 
@@ -442,99 +442,204 @@
         .editing-active .editing-hint { display: inline-block; }
     </style>
 
-    <script src="/static/js/app.js?v=20260723b"></script>
+    <script src="/static/js/app.js?v=20260727n"></script>
     <script src="/static/js/benchmark_download.js"></script>
     <script>
         let currentFileData = null;
-        let extractionState = {}; 
+        let extractionState = {};
+        const OCR_STATE_KEY = 'ocrExtractionState';
+        const OCR_NAV_FLAG = 'ocrKeepOnNextLoad';
 
-        
+        function wasPageReload() {
+            try {
+                const nav = performance.getEntriesByType('navigation')[0];
+                if (nav) return nav.type === 'reload';
+            } catch (e) {}
+            try {
+                return performance.navigation && performance.navigation.type === 1;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /** Slim copy so localStorage can hold the state across Dashboard / Rapports / etc. */
+        function buildPersistableState() {
+            const token = localStorage.getItem('access_token');
+            if (!currentFileData || !token) return null;
+
+            const baselines = {};
+            (currentFileData.results || []).forEach((r, i) => {
+                if (r && r._editBaseline) baselines[String(i)] = r._editBaseline;
+            });
+
+            const slimResults = (currentFileData.results || []).map((r) => ({
+                model_id: r.model_id,
+                model_name: r.model_name,
+                status: r.status,
+                text: r.text,
+                error: r.error,
+                char_count: r.char_count,
+                word_count: r.word_count,
+                quality_score: r.quality_score,
+                timing: r.timing,
+                word_confidence: r.word_confidence,
+                _editBaseline: r._editBaseline || null,
+            }));
+
+            return {
+                data: {
+                    file: currentFileData.file,
+                    file_type: currentFileData.file_type,
+                    file_path: currentFileData.file_path,
+                    detected_language: currentFileData.detected_language,
+                    total_processing_time_s: currentFileData.total_processing_time_s,
+                    best_model: currentFileData.best_model,
+                    best_model_name: currentFileData.best_model_name,
+                    successful_extractions: currentFileData.successful_extractions,
+                    total_models_tested: currentFileData.total_models_tested,
+                    results: slimResults,
+                },
+                edits: extractionState.edits || {},
+                baselines,
+                token,
+            };
+        }
+
         function loadExtractionState() {
-            
             const token = localStorage.getItem('access_token');
             if (!token) {
-                
-                sessionStorage.removeItem('ocrExtractionState');
+                clearExtractionState();
                 return;
             }
 
-            const saved = sessionStorage.getItem('ocrExtractionState');
-            if (saved) {
+            // Navigation interne (Dashboard, Rapports, Historique…) → garder l'extraction
+            const keepFromNav = sessionStorage.getItem(OCR_NAV_FLAG) === '1';
+            sessionStorage.removeItem(OCR_NAV_FLAG);
+
+            // Effacer seulement sur F5 / refresh de la page OCR (pas en revenant des rapports)
+            if (wasPageReload() && !keepFromNav) {
+                clearExtractionState();
+                console.log('🔄 Page OCR rafraîchie — extraction effacée');
+                return;
+            }
+
+            let saved = localStorage.getItem(OCR_STATE_KEY);
+            if (!saved) {
+                const legacy = sessionStorage.getItem(OCR_STATE_KEY);
+                if (legacy) {
+                    try {
+                        localStorage.setItem(OCR_STATE_KEY, legacy);
+                    } catch (e) {}
+                    sessionStorage.removeItem(OCR_STATE_KEY);
+                    saved = legacy;
+                }
+            }
+
+            if (!saved) return;
+
+            try {
+                extractionState = JSON.parse(saved);
+
+                if (extractionState.token !== token) {
+                    console.log('🔄 Token différent, effacement de l\'extraction précédente');
+                    clearExtractionState();
+                    return;
+                }
+
+                if (extractionState.data) {
+                    currentFileData = extractionState.data;
+
+                    const baselines = extractionState.baselines || {};
+                    Object.keys(baselines).forEach((key) => {
+                        const idx = parseInt(key, 10);
+                        if (currentFileData.results?.[idx]) {
+                            currentFileData.results[idx]._editBaseline = baselines[key];
+                        }
+                    });
+                    displayResults(extractionState.data, extractionState.edits || {});
+                    document.getElementById('resultsSection').style.display = 'block';
+
+                    setTimeout(() => {
+                        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                    console.log('✅ État d\'extraction restauré (navigation conservée)');
+                }
+            } catch (e) {
+                console.log('Impossible de restaurer l\'état d\'extraction:', e);
+                clearExtractionState();
+            }
+        }
+
+        function saveExtractionState() {
+            const payload = buildPersistableState();
+            if (!payload) return;
+
+            const raw = JSON.stringify(payload);
+            try {
+                localStorage.setItem(OCR_STATE_KEY, raw);
+                sessionStorage.removeItem(OCR_STATE_KEY);
+                console.log('💾 État d\'extraction sauvegardé');
+                return true;
+            } catch (e) {
+                // Quota : retenter sans word_confidence détaillé
                 try {
-                    extractionState = JSON.parse(saved);
-                    
-                    
-                    if (extractionState.token !== token) {
-                        
-                        console.log('⚠️ Token différent, effacement de l\'extraction précédente');
-                        sessionStorage.removeItem('ocrExtractionState');
-                        extractionState = {};
-                        return;
-                    }
-                    
-                    if (extractionState.data) {
-                        currentFileData = extractionState.data;
-                        
-                        const baselines = extractionState.baselines || {};
-                        Object.keys(baselines).forEach((key) => {
-                            const idx = parseInt(key, 10);
-                            if (currentFileData.results?.[idx]) {
-                                currentFileData.results[idx]._editBaseline = baselines[key];
-                            }
-                        });
-                        displayResults(extractionState.data, extractionState.edits || {});
-                        document.getElementById('resultsSection').style.display = 'block';
-                        
-                        setTimeout(() => {
-                            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 300);
-                        console.log('✅ État d\'extraction restauré');
-                    }
-                } catch (e) {
-                    console.log('Impossible de restaurer l\'état d\'extraction:', e);
-                    sessionStorage.removeItem('ocrExtractionState');
+                    payload.data.results = (payload.data.results || []).map((r) => ({
+                        ...r,
+                        word_confidence: (r.word_confidence || []).map((w) =>
+                            typeof w === 'number' ? w : (w?.confidence ?? 0.75)
+                        ),
+                    }));
+                    localStorage.setItem(OCR_STATE_KEY, JSON.stringify(payload));
+                    console.log('💾 État d\'extraction sauvegardé (version allégée)');
+                    return true;
+                } catch (e2) {
+                    console.warn('Impossible de sauvegarder l\'extraction:', e2);
+                    return false;
                 }
             }
         }
 
-        
-        function saveExtractionState() {
-            const token = localStorage.getItem('access_token');
-            if (currentFileData && token) {
-                
-                const baselines = {};
-                (currentFileData.results || []).forEach((r, i) => {
-                    if (r && r._editBaseline) baselines[String(i)] = r._editBaseline;
-                });
-                sessionStorage.setItem('ocrExtractionState', JSON.stringify({
-                    data: currentFileData,
-                    edits: extractionState.edits || {},
-                    baselines,
-                    token: token 
-                }));
-                console.log('✅ État d\'extraction sauvegardé');
-            }
-        }
-
-        
         function clearExtractionState() {
-            sessionStorage.removeItem('ocrExtractionState');
+            localStorage.removeItem(OCR_STATE_KEY);
+            sessionStorage.removeItem(OCR_STATE_KEY);
+            sessionStorage.removeItem(OCR_NAV_FLAG);
             currentFileData = null;
             extractionState = {};
-            console.log('✅ État d\'extraction effacé');
+            console.log('🗑️ État d\'extraction effacé');
         }
 
-        
-        window.addEventListener('beforeunload', () => {
-            if (currentFileData) {
-                saveExtractionState();
-            }
-        });
+        /** Avant d'aller vers Dashboard / Rapports / Historique / Profil : sauver + marquer */
+        function prepareLeaveOcrPage() {
+            if (!currentFileData) return;
+            saveExtractionState();
+            sessionStorage.setItem(OCR_NAV_FLAG, '1');
+        }
+
+        function bindNavPersistence() {
+            document.querySelectorAll(
+                'a.menu-item, a.sidebar-logo, a.user-profile-link, a[href^="/app"]'
+            ).forEach((link) => {
+                link.addEventListener('click', () => {
+                    const href = link.getAttribute('href') || '';
+                    // Ne pas marquer si on reste sur OCR ou déconnexion
+                    if (!href || href === '#' || href.includes('logout') || href.includes('/app/ocr')) {
+                        return;
+                    }
+                    prepareLeaveOcrPage();
+                });
+            });
+
+            window.addEventListener('pagehide', () => {
+                // Sauvegarder sans marquer : un F5 ne doit pas être traité comme navigation
+                if (currentFileData) saveExtractionState();
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeAuth();
-            loadExtractionState(); 
-            
+            loadExtractionState();
+            bindNavPersistence();
+
             const uploadZone = document.getElementById('uploadZone');
             const fileInput = document.getElementById('fileInput');
             
@@ -565,7 +670,6 @@
             const progressDiv = document.getElementById('uploadProgress');
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
-            const resultsSection = document.getElementById('resultsSection');
             
             if (file.size > 10 * 1024 * 1024) {
                 showError('Le fichier est trop volumineux. Maximum : 10 MB');
@@ -573,59 +677,80 @@
             }
             
             progressDiv.style.display = 'block';
-            progressBar.style.width = '30%';
-            progressText.textContent = 'Upload en cours...';
-            
+            progressBar.style.width = '15%';
+            progressText.textContent = 'Préparation… Vous pouvez changer de page.';
+
             try {
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                progressBar.style.width = '60%';
-                progressText.textContent = 'Extraction OCR en cours avec 4 modèles...';
-                
-                const headers = getAuthHeaders();
-                delete headers['Content-Type'];
-                
-                const response = await fetch('/api/extract-all', {
-                    method: 'POST',
-                    headers: headers,
-                    body: formData
-                });
-                
-                progressBar.style.width = '100%';
-                
-                if (!response.ok) {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(error.detail || `Erreur HTTP: ${response.status}`);
+                if (typeof startAsyncExtraction !== 'function') {
+                    throw new Error('Module extraction async indisponible — Ctrl+F5');
                 }
-                
-                const data = await response.json();
-                currentFileData = data;
-                extractionState = { data, edits: {} };
-                displayResults(data);
-                saveExtractionState();
-                
-                progressDiv.style.display = 'none';
-                resultsSection.style.display = 'block';
-                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
-                showSuccess(`Extraction terminée ! ${data.successful_extractions || 0}/${data.total_models_tested || 0} modèles réussis`);
-                
-                setTimeout(async () => {
-                    try {
-                        const statsResponse = await authenticatedFetch('/api/dashboard/stats');
-                        if (statsResponse.ok) console.log('✅ Dashboard stats updated');
-                    } catch (e) {
-                        console.log('Dashboard stats refresh skipped:', e);
-                    }
-                }, 2000);
-                
+
+                await startAsyncExtraction(file);
+                progressBar.style.width = '35%';
+                progressText.textContent = 'Extraction en arrière-plan… Navigation libre.';
+
             } catch (error) {
                 console.error('Error:', error);
-                showError(error.message || 'Erreur lors de l\'extraction OCR');
+                const msg = String(error && error.message || error);
+                // Navigation pendant l'envoi ? échec réel
+                if (/failed to fetch|networkerror|aborted|load failed/i.test(msg)) {
+                    progressText.textContent = 'Suivi de l\'extraction en cours…';
+                    if (typeof recoverOcrJobFromServer === 'function') {
+                        const ok = await recoverOcrJobFromServer(file.name);
+                        if (ok) return;
+                    }
+                }
+                if (typeof notifyExtractionFailed === 'function') {
+                    notifyExtractionFailed(msg || 'Erreur lors de l\'extraction OCR', file.name);
+                } else {
+                    showError(msg || 'Erreur lors de l\'extraction OCR');
+                }
                 progressDiv.style.display = 'none';
             }
         }
+
+        function applyOcrJobResult(data) {
+            if (!data) return;
+            currentFileData = data;
+            extractionState = { data, edits: {} };
+            if (typeof saveExtractionState === 'function') saveExtractionState();
+            displayResults(data);
+            const progressDiv = document.getElementById('uploadProgress');
+            const resultsSection = document.getElementById('resultsSection');
+            if (progressDiv) progressDiv.style.display = 'none';
+            if (resultsSection) {
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        window.addEventListener('ocr-job-progress', (e) => {
+            const job = e.detail || {};
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            if (!progressDiv || progressDiv.style.display === 'none') {
+                if (job.status === 'queued' || job.status === 'running' || job.status === 'uploading') {
+                    if (progressDiv) progressDiv.style.display = 'block';
+                }
+            }
+            if (progressBar) {
+                const pct = Math.max(15, Math.min(95, Number(job.progress) || 35));
+                progressBar.style.width = pct + '%';
+            }
+            if (progressText) {
+                progressText.textContent = job.message || 'Extraction en cours…';
+            }
+        });
+
+        window.addEventListener('ocr-job-completed', (e) => {
+            applyOcrJobResult(e.detail);
+        });
+
+        window.addEventListener('ocr-job-failed', () => {
+            const progressDiv = document.getElementById('uploadProgress');
+            if (progressDiv) progressDiv.style.display = 'none';
+        });
 
         
         function escHtml(str) {
@@ -636,10 +761,10 @@
                 .replace(/"/g, '&quot;');
         }
 
-        /* ── Confidence → color (correct principle) ── */
+        /* -- Confidence → color (correct principle) -- */
         function getConfidenceColor(conf) {
             const c = typeof conf === 'number' ? conf : parseFloat(conf) || 0;
-            if (c >= 0.9)  return '#111827'; // Noir — correct (≥90%)
+            if (c >= 0.9)  return '#111827'; // Noir — correct (=90%)
             if (c >= 0.7)  return '#F59E0B'; // Orange — probable erreur (70–89%)
             return '#EF4444';                // Rouge — faux (<70%)
         }
@@ -746,12 +871,12 @@
                 }
                 const origWord = baseWords[wordIdx];
                 const origConf = confs[wordIdx] ?? 0.75;
-                // Mot touché en édition → noir, même si le texte est identique
+                // Mot touché en édition ? noir, même si le texte est identique
                 const modified = (tok !== origWord) || (touchedWords && touchedWords.has(wordIdx));
                 const color  = modified ? '#111827' : getConfidenceColor(origConf);
                 const weight = modified ? '600' : 'normal';
                 const tip = modified
-                    ? 'Mot modifié ✏️'
+                    ? 'Mot modifié ✓'
                     : `Confiance: ${(origConf * 100).toFixed(0)}%`;
                 wordIdx++;
                 return `<span class="ocr-word" style="color:${color};font-weight:${weight};" title="${tip}">${escHtml(tok)}</span>`;
@@ -884,8 +1009,8 @@
             
             resultsEl.innerHTML = documentHTML + data.results.map((result, index) => {
                 const isBest = result.model_id === data.best_model;
-                const modelIcons = {'paddleocr': '🏆', 'docling': '📄', 'easyocr': '👁️', 'trocr': '🤖'};
-                const icon = modelIcons[result.model_id] || '📊';
+                const modelIcons = {'paddleocr': '🚀', 'docling': '📄', 'easyocr': '🔍', 'trocr': '✍️'};
+                const icon = modelIcons[result.model_id] || '🤖';
                 const modelId = result.model_id;
                 const editedText = edits[modelId] || result.text || '';
                 // Prefer saved edit baseline (after corrections) for coloring
@@ -901,13 +1026,13 @@
                     <div class="result-card ${isBest ? 'best-result' : ''}">
                         <div class="result-card-header">
                             <div class="result-card-title">
-                                <h4>${icon} ${result.model_name}${isBest ? ' ⭐' : ''}</h4>
+                                <h4>${icon} ${result.model_name}${isBest ? ' 🏆' : ''}</h4>
                                 ${result.status === 'success' ? `
                                     <div class="result-card-meta">
                                         <span>📝 ${result.char_count || 0} caractères</span>
-                                        <span>📖 ${result.word_count || 0} mots</span>
+                                        <span>🔤 ${result.word_count || 0} mots</span>
                                         <span>⏱️ ${(result.timing?.ocr_time_s || 0).toFixed(2)}s</span>
-                                        <span>⚡ Score: ${result.quality_score || 0}/100</span>
+                                        <span>⭐ Score: ${result.quality_score || 0}/100</span>
                                     </div>
                                 ` : `<div class="result-card-meta"><span style="color: var(--error);">❌ ${result.status}</span></div>`}
                             </div>
@@ -923,9 +1048,9 @@
                             ${result.status === 'success' ? `
                                 <div style="margin-bottom: 12px; padding: 8px; background: var(--gray-100); border-radius: 4px;">
                                     <small style="color: var(--gray-600);">
-                                        <span style="color: #111827;">■ Confiance ≥ 90% (Correct)</span> | 
-                                        <span style="color: #F59E0B;">■ Confiance 70-89% (Probable erreur)</span> | 
-                                        <span style="color: #EF4444;">■ Confiance &lt; 70% (Faux)</span>
+                                        <span style="color: #111827;">● Confiance ≥ 90% (Correct)</span> | 
+                                        <span style="color: #F59E0B;">● Confiance 70-89% (Probable erreur)</span> | 
+                                        <span style="color: #EF4444;">● Confiance &lt; 70% (Faux)</span>
                                     </small>
                                 </div>
                                 <div id="wrapper-${index}" data-editing="false">
@@ -985,7 +1110,7 @@
             }).join('');
         }
 
-        /* ── Toggle edit mode: coloré reste visible + contenteditable ── */
+        /* -- Toggle edit mode: coloré reste visible + contenteditable -- */
         function toggleEditMode(index) {
             const wrapper   = document.getElementById(`wrapper-${index}`);
             const displayEl = document.getElementById(`display-${index}`);
@@ -1021,7 +1146,7 @@
             displayEl.focus();
         }
 
-        /* ── Cancel: restore snapshot and exit edit mode ── */
+        /* -- Cancel: restore snapshot and exit edit mode -- */
         function cancelEdit(index) {
             const wrapper   = document.getElementById(`wrapper-${index}`);
             const displayEl = document.getElementById(`display-${index}`);
@@ -1056,7 +1181,7 @@
             cancelBtn.style.display = 'none';
         }
 
-        /* ── Save edits: persist, update color baseline, allow re-edit ── */
+        /* -- Save edits: persist, update color baseline, allow re-edit -- */
         function saveEdits(index, modelId) {
             const wrapper   = document.getElementById(`wrapper-${index}`);
             const displayEl = document.getElementById(`display-${index}`);
@@ -1076,7 +1201,7 @@
             const newWords = tokenizeWords(newText);
             const touched = displayEl?._touchedWords || new Set();
             const newConfs = newWords.map((w, i) => {
-                // Mot touché ou contenu différent → noir (confiance 100%)
+                // Mot touché ou contenu différent ? noir (confiance 100%)
                 if (touched.has(i) || w !== baseWords[i]) return 1.0;
                 return baseline.confidences[i] ?? 0.75;
             });
@@ -1096,7 +1221,7 @@
                 displayEl.setAttribute('contenteditable', 'false');
                 displayEl._touchedWords = null;
                 displayEl._lastEditWords = null;
-                // Après save, la baseline a déjà conf=1.0 pour les mots touchés → noir
+                // Après save, la baseline a déjà conf=1.0 pour les mots touchés ? noir
                 displayEl.innerHTML = buildColoredFromBaseline(newText, getEditBaseline(index));
             }
 
@@ -1181,7 +1306,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     const resultDiv = document.getElementById(`translation-result-${index}`);
-                    resultDiv.innerHTML = `<strong style="color: var(--primary-600);">📝 Traduction (${targetLang}):</strong><br><p style="margin-top: 8px;">${data.translated_text}</p>`;
+                    resultDiv.innerHTML = `<strong style="color: var(--primary-600);">🌐 Traduction (${targetLang}):</strong><br><p style="margin-top: 8px;">${data.translated_text}</p>`;
                     resultDiv.style.display = 'block';
                     showSuccess('✅ Traduction effectuée !');
                 } else {
@@ -1207,9 +1332,11 @@
         function resetUpload() {
             document.getElementById('resultsSection').style.display = 'none';
             document.getElementById('fileInput').value = '';
-            currentFileData = null;
-            extractionState = {};
-            sessionStorage.removeItem('ocrExtractionState');
+            clearExtractionState();
+            const resultsEl = document.getElementById('extractionResults');
+            if (resultsEl) resultsEl.innerHTML = '';
+            const fileInfoEl = document.getElementById('fileInfo');
+            if (fileInfoEl) fileInfoEl.innerHTML = '';
             document.getElementById('uploadZone').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     </script>

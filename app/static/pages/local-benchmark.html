@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Benchmark Local — OCR Intelligence</title>
-    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727k">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -193,16 +193,9 @@
                 <p id="reportDate" class="page-description" style="font-size:13px;margin-top:4px;"></p>
             </div>
             <div class="download-wrapper">
-                <button class="btn btn-primary" id="dlBtn" onclick="toggleDownloadMenu()">
-                    Télécharger
-                    <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+                <button class="btn btn-primary" id="dlBtn" onclick="doDownload(event)">
+                    Télécharger PDF
                 </button>
-                <div class="download-menu" id="dlMenu">
-                    <a href="#" onclick="doDownload(event,'pdf')">PDF</a>
-                    <a href="#" onclick="doDownload(event,'docx')">Word</a>
-                    <a href="#" onclick="doDownload(event,'excel')">Excel</a>
-                    <a href="#" onclick="doDownload(event,'csv')">CSV</a>
-                </div>
             </div>
         </header>
 
@@ -214,7 +207,7 @@
         </div>
     </main>
 
-<script src="/static/js/app.js?v=20260723b"></script>
+<script src="/static/js/app.js?v=20260727n"></script>
 <script>
 const API = '/api';
 let reportData = null;
@@ -225,20 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAuth();
     loadData();
 });
-
-document.addEventListener('click', e => {
-    const btn = document.getElementById('dlBtn');
-    const menu = document.getElementById('dlMenu');
-    if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
-        menu.classList.remove('open');
-        btn.classList.remove('open');
-    }
-});
-
-function toggleDownloadMenu() {
-    document.getElementById('dlMenu').classList.toggle('open');
-    document.getElementById('dlBtn').classList.toggle('open');
-}
 
 async function loadData() {
     try {
@@ -324,17 +303,13 @@ function getLevel(score) {
     return { label:'Faible', color:'#dc2626' };
 }
 
-async function doDownload(e, format) {
-    e.preventDefault();
-    document.getElementById('dlMenu').classList.remove('open');
-    document.getElementById('dlBtn').classList.remove('open');
-
-    const labels = { pdf:'PDF', docx:'Word', excel:'Excel', csv:'CSV' };
+async function doDownload(e) {
+    if (e) e.preventDefault();
     try {
-        showInfo(`⏳ Génération du rapport ${labels[format]}...`);
+        showInfo('⏳ Génération du rapport PDF...');
         const token = localStorage.getItem('access_token');
         const tokenType = localStorage.getItem('token_type') || 'Bearer';
-        const res = await fetch(`${API}/local-benchmark/download/${format}`, {
+        const res = await fetch(`${API}/local-benchmark/download/pdf`, {
             headers: { 'Authorization': `${tokenType} ${token}` }
         });
         if (!res.ok) {
@@ -342,8 +317,7 @@ async function doDownload(e, format) {
             throw new Error(err.detail || 'Erreur téléchargement');
         }
         const cd = res.headers.get('Content-Disposition');
-        const exts = { pdf:'pdf', docx:'docx', excel:'xlsx', csv:'csv' };
-        let filename = `benchmark_local.${exts[format]}`;
+        let filename = 'benchmark_local.pdf';
         if (cd) { const m = cd.match(/filename="(.+)"/); if (m) filename = m[1]; }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -351,7 +325,7 @@ async function doDownload(e, format) {
         a.href = url; a.download = filename;
         document.body.appendChild(a); a.click();
         URL.revokeObjectURL(url); document.body.removeChild(a);
-        showSuccess(`✅ Rapport ${labels[format]} téléchargé !`);
+        showSuccess('✅ Rapport PDF téléchargé !');
     } catch (err) {
         showError(`❌ ${err.message}`);
     }

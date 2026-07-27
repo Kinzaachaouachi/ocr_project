@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 OCR Intelligence v3.0 -- Application Launcher
-Usage: python start_app.py [--host HOST] [--port PORT] [--no-reload]
+Usage: python start_app.py [--host HOST] [--port PORT] [--reload]
 """
 
 import argparse
@@ -26,13 +26,19 @@ def main():
     )
     parser.add_argument("--port", type=int, default=8000, help="Port (defaut: 8000)")
     parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Activer le hot-reload (dev only — interrompt les jobs OCR)",
+    )
+    parser.add_argument(
         "--no-reload",
         action="store_true",
-        help="Desactiver le rechargement automatique",
+        help="Alias conserve : hot-reload desactive (comportement par defaut)",
     )
     args = parser.parse_args()
 
-    reload = not args.no_reload
+    # Hot-reload OFF par defaut : sinon les extractions en arriere-plan sont tuees
+    reload = bool(args.reload) and not bool(args.no_reload)
 
     print("=" * 65)
     print("  OCR Intelligence v3.0.0")
@@ -41,6 +47,8 @@ def main():
     print(f"  API Docs   : http://{args.host}:{args.port}/docs")
     print(f"  Dashboard  : http://{args.host}:{args.port}/app")
     print(f"  Hot-reload : {'ON' if reload else 'OFF'}")
+    if not reload:
+        print("  (Jobs OCR stables — utilisez --reload seulement en dev UI)")
     print("=" * 65)
     print()
 

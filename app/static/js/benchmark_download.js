@@ -1,5 +1,4 @@
 
-
 function initializeBenchmarkMenu() {
     
     const localMenu = document.getElementById('benchmarkMenu');
@@ -49,26 +48,23 @@ function initializeBenchmarkMenu() {
 }
 
 async function downloadBenchmark(event, format) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const formatNames = {
-        'pdf': 'PDF',
-        'docx': 'Word',
-        'excel': 'Excel',
-        'csv': 'CSV'
-    };
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    // Benchmarks: PDF only
+    format = 'pdf';
 
     try {
-        showInfo(`⏳ Génération du rapport local ${formatNames[format]}...`);
+        showInfo('⏳ Génération du rapport local PDF...');
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
         if (!token) {
             showError('❌ Vous devez être connecté pour télécharger un rapport.');
             return;
         }
 
-        const response = await fetch(`/api/local-benchmark/download/${format}`, {
+        const response = await fetch('/api/local-benchmark/download/pdf', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -76,12 +72,12 @@ async function downloadBenchmark(event, format) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.detail || `Erreur lors du téléchargement ${formatNames[format]}`);
+            throw new Error(errorData.detail || 'Erreur lors du téléchargement PDF');
         }
 
         
         const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `benchmark_local.${format === 'docx' ? 'docx' : format === 'excel' ? 'xlsx' : format}`;
+        let filename = 'benchmark_local.pdf';
         if (contentDisposition) {
             const match = contentDisposition.match(/filename="(.+)"/);
             if (match) filename = match[1];
@@ -98,9 +94,7 @@ async function downloadBenchmark(event, format) {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        showSuccess(`✅ Rapport local ${formatNames[format]} téléchargé avec succès!`);
-
-        
+        showSuccess('✅ Rapport local PDF téléchargé avec succès!');
         closeAllSubmenus();
 
     } catch (error) {
@@ -110,26 +104,23 @@ async function downloadBenchmark(event, format) {
 }
 
 async function downloadOlmReport(event, format) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const formatNames = {
-        'pdf': 'PDF',
-        'docx': 'Word',
-        'excel': 'Excel',
-        'csv': 'CSV'
-    };
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    // Benchmarks: PDF only
+    format = 'pdf';
 
     try {
-        showInfo(`⏳ Génération du rapport OLM Global ${formatNames[format]}...`);
+        showInfo('⏳ Génération du rapport OLM Global PDF...');
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
         if (!token) {
             showError('❌ Vous devez être connecté pour télécharger un rapport.');
             return;
         }
 
-        const response = await fetch(`/api/olm-report/download/${format}`, {
+        const response = await fetch('/api/olm-report/download/pdf', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -137,13 +128,12 @@ async function downloadOlmReport(event, format) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.detail || `Erreur lors du téléchargement OLM ${formatNames[format]}`);
+            throw new Error(errorData.detail || 'Erreur lors du téléchargement OLM PDF');
         }
 
         
         const contentDisposition = response.headers.get('Content-Disposition');
-        const extMap = { 'pdf': 'pdf', 'docx': 'docx', 'excel': 'xlsx', 'csv': 'csv' };
-        let filename = `rapport_olm_benchmark.${extMap[format] || format}`;
+        let filename = 'rapport_olm_benchmark.pdf';
         if (contentDisposition) {
             const match = contentDisposition.match(/filename="(.+)"/);
             if (match) filename = match[1];
@@ -160,9 +150,7 @@ async function downloadOlmReport(event, format) {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        showSuccess(`✅ Rapport OLM Global ${formatNames[format]} téléchargé avec succès!`);
-
-        
+        showSuccess('✅ Rapport OLM Global PDF téléchargé avec succès!');
         closeAllSubmenus();
 
     } catch (error) {

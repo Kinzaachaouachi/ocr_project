@@ -366,6 +366,155 @@ body.app-shell .navbar {
     background: linear-gradient(180deg, transparent, rgba(239, 246, 255, 0.5));
 }
 
+/* ── Centre de notifications (extraction OCR, etc.) ── */
+.app-notif-root {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 1100;
+    font-family: inherit;
+}
+
+.app-notif-bell {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--primary-700);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+}
+
+.app-notif-bell:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.18);
+}
+
+.app-notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.app-notif-badge.show {
+    display: inline-flex;
+}
+
+.app-notif-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(360px, calc(100vw - 32px));
+    max-height: 420px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+}
+
+.app-notif-panel.open {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-notif-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.app-notif-panel-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.app-notif-panel-header button {
+    border: none;
+    background: transparent;
+    color: var(--primary-600);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.app-notif-list {
+    overflow-y: auto;
+    max-height: 360px;
+}
+
+.app-notif-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.app-notif-item:hover {
+    background: var(--gray-50);
+}
+
+.app-notif-item.unread {
+    background: var(--primary-50);
+}
+
+.app-notif-item-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+}
+
+.app-notif-item-msg {
+    font-size: 12px;
+    color: var(--gray-600);
+    line-height: 1.4;
+}
+
+.app-notif-item-time {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-top: 6px;
+}
+
+.app-notif-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 13px;
+}
+
+.app-notif-item.type-success .app-notif-item-title { color: #059669; }
+.app-notif-item.type-error .app-notif-item-title { color: #dc2626; }
+.app-notif-item.type-info .app-notif-item-title { color: var(--primary-700); }
+
+#notification-container {
+    top: 72px !important;
+}
+
 .user-profile-link {
     display: flex;
     align-items: center;
@@ -447,6 +596,20 @@ body.app-shell .navbar {
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
+    /* Espace pour la cloche de notifications (position: fixed, top-right) */
+    padding-right: 72px;
+    box-sizing: border-box;
+}
+
+.page-header .download-wrapper,
+.page-header .card-actions {
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.page-header .download-wrapper .btn,
+.page-header > .btn {
+    white-space: nowrap;
 }
 
 .page-title {

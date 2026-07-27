@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - OCR Intelligence</title>
-    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727j">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,20 +181,13 @@
                     <h3 class="card-title">Benchmark Local</h3>
                     <p class="card-description">Performances de vos extractions OCR par modèle</p>
                     <div class="card-actions">
-                        <button onclick="exportBenchmarkExcel()" class="btn btn-success btn-sm">
+                        <button onclick="downloadBenchmark(event, 'pdf')" class="btn btn-primary btn-sm">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7,10 12,15 17,10"></polyline>
                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
-                            Excel
-                        </button>
-                        <button onclick="exportBenchmarkCSV()" class="btn btn-outline btn-sm">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14,2 14,8 20,8"></polyline>
-                            </svg>
-                            CSV
+                            Télécharger PDF
                         </button>
                     </div>
                 </div>
@@ -298,7 +291,7 @@
         </div>
     </main>
 
-    <script src="/static/js/app.js?v=20260723b"></script>
+    <script src="/static/js/app.js?v=20260727n"></script>
     <script src="/static/js/benchmark_download.js"></script>
     <script>
         
@@ -373,15 +366,15 @@
             };
 
             const modelIcons = {
-                'paddleocr': '🏆',
+                'paddleocr': '🚀',
                 'docling': '📄',
-                'easyocr': '👁️',
-                'trocr': '🤖'
+                'easyocr': '🔍',
+                'trocr': '✍️'
             };
 
             const rows = modelBenchmarks.map(model => {
                 const modelName = modelNames[model.model_id] || model.model_name || model.model_id;
-                const icon = modelIcons[model.model_id] || '📊';
+                const icon = modelIcons[model.model_id] || '🤖';
                 
                 return `
                     <tr>
@@ -503,59 +496,7 @@
         }
 
         async function exportBenchmarkData() {
-            await exportBenchmarkExcel();
-        }
-
-        async function exportBenchmarkExcel() {
-            try {
-                showInfo('Préparation de l\'export Excel...');
-                const response = await authenticatedFetch('/api/dashboard/export/excel');
-                
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `benchmark-${new Date().toISOString().slice(0, 10)}.xlsx`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    showSuccess('Export Excel téléchargé avec succès');
-                } else {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(error.detail || `Erreur HTTP: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Erreur export Excel:', error);
-                showError('Erreur lors de l\'export Excel: ' + error.message);
-            }
-        }
-
-        async function exportBenchmarkCSV() {
-            try {
-                showInfo('Préparation de l\'export CSV...');
-                const response = await authenticatedFetch('/api/dashboard/export/csv');
-                
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `benchmark-${new Date().toISOString().slice(0, 10)}.csv`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    showSuccess('Export CSV téléchargé avec succès');
-                } else {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(error.detail || `Erreur HTTP: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Erreur export CSV:', error);
-                showError('Erreur lors de l\'export CSV: ' + error.message);
-            }
+            await downloadBenchmark(null, 'pdf');
         }
 
         
@@ -590,42 +531,26 @@
 
         
         async function downloadBenchmark(event, format) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const formatNames = {
-                'pdf': 'PDF',
-                'docx': 'Word',
-                'excel': 'Excel',
-                'csv': 'CSV'
-            };
-            
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             try {
-                showInfo(`Génération du rapport ${formatNames[format]}...`);
-                
-                const token = localStorage.getItem('token');
-                const response = await fetch(`/api/local-benchmark/download/${format}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                showInfo('Génération du rapport PDF...');
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch('/api/local-benchmark/download/pdf', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || `Erreur lors du téléchargement ${formatNames[format]}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Erreur lors du téléchargement PDF');
                 }
-                
-                
                 const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = `benchmark_local.${format === 'docx' ? 'docx' : format === 'excel' ? 'xlsx' : format}`;
+                let filename = 'benchmark_local.pdf';
                 if (contentDisposition) {
                     const match = contentDisposition.match(/filename="(.+)"/);
-                    if (match) {
-                        filename = match[1];
-                    }
+                    if (match) filename = match[1];
                 }
-                
-                
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -635,16 +560,14 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                
-                showSuccess(`✅ Rapport ${formatNames[format]} téléchargé avec succès!`);
-                
-                
-                document.getElementById('benchmarkSubmenu').classList.remove('show');
-                document.getElementById('benchmarkMenu').classList.remove('active');
-                
+                showSuccess('✅ Rapport PDF téléchargé avec succès!');
+                const submenu = document.getElementById('benchmarkSubmenu');
+                const menu = document.getElementById('benchmarkMenu');
+                if (submenu) submenu.classList.remove('show');
+                if (menu) menu.classList.remove('active');
             } catch (error) {
                 console.error('Erreur téléchargement:', error);
-                showError(`❌ ${error.message}`);
+                showError(`? ${error.message}`);
             }
         }
     </script>

@@ -23,6 +23,12 @@ from ..services.ocr_service import (
     save_ocr_result,
     calculate_benchmark_metrics,
 )
+from ..services.extraction_jobs import (
+    get_job,
+    get_active_job_for_user,
+    start_extract_all_job,
+    process_extract_all_file,
+)
 from ..utils.confidence_analyzer import (
     analyze_text_confidence,
     refine_word_confidence_list,
@@ -159,6 +165,7 @@ async def extract_all_models(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Lancement asynchrone : le job continue même si l'utilisateur change de page."""
     file_type = detect_file_type(file.filename)
     if file_type is None:
         raise HTTPException(
@@ -166,9 +173,20 @@ async def extract_all_models(
             detail=f"Extension non supportée : '{Path(file.filename).suffix}'",
         )
 
+    available_models = [
+        mid
+        for mid, minfo in MODELS_INFO.items()
+        if file_type in minfo["supported_formats"]
+    ]
+    if not available_models:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Aucun modèle ne supporte le format '{file_type}'",
+        )
+
     suffix = Path(file.filename).suffix.lower()
     tmp_path = None
-    uploaded_file_path = None
+    file_url = None
     client_ip = request.client.host if request else "unknown"
 
     try:
@@ -190,175 +208,140 @@ async def extract_all_models(
 
             file_url = f"/uploads/{uploaded_filename}"
         except Exception as e:
-            file_url = None
             print(f"Warning: Could not save uploaded file: {e}")
 
-        detected_lang_from_filename = detect_language_from_filename(file.filename)
-        available_models = [
-            mid
-            for mid, minfo in MODELS_INFO.items()
-            if file_type in minfo["supported_formats"]
-        ]
-
-        if not available_models:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Aucun modèle ne supporte le format '{file_type}'",
-            )
-
-        results = []
-        overall_start = time.time()
-        detected_language = None
-        detected_language_confidence = 0.0
-
-        futures = await run_in_threadpool(
-            run_models_in_parallel, tmp_path, file_type, available_models
+        job_id = start_extract_all_job(
+            tmp_path=tmp_path,
+            filename=file.filename,
+            file_type=file_type,
+            file_url=file_url,
+            user_id=current_user.id,
+            client_ip=client_ip,
         )
-
-        for model_id, result, wall_time in futures:
-            try:
-                if result.get("status") == "success":
-                    text = result.get("text", "")
-                    word_confidence_data = refine_word_confidence_list(
-                        result.get("word_confidence", []),
-                        model_id=model_id,
-                        text=text,
-                    )
-                    result["word_confidence"] = word_confidence_data
-
-                    if text and len(text.strip()) > 20:
-                        try:
-                            lang_code, lang_confidence = detect_language_from_text(text)
-                            if detected_lang_from_filename:
-                                detected_language = detected_lang_from_filename
-                                detected_language_confidence = 0.95
-                            elif lang_confidence > detected_language_confidence:
-                                detected_language = lang_code
-                                detected_language_confidence = lang_confidence
-                        except Exception:
-                            if not detected_language:
-                                detected_language, detected_language_confidence = (
-                                    detect_language_by_charset(text)
-                                )
-
-                    confidence_stats = analyze_text_confidence(word_confidence_data)
-                    model_matrix_score = calculate_overall_score(model_id)
-                    metrics = calculate_benchmark_metrics(result, model_id)
-
-                    results.append(
-                        {
-                            "model_id": model_id,
-                            "model_name": MODELS_INFO[model_id]["name"],
-                            "status": "success",
-                            "text": text,
-                            "word_confidence": word_confidence_data,
-                            "confidence_stats": confidence_stats,
-                            "char_count": len(text),
-                            "word_count": len(text.split()),
-                            "timing": {
-                                "init_time_s": result.get("init_time", 0),
-                                "ocr_time_s": result.get("ocr_time", 0),
-                                "total_time_s": result.get("total_time", 0),
-                                "wall_time_s": wall_time,
-                            },
-                            "quality_score": 0,
-                            "model_score": model_matrix_score,
-                            "benchmark": metrics,
-                            "language_support": detected_language
-                            in MODEL_MATRIX.get(model_id, {}).get("languages", []),
-                        }
-                    )
-                else:
-                    results.append(
-                        {
-                            "model_id": model_id,
-                            "model_name": MODELS_INFO[model_id]["name"],
-                            "status": "error",
-                            "error": result.get("error", "Erreur inconnue"),
-                            "quality_score": 0,
-                        }
-                    )
-
-                save_ocr_result(
-                    db,
-                    current_user,
-                    file.filename,
-                    file_type,
-                    file_url,
-                    model_id,
-                    result,
-                    wall_time,
-                    client_ip,
-                )
-
-            except Exception as e:
-                results.append(
-                    {
-                        "model_id": model_id,
-                        "model_name": MODELS_INFO[model_id]["name"],
-                        "status": "error",
-                        "error": str(e),
-                        "quality_score": 0,
-                    }
-                )
-
-        successful_results = [r for r in results if r["status"] == "success"]
-        if successful_results:
-            max_char_count = max(r["char_count"] for r in successful_results) or 1
-            min_ocr_time = (
-                min(r["timing"]["ocr_time_s"] for r in successful_results) or 0.01
-            )
-
-            for r in successful_results:
-                avg_conf = r.get("confidence_stats", {}).get("avg_confidence", 0.75)
-                confidence_score = avg_conf * 100
-                text_completeness = (r["char_count"] / max_char_count) * 100
-                ocr_time = r["timing"]["ocr_time_s"] or 0.01
-                speed_score = min(100, (min_ocr_time / ocr_time) * 100)
-                language_score = 100 if r.get("language_support") else 0
-                static_score = r.get("model_score", 0)
-
-                quality_score = (
-                    confidence_score * 0.30
-                    + text_completeness * 0.25
-                    + static_score * 0.20
-                    + language_score * 0.15
-                    + speed_score * 0.10
-                )
-                r["quality_score"] = round(quality_score, 1)
-
-        results.sort(key=lambda x: x.get("quality_score", 0), reverse=True)
-        overall_time = round(time.time() - overall_start, 2)
-        best_result = next((r for r in results if r["status"] == "success"), None)
-
-        if not detected_language:
-            detected_language = "fr"
-            detected_language_confidence = 0.5
+        # tmp_path ownership transferred to the job worker (deleted there)
+        tmp_path = None
 
         return {
-            "status": "success",
+            "status": "accepted",
+            "async": True,
+            "job_id": job_id,
             "file": file.filename,
             "file_type": file_type,
             "file_path": file_url,
-            "detected_language": {
-                "code": detected_language,
-                "name": get_language_name(detected_language),
-                "confidence": round(detected_language_confidence, 2),
-                "detection_method": (
-                    "filename" if detected_lang_from_filename else "text_analysis"
-                ),
-            },
-            "recommended_models": get_best_models_for_language(detected_language),
-            "total_models_tested": len(results),
-            "successful_extractions": sum(
-                1 for r in results if r["status"] == "success"
-            ),
-            "best_model": best_result["model_id"] if best_result else None,
-            "best_model_name": best_result["model_name"] if best_result else None,
-            "total_processing_time_s": overall_time,
-            "results": results,
-            "processed_at": datetime.now().isoformat(),
+            "message": "Extraction démarrée en arrière-plan. Vous pouvez changer de page.",
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur interne : {str(e)}")
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
+@router.get("/extract-all/jobs/active")
+async def get_active_extract_job(
+    current_user: User = Depends(get_current_user),
+):
+    """Job en cours (ou tout juste terminé) pour l'utilisateur connecté."""
+    job = get_active_job_for_user(current_user.id)
+    if not job:
+        return {"status": "idle", "job": None}
+
+    payload = {
+        "job_id": job["job_id"],
+        "status": job["status"],
+        "progress": job.get("progress", 0),
+        "message": job.get("message"),
+        "filename": job.get("filename"),
+        "file_type": job.get("file_type"),
+        "file_path": job.get("file_path"),
+        "error": job.get("error"),
+        "created_at": job.get("created_at"),
+        "updated_at": job.get("updated_at"),
+    }
+    if job.get("status") == "completed" and job.get("result"):
+        payload["result"] = job["result"]
+    return {"status": job["status"], "job": payload}
+
+
+@router.get("/extract-all/jobs/{job_id}")
+async def get_extract_all_job(
+    job_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job introuvable")
+    if job.get("user_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Accès refusé")
+
+    payload = {
+        "job_id": job["job_id"],
+        "status": job["status"],
+        "progress": job.get("progress", 0),
+        "message": job.get("message"),
+        "filename": job.get("filename"),
+        "file_type": job.get("file_type"),
+        "file_path": job.get("file_path"),
+        "error": job.get("error"),
+        "created_at": job.get("created_at"),
+        "updated_at": job.get("updated_at"),
+    }
+    if job.get("status") == "completed" and job.get("result"):
+        payload["result"] = job["result"]
+    return payload
+
+
+@router.post("/extract-all/sync")
+async def extract_all_models_sync(
+    file: UploadFile = File(..., description="Fichier à traiter (mode synchrone)"),
+    request: Request = None,
+    current_user: User = Depends(get_current_user),
+):
+    """Ancien mode bloquant — conservé pour compatibilité / tests."""
+    file_type = detect_file_type(file.filename)
+    if file_type is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Extension non supportée : '{Path(file.filename).suffix}'",
+        )
+
+    suffix = Path(file.filename).suffix.lower()
+    tmp_path = None
+    file_url = None
+    client_ip = request.client.host if request else "unknown"
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            file_content = await file.read()
+            tmp.write(file_content)
+            tmp_path = tmp.name
+
+        try:
+            UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            uploaded_filename = (
+                f"{Path(file.filename).stem}_{timestamp}{suffix}"
+            )
+            uploaded_file_path = UPLOADS_DIR / uploaded_filename
+            with open(tmp_path, "rb") as src, open(uploaded_file_path, "wb") as dst:
+                dst.write(src.read())
+            file_url = f"/uploads/{uploaded_filename}"
+        except Exception as e:
+            print(f"Warning: Could not save uploaded file: {e}")
+
+        return await run_in_threadpool(
+            lambda: process_extract_all_file(
+                tmp_path=tmp_path,
+                filename=file.filename,
+                file_type=file_type,
+                file_url=file_url,
+                user_id=current_user.id,
+                client_ip=client_ip,
+                job_id=None,
+            )
+        )
     except HTTPException:
         raise
     except Exception as e:

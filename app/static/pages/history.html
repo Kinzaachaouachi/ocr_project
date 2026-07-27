@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historique - OCR Intelligence</title>
-    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727j">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,15 +118,15 @@
             <div class="filter-actions">
                 <select id="modelFilter" class="filter-select">
                     <option value="">Tous les modèles</option>
-                    <option value="paddleocr">🏆 PaddleOCR</option>
+                    <option value="paddleocr">🚀 PaddleOCR</option>
                     <option value="docling">📄 Docling</option>
-                    <option value="easyocr">👁️ EasyOCR</option>
-                    <option value="trocr">🤖 TrOCR</option>
+                    <option value="easyocr">🔍 EasyOCR</option>
+                    <option value="trocr">✍️ TrOCR</option>
                 </select>
                 <select id="statusFilter" class="filter-select">
                     <option value="">Tous les statuts</option>
-                    <option value="success">✓ Succès</option>
-                    <option value="error">✗ Erreur</option>
+                    <option value="success">✅ Succès</option>
+                    <option value="error">❌ Erreur</option>
                 </select>
             </div>
         </header>
@@ -769,7 +769,7 @@
         }
     </style>
 
-    <script src="/static/js/app.js?v=20260723b"></script>
+    <script src="/static/js/app.js?v=20260727n"></script>
     <script src="/static/js/benchmark_download.js"></script>
     <script>
         let currentHistory = [];
@@ -874,12 +874,12 @@
                 const globalScore = item.benchmark?.global_score != null ? (item.benchmark.global_score).toFixed(1) : '-';
                 
                 const modelIcons = {
-                    'paddleocr': '🏆',
+                    'paddleocr': '🚀',
                     'docling': '📄',
-                    'easyocr': '👁️',
-                    'trocr': '🤖'
+                    'easyocr': '🔍',
+                    'trocr': '✍️'
                 };
-                const icon = modelIcons[item.model_id] || '📊';
+                const icon = modelIcons[item.model_id] || '🤖';
                 
                 return `
                 <tr>
@@ -915,8 +915,8 @@
                     </td>
                     <td>
                         ${item.status === 'success' 
-                            ? '<span class="status-badge success">✓ Succès</span>'
-                            : '<span class="status-badge error">✗ Erreur</span>'
+                            ? '<span class="status-badge success">✅ Succès</span>'
+                            : '<span class="status-badge error">❌ Erreur</span>'
                         }
                     </td>
                     <td>
@@ -1003,7 +1003,7 @@
             } else if (fileTypeLC.includes('pdf')) {
                 previewHtml = `<embed src="${filePath}" type="application/pdf" style="width: 100%; height: 600px; border-radius: 8px;" onload="this.parentElement.querySelector('.loading-spinner')?.remove()">`;
             } else {
-                previewHtml = '<div style="padding: 40px; text-align: center; color: var(--gray-500);">📄 Aperçu non disponible pour ce type de fichier</div>';
+                previewHtml = '<div style="padding: 40px; text-align: center; color: var(--gray-500);">👁️ Aperçu non disponible pour ce type de fichier</div>';
             }
             
             docViewer.innerHTML = previewHtml;
@@ -1087,42 +1087,26 @@
 
         
         async function downloadBenchmark(event, format) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const formatNames = {
-                'pdf': 'PDF',
-                'docx': 'Word',
-                'excel': 'Excel',
-                'csv': 'CSV'
-            };
-            
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             try {
-                showInfo(`Génération du rapport ${formatNames[format]}...`);
-                
-                const token = localStorage.getItem('token');
-                const response = await fetch(`/api/local-benchmark/download/${format}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                showInfo('Génération du rapport PDF...');
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch('/api/local-benchmark/download/pdf', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || `Erreur lors du téléchargement ${formatNames[format]}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Erreur lors du téléchargement PDF');
                 }
-                
-                
                 const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = `benchmark_local.${format === 'docx' ? 'docx' : format === 'excel' ? 'xlsx' : format}`;
+                let filename = 'benchmark_local.pdf';
                 if (contentDisposition) {
                     const match = contentDisposition.match(/filename="(.+)"/);
-                    if (match) {
-                        filename = match[1];
-                    }
+                    if (match) filename = match[1];
                 }
-                
-                
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1132,18 +1116,14 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                
-                showSuccess(`✅ Rapport ${formatNames[format]} téléchargé avec succès!`);
-                
-                
+                showSuccess('✅ Rapport PDF téléchargé avec succès!');
                 const submenu = document.getElementById('benchmarkSubmenu');
                 const menu = document.getElementById('benchmarkMenu');
                 if (submenu) submenu.classList.remove('show');
                 if (menu) menu.classList.remove('active');
-                
             } catch (error) {
                 console.error('Erreur téléchargement:', error);
-                showError(`❌ ${error.message}`);
+                showError(`? ${error.message}`);
             }
         }
 

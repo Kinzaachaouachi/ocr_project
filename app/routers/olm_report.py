@@ -9,9 +9,6 @@ from ..services.olm_report_service import (
     generate_olm_report_data,
     generate_html_report,
     generate_pdf_report,
-    generate_docx_report,
-    generate_excel_report,
-    generate_csv_report,
 )
 from ..services.auth_service import get_current_user
 
@@ -84,98 +81,6 @@ async def download_pdf_report(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Erreur lors de la génération du PDF: {str(e)}"
-        )
-
-
-@router.get("/download/docx")
-async def download_docx_report(
-    include_user_stats: bool = False,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Download OLM benchmark report as Word document."""
-    try:
-        user_id = current_user.id if include_user_stats else None
-        report_data = generate_olm_report_data(db, user_id=user_id)
-        docx_bytes = generate_docx_report(report_data)
-
-        filename = (
-            f"rapport_olm_benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
-        )
-
-        return Response(
-            content=docx_bytes,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
-    except ImportError:
-        raise HTTPException(
-            status_code=500,
-            detail="python-docx n'est pas installé. pip install python-docx",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur lors de la génération du document Word: {str(e)}",
-        )
-
-
-@router.get("/download/excel")
-async def download_excel_report(
-    include_user_stats: bool = False,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Download OLM benchmark report as Excel spreadsheet."""
-    try:
-        user_id = current_user.id if include_user_stats else None
-        report_data = generate_olm_report_data(db, user_id=user_id)
-        excel_bytes = generate_excel_report(report_data)
-
-        filename = (
-            f"rapport_olm_benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        )
-
-        return Response(
-            content=excel_bytes,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
-    except ImportError:
-        raise HTTPException(
-            status_code=500, detail="openpyxl n'est pas installé. pip install openpyxl"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur lors de la génération du fichier Excel: {str(e)}",
-        )
-
-
-@router.get("/download/csv")
-async def download_csv_report(
-    include_user_stats: bool = False,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Download OLM benchmark report as CSV file."""
-    try:
-        user_id = current_user.id if include_user_stats else None
-        report_data = generate_olm_report_data(db, user_id=user_id)
-        csv_content = generate_csv_report(report_data)
-
-        filename = (
-            f"rapport_olm_benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        )
-
-        return Response(
-            content=csv_content,
-            media_type="text/csv",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Erreur lors de la génération du CSV: {str(e)}"
         )
 
 
