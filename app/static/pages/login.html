@@ -1,0 +1,1226 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>OCR Intelligence — Connexion</title>
+        <meta
+            name="description"
+            content="Connectez-vous à OCR Intelligence pour extraire du texte avec 4 modèles IA en parallèle."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/css/theme.css" />
+    </head>
+    <body>
+        <div class="auth-page">
+            <a class="brand auth-top-brand" href="/">
+                <div class="logo">AI</div>
+                <div class="brand-text">OCR Intelligence</div>
+            </a>
+
+            <div class="auth-card" id="loginContainer">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">Connexion</h2>
+                    <p class="auth-subtitle">
+                        Accédez à votre espace d'extraction OCR.
+                    </p>
+                </div>
+
+                <div id="alert" class="alert"></div>
+
+                <form id="loginForm" novalidate>
+                    <div class="field">
+                        <label for="email">Adresse email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            required
+                            autocomplete="email"
+                            placeholder="vous@exemple.com"
+                        />
+                        <div class="error-text" id="email-error"></div>
+                    </div>
+
+                    <div class="field password-field">
+                        <label for="password">Mot de passe</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="••••••••"
+                        />
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('password')"
+                            >👁️</span
+                        >
+                        <div class="error-text" id="password-error"></div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="loginBtn"
+                    >
+                        <span class="spinner-sm" id="loginSpinner"></span>
+                        <span id="loginBtnText">Se connecter</span>
+                    </button>
+
+                    <p style="text-align: center; margin-top: 12px;">
+                        <a href="#" onclick="showForgotPasswordForm(); return false;" style="font-size: 14px; text-decoration: none;">
+                            🔑 Mot de passe oublié ?
+                        </a>
+                    </p>
+                </form>
+
+                <div class="auth-divider"><span>ou</span></div>
+
+                <p class="auth-footer-link">
+                    Pas encore de compte ?
+                    <a href="#" onclick="showRegisterForm(); return false;">Créer un compte</a>
+                </p>
+            </div>
+
+            
+            <div class="auth-card" id="forgotPasswordContainer" style="display: none">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">🔑 Mot de passe oublié</h2>
+                    <p class="auth-subtitle">
+                        Entrez votre adresse email pour réinitialiser votre mot de passe.
+                    </p>
+                </div>
+
+                <div id="forgotPasswordAlert" class="alert"></div>
+
+                <form id="forgotPasswordForm" novalidate>
+                    <div class="field">
+                        <label for="forgotEmail">Adresse email</label>
+                        <input
+                            type="email"
+                            id="forgotEmail"
+                            name="email"
+                            required
+                            autocomplete="email"
+                            placeholder="vous@exemple.com"
+                        />
+                        <div class="error-text" id="forgotEmail-error"></div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="forgotPasswordBtn"
+                    >
+                        <span class="spinner-sm" id="forgotPasswordSpinner"></span>
+                        <span id="forgotPasswordBtnText">Envoyer le lien</span>
+                    </button>
+                </form>
+
+                <p class="auth-footer-link" style="margin-top: 16px;">
+                    <a href="#" onclick="showLoginForm(); return false;">← Retour à la connexion</a>
+                </p>
+            </div>
+
+            
+            <div class="auth-card" id="verifyWaitContainer" style="display: none">
+                <div class="auth-card-header" style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📧</div>
+                    <h2 class="auth-title">Vérifiez votre email</h2>
+                    <p class="auth-subtitle" id="verifyWaitSubtitle">
+                        Un lien d'activation a été envoyé à votre adresse email.
+                        Après confirmation, un code OTP sera envoyé pour valider la connexion.
+                    </p>
+                </div>
+
+                <div id="verifyWaitAlert" class="alert"></div>
+
+                <div style="padding: 0 8px 8px;">
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-block"
+                        id="resendFromWaitBtn"
+                        onclick="resendFromWait()"
+                        style="background: #6366f1; color: white;"
+                    >
+                        📧 Renvoyer l'email de vérification
+                    </button>
+                    <p class="auth-footer-link" style="margin-top: 16px;">
+                        <a href="#" onclick="backToLoginFromWait(); return false;">← Retour à la connexion</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="auth-card" id="otpContainer" style="display: none">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">🔐 Vérification de sécurité</h2>
+                    <p class="auth-subtitle" id="otpSubtitle">
+                        Un code a été envoyé à votre adresse email.
+                    </p>
+                </div>
+
+                <div id="otpAlert" class="alert"></div>
+
+                <form id="otpForm" novalidate>
+                    <div class="field">
+                        <label for="otpCode">Code de vérification</label>
+                        <input
+                            type="text"
+                            id="otpCode"
+                            name="otp_code"
+                            required
+                            placeholder="000000"
+                            maxlength="6"
+                            inputmode="numeric"
+                            pattern="[0-9]{6}"
+                            autocomplete="one-time-code"
+                            style="font-size: 20px; letter-spacing: 8px; text-align: center; font-weight: 600;"
+                        />
+                        <div class="error-text" id="otpCode-error"></div>
+                        <p style="margin-top: 8px; color: #6B7280; font-size: 13px; text-align: center;">
+                            Entrez le code à 6 chiffres reçu par email
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="verifyOtpBtn"
+                    >
+                        <span class="spinner-sm" id="verifyOtpSpinner"></span>
+                        <span id="verifyOtpBtnText">Vérifier</span>
+                    </button>
+                </form>
+
+                <div class="auth-divider"><span>ou</span></div>
+
+                <div class="otp-actions">
+                    <p class="auth-footer-link" id="resendContainer">
+                        <a href="#" onclick="resendOTP(); return false;" id="resendLink">
+                            Renvoyer le code
+                        </a>
+                        <span id="resendCooldown"></span>
+                    </p>
+                    <p class="auth-footer-link">
+                        <a href="#" onclick="backToLogin(); return false;">Revenir à la connexion</a>
+                    </p>
+                </div>
+
+                <div class="otp-info">
+                    <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-align: center;">
+                        Code valable 10 minutes
+                    </p>
+                </div>
+            </div>
+
+            
+            <div class="auth-card" id="registerContainer" style="display: none">
+                <div class="auth-card-header">
+                    <h2 class="auth-title">Créer un compte</h2>
+                    <p class="auth-subtitle">
+                        Quelques informations pour démarrer.
+                    </p>
+                </div>
+
+                <div id="registerAlert" class="alert"></div>
+
+                <form id="registerForm" novalidate enctype="multipart/form-data">
+                    <div class="field">
+                        <label for="regEmail">Adresse email *</label>
+                        <input
+                            type="email"
+                            id="regEmail"
+                            name="email"
+                            required
+                            placeholder="vous@exemple.com"
+                        />
+                        <div class="error-text" id="regEmail-error"></div>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="firstName">Prénom *</label>
+                            <input
+                                type="text"
+                                id="firstName"
+                                name="first_name"
+                                required
+                                placeholder="Prénom"
+                            />
+                            <div class="error-text" id="firstName-error"></div>
+                        </div>
+
+                        <div class="field">
+                            <label for="lastName">Nom *</label>
+                            <input 
+                                type="text" 
+                                id="lastName" 
+                                name="last_name"
+                                required
+                                placeholder="Nom"
+                            />
+                            <div class="error-text" id="lastName-error"></div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="profileImage">Photo de profil (Optionnel)</label>
+                        <div class="file-upload-wrapper">
+                            <input
+                                type="file"
+                                id="profileImage"
+                                name="profile_image"
+                                accept="image/*"
+                                style="display: none;"
+                            />
+                            <button type="button" class="btn btn-secondary btn-block" onclick="document.getElementById('profileImage').click()" style="background: #6B7280;">
+                                📷 Choisir une photo
+                            </button>
+                            <div id="imagePreview" style="display: none; margin-top: 12px; text-align: center;">
+                                <img id="previewImg" src="" alt="Aperçu" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid var(--primary-500);">
+                                <br/>
+                                <button type="button" class="btn btn-sm" onclick="clearImagePreview()" style="margin-top: 8px; background: #ef4444; color: white;">✕ Supprimer</button>
+                            </div>
+                            <div class="error-text" id="profileImage-error"></div>
+                        </div>
+                    </div>
+
+                    <div class="field password-field">
+                        <label for="regPassword">Mot de passe *</label>
+                        <input
+                            type="password"
+                            id="regPassword"
+                            name="password"
+                            required
+                            placeholder="••••••••"
+                        />
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('regPassword')"
+                            >👁️</span
+                        >
+                        <div class="error-text" id="regPassword-error"></div>
+                    </div>
+
+                    <div class="field password-field">
+                        <label for="confirmPassword"
+                            >Confirmer le mot de passe *</label
+                        >
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirm_password"
+                            required
+                            placeholder="••••••••"
+                        />
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('confirmPassword')"
+                            >👁️</span
+                        >
+                        <div
+                            class="error-text"
+                            id="confirmPassword-error"
+                        ></div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        id="registerBtn"
+                    >
+                        <span class="spinner-sm" id="registerSpinner"></span>
+                        <span id="registerBtnText">Créer le compte</span>
+                    </button>
+                </form>
+
+                <div class="auth-divider"><span>ou</span></div>
+
+                <p class="auth-footer-link">
+                    Déjà un compte ?
+                    <a href="#" onclick="showLoginForm(); return false;">Se connecter</a>
+                </p>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = "/api";
+
+            
+            const EMAIL_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.([a-zA-Z]{2,})$/;
+            const NAME_REGEX = /^[a-zA-ZàâäéèêëîïôöùûüÿñçÀÂÄÉÈÊËÎÏÔÖÙÛÜŸÑÇ\s\-']+$/;
+
+            // ════════════════════════════════════════════════════════════
+            // Form Display Functions
+            // ════════════════════════════════════════════════════════════
+
+            function showRegisterForm() {
+                hideAllAuthCards();
+                document.getElementById("registerContainer").style.display = "block";
+                hideAlert();
+                hideAlert("registerAlert");
+                hideAlert("forgotPasswordAlert");
+                hideAlert("verifyWaitAlert");
+                document.getElementById("registerForm").reset();
+            }
+
+            function showLoginForm() {
+                hideAllAuthCards();
+                document.getElementById("loginContainer").style.display = "block";
+                hideAlert();
+                hideAlert("registerAlert");
+                hideAlert("forgotPasswordAlert");
+                hideAlert("verifyWaitAlert");
+                document.getElementById("loginForm").reset();
+            }
+
+            function showForgotPasswordForm() {
+                hideAllAuthCards();
+                document.getElementById("forgotPasswordContainer").style.display = "block";
+                hideAlert();
+                hideAlert("forgotPasswordAlert");
+                document.getElementById("forgotPasswordForm").reset();
+                document.getElementById("forgotEmail").focus();
+            }
+
+            function hideAllAuthCards() {
+                ["loginContainer", "registerContainer", "forgotPasswordContainer",
+                 "otpContainer", "verifyWaitContainer"].forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = "none";
+                });
+            }
+
+            function showVerifyWaitScreen(email, message, extra = {}) {
+                hideAllAuthCards();
+                document.getElementById("verifyWaitContainer").style.display = "block";
+                window._pendingVerifyEmail = email || "";
+                const subtitle = document.getElementById("verifyWaitSubtitle");
+                if (message) {
+                    subtitle.textContent = message;
+                } else if (email) {
+                    subtitle.textContent =
+                        `Un lien d'activation a été envoyé à ${email}. ` +
+                        "Consultez votre boîte de réception (et les spams). " +
+                        "Après confirmation, un code OTP sera envoyé.";
+                }
+
+                if (extra.email_delivered === false) {
+                    showAlert(
+                        "⚠️ L'email n'a pas pu être envoyé (problème SMTP). " +
+                        (extra.smtp_hint || "Vérifiez la configuration SMTP et réessayez."),
+                        "error",
+                        "verifyWaitAlert"
+                    );
+                } else {
+                    showAlert(
+                        "✅ Consultez votre boîte de réception (et vos spams).",
+                        "success",
+                        "verifyWaitAlert"
+                    );
+                }
+            }
+
+            function backToLoginFromWait() {
+                window._pendingVerifyEmail = "";
+                showLoginForm();
+            }
+
+            async function resendFromWait() {
+                const email = window._pendingVerifyEmail;
+                if (!email) {
+                    showAlert("Email inconnu. Revenez à la connexion.", "error", "verifyWaitAlert");
+                    return;
+                }
+                await resendVerificationEmail(email, "resendFromWaitBtn", "verifyWaitAlert");
+            }
+
+            function showOtpScreen(otpToken, emailHint, expiresIn, message, extra = {}) {
+                hideAllAuthCards();
+                localStorage.setItem("otp_token", otpToken);
+                if (emailHint) localStorage.setItem("otp_email_hint", emailHint);
+
+                document.getElementById("otpContainer").style.display = "block";
+                const mins = Math.max(1, Math.floor((expiresIn || 600) / 60));
+                document.getElementById("otpSubtitle").textContent =
+                    message ||
+                    `Un code a été envoyé à ${emailHint || "votre email"}. Il est valable ${mins} minutes.`;
+                document.getElementById("otpCode").value = "";
+                document.getElementById("otpCode").focus();
+                startOtpCooldown();
+
+                if (extra.email_delivered === false) {
+                    showAlert(
+                        "⚠️ Email OTP non envoyé (SMTP). " +
+                        (extra.smtp_hint || "Vérifiez le fichier .env (SMTP_*)."),
+                        "error",
+                        "otpAlert"
+                    );
+                }
+            }
+
+            function togglePassword(inputId) {
+                const input = document.getElementById(inputId);
+                const toggle = input.nextElementSibling;
+
+                if (input.type === "password") {
+                    input.type = "text";
+                    toggle.textContent = "🙈";
+                } else {
+                    input.type = "password";
+                    toggle.textContent = "👁️";
+                }
+            }
+
+            // ════════════════════════════════════════════════════════════
+            // Validation Functions
+            // ════════════════════════════════════════════════════════════
+
+            function validateEmail(email) {
+                if (!email || !email.trim()) {
+                    return "L'email est obligatoire";
+                }
+                if (!EMAIL_REGEX.test(email.trim().toLowerCase())) {
+                    return "Format d'email invalide";
+                }
+                return null;
+            }
+
+            function validatePassword(password) {
+                if (!password) {
+                    return "Le mot de passe est obligatoire";
+                }
+                if (password.length < 6) {
+                    return "Le mot de passe doit contenir au moins 6 caractères";
+                }
+                return null;
+            }
+
+            function validateName(name, fieldName) {
+                if (!name || !name.trim()) {
+                    return `Le ${fieldName} est obligatoire`;
+                }
+                if (name.trim().length < 2) {
+                    return `Le ${fieldName} doit contenir au moins 2 caractères`;
+                }
+                if (!NAME_REGEX.test(name.trim())) {
+                    return `Le ${fieldName} contient des caractères non autorisés`;
+                }
+                return null;
+            }
+
+            function validateImage(file) {
+                if (!file) return null; // Image est optionnelle
+                
+                const maxSizeMB = 5;
+                const maxSizeBytes = maxSizeMB * 1024 * 1024;
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                
+                if (!allowedTypes.includes(file.type)) {
+                    return `Format d'image non supporté. Formats acceptés: JPEG, PNG, GIF, WebP`;
+                }
+                
+                if (file.size > maxSizeBytes) {
+                    return `L'image est trop volumineuse. Taille maximale: ${maxSizeMB}MB`;
+                }
+                
+                return null;
+            }
+
+            function clearImagePreview() {
+                document.getElementById('profileImage').value = '';
+                document.getElementById('imagePreview').style.display = 'none';
+                document.getElementById('profileImage-error').style.display = 'none';
+            }
+
+            function validateOtpCode(code) {
+                if (!code || !code.trim()) {
+                    return "Le code OTP est requis";
+                }
+                code = code.replace(/\s/g, '').replace(/-/g, '');
+                if (!code.match(/^\d{6}$/)) {
+                    return "Le code doit contenir exactement 6 chiffres";
+                }
+                return null;
+            }
+
+            // ════════════════════════════════════════════════════════════
+            // UI Functions
+            // ════════════════════════════════════════════════════════════
+
+            function showFieldError(fieldId, message) {
+                const field = document.getElementById(fieldId);
+                const errorDiv = document.getElementById(fieldId + "-error");
+
+                if (!field || !errorDiv) return;
+
+                if (message) {
+                    field.classList.add("error");
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = "block";
+                } else {
+                    field.classList.remove("error");
+                    errorDiv.textContent = "";
+                    errorDiv.style.display = "none";
+                }
+            }
+
+            function showAlert(message, type = "error", containerId = "alert") {
+                const alertDiv = document.getElementById(containerId);
+                if (!alertDiv) return;
+
+                alertDiv.textContent = message;
+                alertDiv.className = `alert ${type}`;
+                alertDiv.style.display = "block";
+
+                if (type === "success") {
+                    setTimeout(() => {
+                        alertDiv.style.display = "none";
+                    }, 5000);
+                }
+            }
+
+            function hideAlert(containerId = "alert") {
+                const alertDiv = document.getElementById(containerId);
+                if (alertDiv) {
+                    alertDiv.style.display = "none";
+                }
+            }
+
+            function showUnverifiedAccountAlert(email, extra = {}) {
+                showVerifyWaitScreen(
+                    email,
+                    extra.detail ||
+                    `Compte non vérifié pour ${email}. Activez-le pour recevoir un OTP.`,
+                    extra
+                );
+            }
+
+            async function resendVerificationEmail(email, btnId = "resendVerificationBtn", alertId = "alert") {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = "Envoi en cours...";
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append("email", email);
+
+                    const response = await fetch(`${API_BASE}/resend-verification`, {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAlert(
+                            `✅ ${data.message || "Lien de vérification renvoyé."} Consultez votre boîte email.`,
+                            data.email_delivered === false ? "error" : "success",
+                            alertId
+                        );
+                        if (data.email_delivered === false) {
+                            showAlert(
+                                "⚠️ Envoi SMTP échoué. " + (data.smtp_hint || "Vérifiez la config SMTP."),
+                                "error",
+                                alertId
+                            );
+                        }
+                    } else {
+                        const detail = typeof data.detail === "string"
+                            ? data.detail
+                            : (data.detail && data.detail.message) || "Impossible de renvoyer l'email";
+                        showAlert(`❌ ${detail}`, "error", alertId);
+                    }
+                } catch (error) {
+                    console.error("Resend verification error:", error);
+                    showAlert("❌ Erreur de connexion. Veuillez réessayer.", "error", alertId);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = "📧 Renvoyer l'email de vérification";
+                    }
+                }
+            }
+
+            // ════════════════════════════════════════════════════════════
+            // Login Form Handler
+            // ════════════════════════════════════════════════════════════
+
+            document.getElementById("loginForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+
+                let hasErrors = false;
+
+                const emailError = validateEmail(email);
+                showFieldError("email", emailError);
+                if (emailError) hasErrors = true;
+
+                const passwordError = validatePassword(password);
+                showFieldError("password", passwordError);
+                if (passwordError) hasErrors = true;
+
+                if (hasErrors) return;
+
+                const loginBtn = document.getElementById("loginBtn");
+                const loginSpinner = document.getElementById("loginSpinner");
+                const loginBtnText = document.getElementById("loginBtnText");
+
+                loginBtn.disabled = true;
+                loginSpinner.style.display = "block";
+                loginBtnText.textContent = "Connexion...";
+                hideAlert();
+
+                try {
+                    const response = await fetch(`${API_BASE}/login`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email, password }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showOtpScreen(
+                            data.otp_token,
+                            data.email_hint,
+                            data.expires_in,
+                            data.message,
+                            data
+                        );
+                    } else {
+                        const detailText = typeof data.detail === "string"
+                            ? data.detail
+                            : (data.detail && data.detail.message) || "";
+                        const needsVerification =
+                            response.status === 403 &&
+                            (data.code === "EMAIL_NOT_VERIFIED" ||
+                             data.requires_email_verification ||
+                             data.verification_sent ||
+                             (detailText && detailText.toLowerCase().includes("vérifié")));
+
+                        if (needsVerification) {
+                            showUnverifiedAccountAlert(data.email || email, {
+                                ...data,
+                                detail: detailText || data.message,
+                            });
+                        } else {
+                            showAlert(detailText || "Erreur de connexion");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Login error:", error);
+                    showAlert("Erreur de connexion. Veuillez réessayer.");
+                } finally {
+                    loginBtn.disabled = false;
+                    loginSpinner.style.display = "none";
+                    loginBtnText.textContent = "Se connecter";
+                }
+            });
+
+            // ════════════════════════════════════════════════════════════
+            // Forgot Password Form Handler
+            // ════════════════════════════════════════════════════════════
+
+            document.getElementById("forgotPasswordForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById("forgotEmail").value;
+
+                let hasErrors = false;
+
+                const emailError = validateEmail(email);
+                showFieldError("forgotEmail", emailError);
+                if (emailError) hasErrors = true;
+
+                if (hasErrors) return;
+
+                const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+                const forgotPasswordSpinner = document.getElementById("forgotPasswordSpinner");
+                const forgotPasswordBtnText = document.getElementById("forgotPasswordBtnText");
+
+                forgotPasswordBtn.disabled = true;
+                forgotPasswordSpinner.style.display = "block";
+                forgotPasswordBtnText.textContent = "Envoi en cours...";
+                hideAlert("forgotPasswordAlert");
+
+                try {
+                    const response = await fetch(`${API_BASE}/forgot-password`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAlert(
+                            "✅ " + (data.message || "Un lien de réinitialisation a été envoyé à votre email."),
+                            "success",
+                            "forgotPasswordAlert"
+                        );
+
+                        // Optionally redirect to login after success
+                        setTimeout(() => {
+                            showLoginForm();
+                        }, 3000);
+                    } else {
+                        showAlert(
+                            data.detail || "Erreur lors de l'envoi du lien de réinitialisation",
+                            "error",
+                            "forgotPasswordAlert"
+                        );
+                    }
+                } catch (error) {
+                    console.error("Forgot password error:", error);
+                    showAlert(
+                        "Erreur de connexion. Veuillez réessayer.",
+                        "error",
+                        "forgotPasswordAlert"
+                    );
+                } finally {
+                    forgotPasswordBtn.disabled = false;
+                    forgotPasswordSpinner.style.display = "none";
+                    forgotPasswordBtnText.textContent = "Envoyer le lien";
+                }
+            });
+
+            // ════════════════════════════════════════════════════════════
+            // Register Form Handler
+            // ════════════════════════════════════════════════════════════
+
+            document.getElementById("registerForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById("regEmail").value;
+                const firstName = document.getElementById("firstName").value;
+                const lastName = document.getElementById("lastName").value;
+                const password = document.getElementById("regPassword").value;
+                const confirmPassword = document.getElementById("confirmPassword").value;
+                const profileImageFile = document.getElementById("profileImage").files[0];
+
+                let hasErrors = false;
+
+                const emailError = validateEmail(email);
+                showFieldError("regEmail", emailError);
+                if (emailError) hasErrors = true;
+
+                const firstNameError = validateName(firstName, "prénom");
+                showFieldError("firstName", firstNameError);
+                if (firstNameError) hasErrors = true;
+
+                const lastNameError = validateName(lastName, "nom");
+                showFieldError("lastName", lastNameError);
+                if (lastNameError) hasErrors = true;
+
+                const passwordError = validatePassword(password);
+                showFieldError("regPassword", passwordError);
+                if (passwordError) hasErrors = true;
+
+                if (password !== confirmPassword) {
+                    showFieldError("confirmPassword", "Les mots de passe ne correspondent pas");
+                    hasErrors = true;
+                } else {
+                    showFieldError("confirmPassword", null);
+                }
+
+                // Validation de l'image (optionnelle)
+                if (profileImageFile) {
+                    const imageError = validateImage(profileImageFile);
+                    if (imageError) {
+                        showFieldError("profileImage", imageError);
+                        hasErrors = true;
+                    } else {
+                        showFieldError("profileImage", null);
+                    }
+                }
+
+                if (hasErrors) return;
+
+                const registerBtn = document.getElementById("registerBtn");
+                const registerSpinner = document.getElementById("registerSpinner");
+                const registerBtnText = document.getElementById("registerBtnText");
+
+                registerBtn.disabled = true;
+                registerSpinner.style.display = "block";
+                registerBtnText.textContent = "Création...";
+                hideAlert("registerAlert");
+
+                try {
+                    // Préparer FormData pour l'envoi avec image
+                    const formData = new FormData();
+                    formData.append("email", email.trim().toLowerCase());
+                    formData.append("first_name", firstName.trim());
+                    formData.append("last_name", lastName.trim());
+                    formData.append("password", password);
+                    formData.append("confirm_password", confirmPassword);
+                    
+                    if (profileImageFile) {
+                        formData.append("profile_image", profileImageFile);
+                    }
+
+                    const response = await fetch(`${API_BASE}/register`, {
+                        method: "POST",
+                        body: formData, // Envoi FormData (pas JSON)
+                        // Note: Ne pas définir Content-Type, le navigateur le fait automatiquement avec boundary
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showVerifyWaitScreen(
+                            data.email || email.trim().toLowerCase(),
+                            data.message ||
+                            "Compte créé ! Vérifiez votre email pour activer le compte. Un code OTP suivra ensuite.",
+                            data
+                        );
+                        document.getElementById("registerForm").reset();
+                        clearImagePreview();
+                    } else {
+                        showAlert(
+                            data.detail || "Erreur lors de la création du compte",
+                            "error",
+                            "registerAlert"
+                        );
+                    }
+                } catch (error) {
+                    console.error("Register error:", error);
+                    showAlert(
+                        "Erreur de connexion. Veuillez réessayer.",
+                        "error",
+                        "registerAlert"
+                    );
+                } finally {
+                    registerBtn.disabled = false;
+                    registerSpinner.style.display = "none";
+                    registerBtnText.textContent = "Créer le compte";
+                }
+            });
+
+            // ════════════════════════════════════════════════════════════
+            // OTP Functions
+            // ════════════════════════════════════════════════════════════
+
+            let otpCooldownCounter = 0;
+            let otpCooldownInterval = null;
+
+            function startOtpCooldown() {
+                otpCooldownCounter = 60;
+                const resendLink = document.getElementById("resendLink");
+                const resendCooldown = document.getElementById("resendCooldown");
+
+                resendLink.style.pointerEvents = "none";
+                resendLink.style.opacity = "0.5";
+
+                otpCooldownInterval = setInterval(() => {
+                    otpCooldownCounter--;
+                    resendCooldown.textContent = ` (${otpCooldownCounter}s)`;
+
+                    if (otpCooldownCounter <= 0) {
+                        clearInterval(otpCooldownInterval);
+                        resendLink.style.pointerEvents = "auto";
+                        resendLink.style.opacity = "1";
+                        resendCooldown.textContent = "";
+                    }
+                }, 1000);
+            }
+
+            async function resendOTP() {
+                const otpToken = localStorage.getItem("otp_token");
+                if (!otpToken) {
+                    showAlert("Session OTP expirée. Veuillez vous reconnecter.", "error", "otpAlert");
+                    return;
+                }
+
+                const resendLink = document.getElementById("resendLink");
+                resendLink.style.pointerEvents = "none";
+                resendLink.style.opacity = "0.5";
+
+                try {
+                    const response = await fetch(`${API_BASE}/resend-otp`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ otp_token: otpToken }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAlert("✅ " + data.message, "success", "otpAlert");
+                        startOtpCooldown();
+                        document.getElementById("otpCode").value = "";
+                        document.getElementById("otpCode").focus();
+                    } else {
+                        showAlert(
+                            data.detail || "Impossible de renvoyer le code",
+                            "error",
+                            "otpAlert"
+                        );
+                    }
+                } catch (error) {
+                    console.error("Resend OTP error:", error);
+                    showAlert("Erreur de connexion. Veuillez réessayer.", "error", "otpAlert");
+                } finally {
+                    resendLink.style.pointerEvents = "auto";
+                    resendLink.style.opacity = "1";
+                }
+            }
+
+            function backToLogin() {
+                localStorage.removeItem("otp_token");
+                localStorage.removeItem("otp_email_hint");
+
+                if (otpCooldownInterval) {
+                    clearInterval(otpCooldownInterval);
+                }
+
+                hideAlert("otpAlert");
+                showLoginForm();
+            }
+
+            document.getElementById("otpForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const otpCode = document.getElementById("otpCode").value.trim();
+                const otpToken = localStorage.getItem("otp_token");
+
+                const otpError = validateOtpCode(otpCode);
+                if (otpError) {
+                    showFieldError("otpCode", otpError);
+                    return;
+                }
+
+                if (!otpToken) {
+                    showAlert("Session OTP expirée. Veuillez vous reconnecter.", "error", "otpAlert");
+                    return;
+                }
+
+                showFieldError("otpCode", null);
+
+                const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+                const verifyOtpSpinner = document.getElementById("verifyOtpSpinner");
+                const verifyOtpBtnText = document.getElementById("verifyOtpBtnText");
+
+                verifyOtpBtn.disabled = true;
+                verifyOtpSpinner.style.display = "block";
+                verifyOtpBtnText.textContent = "Vérification...";
+                hideAlert("otpAlert");
+
+                try {
+                    const response = await fetch(`${API_BASE}/verify-otp`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            otp_token: otpToken,
+                            otp_code: otpCode,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAlert("✅ Connexion réussie ! Redirection...", "success", "otpAlert");
+
+                        if (data.access_token) {
+                            localStorage.setItem("access_token", data.access_token);
+                            localStorage.setItem("token_type", data.token_type || "Bearer");
+                            if (data.user) {
+                                localStorage.setItem("user_data", JSON.stringify(data.user));
+                            }
+                        }
+
+                        localStorage.removeItem("otp_token");
+                        localStorage.removeItem("otp_email_hint");
+
+                        if (otpCooldownInterval) {
+                            clearInterval(otpCooldownInterval);
+                        }
+
+                        setTimeout(() => {
+                            window.location.href = "/app";
+                        }, 1000);
+                    } else {
+                        showAlert(
+                            data.detail || "Code de vérification invalide",
+                            "error",
+                            "otpAlert"
+                        );
+                    }
+                } catch (error) {
+                    console.error("OTP verify error:", error);
+                    showAlert("Erreur de connexion. Veuillez réessayer.", "error", "otpAlert");
+                } finally {
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpSpinner.style.display = "none";
+                    verifyOtpBtnText.textContent = "Vérifier";
+                }
+            });
+
+            // ════════════════════════════════════════════════════════════
+            // Real-time Validation
+            // ════════════════════════════════════════════════════════════
+
+            // Login form
+            document.getElementById("email").addEventListener("input", (e) => {
+                const error = validateEmail(e.target.value);
+                showFieldError("email", error);
+            });
+
+            document.getElementById("password").addEventListener("input", (e) => {
+                const error = validatePassword(e.target.value);
+                showFieldError("password", error);
+            });
+
+            // Register form
+            document.getElementById("regEmail").addEventListener("input", (e) => {
+                const error = validateEmail(e.target.value);
+                showFieldError("regEmail", error);
+            });
+
+            // Forgot password form
+            document.getElementById("forgotEmail").addEventListener("input", (e) => {
+                const error = validateEmail(e.target.value);
+                showFieldError("forgotEmail", error);
+            });
+
+            document.getElementById("firstName").addEventListener("input", (e) => {
+                const error = validateName(e.target.value, "prénom");
+                showFieldError("firstName", error);
+            });
+
+            document.getElementById("lastName").addEventListener("input", (e) => {
+                const error = validateName(e.target.value, "nom");
+                showFieldError("lastName", error);
+            });
+
+            document.getElementById("regPassword").addEventListener("input", (e) => {
+                const error = validatePassword(e.target.value);
+                showFieldError("regPassword", error);
+
+                const confirmPassword = document.getElementById("confirmPassword").value;
+                if (confirmPassword) {
+                    const mismatch = e.target.value !== confirmPassword ? 
+                        "Les mots de passe ne correspondent pas" : null;
+                    showFieldError("confirmPassword", mismatch);
+                }
+            });
+
+            document.getElementById("confirmPassword").addEventListener("input", (e) => {
+                const password = document.getElementById("regPassword").value;
+                const mismatch = password !== e.target.value ? 
+                    "Les mots de passe ne correspondent pas" : null;
+                showFieldError("confirmPassword", mismatch);
+            });
+
+            // OTP code - auto-format and validation
+            const otpCodeInput = document.getElementById("otpCode");
+            
+            otpCodeInput.addEventListener("input", (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 6) {
+                    value = value.slice(0, 6);
+                }
+                e.target.value = value;
+
+                const error = validateOtpCode(value);
+                showFieldError("otpCode", error);
+
+                // Auto-submit when 6 digits entered
+                if (value.length === 6 && !error) {
+                    setTimeout(() => {
+                        document.getElementById("otpForm").dispatchEvent(new Event('submit', {
+                            bubbles: true,
+                            cancelable: true
+                        }));
+                    }, 300);
+                }
+            });
+
+            // Gestion du preview de l'image de profil
+            document.getElementById('profileImage').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const error = validateImage(file);
+                
+                if (error) {
+                    showFieldError('profileImage', error);
+                    this.value = '';
+                    document.getElementById('imagePreview').style.display = 'none';
+                    return;
+                }
+                
+                showFieldError('profileImage', null);
+                
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.getElementById('previewImg').src = event.target.result;
+                        document.getElementById('imagePreview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>
+        <script>
+            
+            window.addEventListener("DOMContentLoaded", function () {
+                const urlParams = new URLSearchParams(window.location.search);
+                const otpToken = urlParams.get("otp_token");
+                const verified = urlParams.get("verified") === "true";
+                const emailHint = urlParams.get("email_hint") || localStorage.getItem("otp_email_hint") || "";
+                const expiresIn = parseInt(urlParams.get("expires_in") || "600", 10);
+
+                if (otpToken) {
+                    showOtpScreen(
+                        otpToken,
+                        emailHint,
+                        expiresIn,
+                        verified
+                            ? `Email vérifié ! Un code OTP a été envoyé à ${emailHint || "votre adresse"}.`
+                            : null,
+                        {
+                            email_delivered: urlParams.get("email_delivered") !== "false",
+                        }
+                    );
+                    window.history.replaceState({}, document.title, "/");
+                    return;
+                }
+
+                if (verified) {
+                    showAlert(
+                        "✅ Email vérifié ! Connectez-vous pour recevoir votre code OTP.",
+                        "success"
+                    );
+                    window.history.replaceState({}, document.title, "/");
+                    return;
+                }
+
+                if (urlParams.get("registered") === "true") {
+                    showAlert(
+                        "✅ Compte créé ! Vérifiez votre email pour l'activer. Un code OTP suivra ensuite.",
+                        "success"
+                    );
+                    window.history.replaceState({}, document.title, "/");
+                }
+            });
+        </script>
+    </body>
+</html>

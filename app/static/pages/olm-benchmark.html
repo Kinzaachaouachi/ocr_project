@@ -1,0 +1,429 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport OLM Global — OCR Intelligence</title>
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        
+        .download-wrapper { position: relative; display: inline-block; }
+        #dlBtn .arrow { transition: transform 0.2s; }
+        #dlBtn.open .arrow { transform: rotate(180deg); }
+        .download-menu {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            background: white; border: 1px solid var(--gray-200); border-radius: 12px;
+            box-shadow: var(--shadow-lg); min-width: 180px; z-index: 100; overflow: hidden;
+        }
+        .download-menu.open { display: block; }
+        .download-menu a {
+            display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+            color: var(--gray-700); text-decoration: none; font-size: 0.92em; font-weight: 500;
+            transition: background 0.15s;
+        }
+        .download-menu a:hover { background: var(--primary-50); color: var(--primary-700); }
+        .download-menu a + a { border-top: 1px solid var(--gray-100); }
+
+        
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .info-card {
+            background: white; border-radius: 12px; padding: 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
+            text-align: center;
+        }
+        .info-card .num { font-size: 2em; font-weight: 800; color: #1e3a8a; }
+        .info-card .lbl { font-size: 0.8em; color: #64748b; margin-top: 4px; font-weight: 500; }
+
+        
+        .section { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; margin-bottom: 24px; }
+        .section h2 { font-size: 1.25em; font-weight: 700; color: #1e3a8a; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .section h3 { font-size: 1em; font-weight: 600; color: #334155; margin: 16px 0 8px; }
+
+        
+        .method-box { background: #fefce8; border-left: 4px solid #eab308; padding: 18px; border-radius: 0 10px 10px 0; margin-bottom: 16px; }
+        .method-box p { color: #713f12; font-size: 0.9em; margin: 6px 0; }
+
+        
+        .perf-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .perf-pill { padding: 6px 16px; border-radius: 20px; font-size: 0.82em; font-weight: 600; }
+        .p-exc { background:#dcfce7; color:#166534; }
+        .p-good { background:#dbeafe; color:#1e40af; }
+        .p-ok { background:#fef3c7; color:#92400e; }
+        .p-low { background:#fee2e2; color:#991b1b; }
+
+        
+        .matrix-wrap { overflow-x: auto; }
+        .matrix-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        .matrix-table th { background: linear-gradient(135deg,#1e3a8a,#2563eb); color:white; padding:12px 10px; text-align:center; font-size:0.82em; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
+        .matrix-table th:first-child, .matrix-table th:nth-child(2) { text-align:left; }
+        .matrix-table td { border: 1px solid #e2e8f0; padding: 10px; text-align:center; font-size:0.9em; }
+        .matrix-table td:nth-child(2) { text-align:left; font-weight:600; }
+        .matrix-table tr:nth-child(even) td { background:#f8fafc; }
+        .matrix-table tr:hover td { background:#eff6ff; }
+        .rank-badge { display:inline-block; padding:3px 11px; border-radius:16px; font-weight:700; font-size:0.82em; }
+        .rank-1 { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#78350f; }
+        .rank-2 { background:linear-gradient(135deg,#d1d5db,#9ca3af); color:#374151; }
+        .rank-3 { background:linear-gradient(135deg,#d97706,#b45309); color:white; }
+        .rank-o { background:#e2e8f0; color:#64748b; }
+        .s-exc { color:#059669; font-weight:700; }
+        .s-good { color:#2563eb; font-weight:600; }
+        .s-ok { color:#d97706; }
+        .s-low { color:#dc2626; font-weight:600; }
+        .s-overall { font-size:1.05em; font-weight:800; }
+
+        
+        .criteria-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:14px; }
+        .crit-card { background:#f8fafc; border-radius:10px; padding:16px; border-left:4px solid #3b82f6; }
+        .crit-card h4 { color:#1e3a8a; margin-bottom:6px; font-size:0.95em; }
+        .crit-card p { color:#64748b; font-size:0.83em; line-height:1.5; }
+        .crit-leader { font-size:0.8em; color:#059669; margin-top:8px; font-weight:600; }
+
+        
+        .model-analysis { margin-bottom:16px; background:#f8fafc; border-radius:12px; padding:18px; border:1px solid #e2e8f0; }
+        .model-analysis h3 { color:#1e3a8a; margin-bottom:4px; }
+        .model-analysis .meta { font-size:0.82em; color:#64748b; margin-bottom:12px; }
+        .tag-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+        .tag { padding:4px 12px; border-radius:20px; font-size:0.78em; font-weight:600; }
+        .tag-str { background:#dcfce7; color:#166534; }
+        .tag-weak { background:#fee2e2; color:#991b1b; }
+
+        
+        .loading-block { text-align:center; padding:60px 20px; color:#64748b; }
+        .spinner { width:48px; height:48px; border:4px solid #e2e8f0; border-top-color:#2563eb; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 16px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .error-box { background:#fee2e2; color:#991b1b; padding:20px; border-radius:12px; border-left:4px solid #dc2626; }
+    </style>
+</head>
+<body class="app-shell">
+
+    <nav class="sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <a href="/app" class="sidebar-logo">
+                <span class="sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                </span>
+                <span>OCR Intelligence</span>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navigation</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/ocr" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Extraction OCR</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/history" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span>Historique</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Rapports</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app/local-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Benchmark Local</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/olm-benchmark" class="menu-item active">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                            </svg>
+                            <span>Rapport OLM Global</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/app/profile" class="user-profile-link" id="sidebarUserProfile">
+                <div class="user-avatar" id="sidebarAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUsername">Chargement...</div>
+                    <div class="user-role">Utilisateur</div>
+                </div>
+            </a>
+            <a href="#" onclick="logout(event)" class="menu-item" style="margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Rapport OLM Global</h1>
+                <p class="page-description">Analyse comparative des systèmes OCR — olmOCR-Bench</p>
+            </div>
+            <div class="download-wrapper">
+                <button class="btn btn-primary" id="dlBtn" onclick="toggleDownloadMenu()">
+                    Télécharger
+                    <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+                </button>
+                <div class="download-menu" id="dlMenu">
+                    <a href="#" onclick="doDownload(event,'pdf')">PDF</a>
+                    <a href="#" onclick="doDownload(event,'docx')">Word</a>
+                    <a href="#" onclick="doDownload(event,'excel')">Excel</a>
+                    <a href="#" onclick="doDownload(event,'csv')">CSV</a>
+                </div>
+            </div>
+        </header>
+
+        <div id="content">
+            <div class="loading-block">
+                <div class="spinner"></div>
+                <p>Chargement du rapport...</p>
+            </div>
+        </div>
+    </main>
+
+<script src="/static/js/app.js?v=20260723b"></script>
+<script>
+const API = '/api';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) { window.location.href = '/'; return; }
+    initializeAuth();
+    loadReport();
+});
+
+document.addEventListener('click', e => {
+    const btn = document.getElementById('dlBtn');
+    const menu = document.getElementById('dlMenu');
+    if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+        btn.classList.remove('open');
+    }
+});
+
+function toggleDownloadMenu() {
+    document.getElementById('dlMenu').classList.toggle('open');
+    document.getElementById('dlBtn').classList.toggle('open');
+}
+
+async function loadReport() {
+    try {
+        const token = localStorage.getItem('access_token');
+        const tokenType = localStorage.getItem('token_type') || 'Bearer';
+        const res = await fetch(`${API}/olm-report/data`, {
+            headers: { 'Authorization': `${tokenType} ${token}` }
+        });
+        if (!res.ok) throw new Error('Erreur API: ' + res.status);
+        const data = await res.json();
+        renderReport(data);
+    } catch (e) {
+        document.getElementById('content').innerHTML =
+            `<div class="error-box"><strong>❌ Erreur de chargement</strong><p>${e.message}</p></div>`;
+    }
+}
+
+function sc(s) {
+    if (s >= 90) return 's-exc';
+    if (s >= 80) return 's-good';
+    if (s >= 60) return 's-ok';
+    return 's-low';
+}
+
+function renderReport(d) {
+    const info = d.benchmark_info;
+    const matrix = d.benchmark_matrix;
+    const criteria = d.criteria;
+    const tops = d.top_by_category || {};
+
+    let html = '';
+
+    
+    html += `
+    <div class="info-grid">
+        <div class="info-card"><div class="num">${info.total_documents.toLocaleString('fr')}</div><div class="lbl">📄 Documents PDF testés</div></div>
+        <div class="info-card"><div class="num">${info.total_tests.toLocaleString('fr')}</div><div class="lbl">🧪 Tests unitaires</div></div>
+        <div class="info-card"><div class="num">${info.test_categories}</div><div class="lbl">🎯 Catégories d'évaluation</div></div>
+        <div class="info-card"><div class="num">${matrix.length}</div><div class="lbl">🤖 Modèles évalués</div></div>
+        <div class="info-card"><div class="num">${info.last_updated}</div><div class="lbl">📅 Dernière mise à jour</div></div>
+    </div>`;
+
+    
+    html += `
+    <div class="section">
+        <h2>📋 À propos d'olmOCR-Bench</h2>
+        <p style="color:#475569;margin-bottom:14px;">${info.description}</p>
+        <p style="font-size:0.88em;color:#64748b;">
+            Licence : <strong>${info.license}</strong> &nbsp;|&nbsp;
+            <a href="${info.github_url}" target="_blank" style="color:#2563eb;font-weight:600;">GitHub</a> &nbsp;|&nbsp;
+            <a href="${info.huggingface_url}" target="_blank" style="color:#2563eb;font-weight:600;">HuggingFace</a> &nbsp;|&nbsp;
+            <a href="${info.demo_url}" target="_blank" style="color:#2563eb;font-weight:600;">Démo</a> &nbsp;|&nbsp;
+            <a href="${info.arxiv_paper_v1}" target="_blank" style="color:#2563eb;font-weight:600;">Paper v1</a> &nbsp;|&nbsp;
+            <a href="${info.arxiv_paper_v2}" target="_blank" style="color:#2563eb;font-weight:600;">Paper v2</a>
+        </p>
+    </div>`;
+
+    
+    html += `
+    <div class="section">
+        <h2>🔬 Méthodologie</h2>
+        <div class="method-box">
+            <p>${d.scoring_methodology.overview}</p>
+            <p style="margin-top:8px;"><strong>Formule :</strong> ${d.scoring_methodology.scoring_formula}</p>
+        </div>
+        <div class="perf-row">
+            <span class="perf-pill p-exc">🟢 Excellent ≥ 90%</span>
+            <span class="perf-pill p-good">🔵 Bon 80–89%</span>
+            <span class="perf-pill p-ok">🟡 Acceptable 60–79%</span>
+            <span class="perf-pill p-low">🔴 Faible &lt; 60%</span>
+        </div>
+    </div>`;
+
+    
+    html += `
+    <div class="section">
+        <h2>🏆 Matrice de Performance — Classement Global</h2>
+        <p style="font-size:0.83em;color:#64748b;margin-bottom:14px;">(*) Résultats soumis par la communauté, non vérifiés officiellement par AI2.</p>
+        <div class="matrix-wrap">
+        <table class="matrix-table">
+            <thead><tr>
+                <th>Rang</th><th>Modèle</th><th>ArXiv</th><th>Math</th>
+                <th>Tables</th><th>Scans</th><th>En-têtes</th>
+                <th>Multi-col</th><th>Texte</th><th>Base</th><th>Global</th>
+            </tr></thead>
+            <tbody>`;
+
+    matrix.forEach(m => {
+        const rk = m.rank <= 3 ? `rank-${m.rank}` : 'rank-o';
+        const s = m.scores;
+        const std = m.std_dev ? `<span style="font-size:0.7em;font-weight:400;">±${m.std_dev}</span>` : '';
+        const mark = m.is_official ? '' : '*';
+        html += `<tr>
+            <td><span class="rank-badge ${rk}">#${m.rank}</span></td>
+            <td>${m.name}${mark}</td>
+            <td class="${sc(s.arxiv)}">${s.arxiv}</td>
+            <td class="${sc(s.old_scans_math)}">${s.old_scans_math}</td>
+            <td class="${sc(s.tables)}">${s.tables}</td>
+            <td class="${sc(s.old_scans)}">${s.old_scans}</td>
+            <td class="${sc(s.headers_footers)}">${s.headers_footers}</td>
+            <td class="${sc(s.multi_column)}">${s.multi_column}</td>
+            <td class="${sc(s.long_tiny_text)}">${s.long_tiny_text}</td>
+            <td class="${sc(s.base)}">${s.base}</td>
+            <td class="${sc(s.overall)} s-overall">${s.overall}${std}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div></div>`;
+
+    
+    html += `<div class="section"><h2>🎯 Critères d'Évaluation</h2><div class="criteria-grid">`;
+    Object.entries(criteria.labels).forEach(([key, label]) => {
+        if (key === 'overall') return;
+        const icon = criteria.icons[key] || '📊';
+        const desc = criteria.descriptions[key] || '';
+        const leader = tops[key];
+        html += `
+        <div class="crit-card">
+            <h4>${icon} ${label}</h4>
+            <p>${desc}</p>
+            ${leader ? `<div class="crit-leader">🏆 Leader : ${leader.model_name} (${leader.score}%)</div>` : ''}
+        </div>`;
+    });
+    html += `</div></div>`;
+
+    
+    html += `<div class="section"><h2>⭐ Analyse des Top 5 Modèles</h2>`;
+    matrix.slice(0, 5).forEach(m => {
+        const std = m.std_dev ? `±${m.std_dev}` : '';
+        const strengths = (m.strengths || []).slice(0, 4);
+        const weaknesses = (m.weaknesses || []);
+        html += `
+        <div class="model-analysis">
+            <h3>${m.name} <span style="font-size:0.8em;color:#64748b;font-weight:400;">Rang #${m.rank}</span></h3>
+            <div class="meta">${m.model_type || ''} &nbsp;|&nbsp; Score global : <strong>${m.scores.overall}${std}</strong> &nbsp;|&nbsp; ${m.note || ''}</div>
+            ${strengths.length ? `<div><strong style="font-size:0.85em;color:#166534;">✅ Points forts</strong><div class="tag-list">${strengths.map(s=>`<span class="tag tag-str">${s.icon||''} ${s.label} : ${s.score}%</span>`).join('')}</div></div>` : ''}
+            ${weaknesses.length ? `<div style="margin-top:8px;"><strong style="font-size:0.85em;color:#991b1b;">⚠️ Points faibles</strong><div class="tag-list">${weaknesses.map(w=>`<span class="tag tag-weak">${w.icon||''} ${w.label} : ${w.score}%</span>`).join('')}</div></div>` : ''}
+        </div>`;
+    });
+    html += `</div>`;
+
+    document.getElementById('content').innerHTML = html;
+}
+
+async function doDownload(e, format) {
+    e.preventDefault();
+    document.getElementById('dlMenu').classList.remove('open');
+    document.getElementById('dlBtn').classList.remove('open');
+
+    const labels = { pdf:'PDF', docx:'Word', excel:'Excel', csv:'CSV' };
+    try {
+        showInfo(`⏳ Génération du rapport OLM ${labels[format]}...`);
+        const token = localStorage.getItem('access_token');
+        const tokenType = localStorage.getItem('token_type') || 'Bearer';
+        const res = await fetch(`${API}/olm-report/download/${format}`, {
+            headers: { 'Authorization': `${tokenType} ${token}` }
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Erreur téléchargement');
+        }
+        const cd = res.headers.get('Content-Disposition');
+        const exts = { pdf:'pdf', docx:'docx', excel:'xlsx', csv:'csv' };
+        let filename = `rapport_olm_benchmark.${exts[format]}`;
+        if (cd) { const m = cd.match(/filename="(.+)"/); if (m) filename = m[1]; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        URL.revokeObjectURL(url); document.body.removeChild(a);
+        showSuccess(`✅ Rapport OLM ${labels[format]} téléchargé !`);
+    } catch (err) {
+        showError(`❌ ${err.message}`);
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>OCR Intelligence — Vérification Email</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/css/theme.css" />
+    </head>
+    <body>
+        <div class="auth-page">
+            <a class="brand auth-top-brand" href="/">
+                <div class="logo">AI</div>
+                <div class="brand-text">OCR Intelligence</div>
+            </a>
+
+            <div class="auth-card">
+                <div class="auth-card-header" style="text-align: center;">
+                    <div id="loading" style="display: block;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                        <h2 class="auth-title">Vérification en cours...</h2>
+                        <p class="auth-subtitle">
+                            Activation du compte, puis envoi du code OTP...
+                        </p>
+                    </div>
+
+                    <div id="success" style="display: none;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                        <h2 class="auth-title" style="color: #22c55e;">Email vérifié !</h2>
+                        <p class="auth-subtitle" id="successMessage">
+                            Votre compte est activé. Un code OTP vient d'être envoyé.
+                        </p>
+                    </div>
+
+                    <div id="error" style="display: none;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+                        <h2 class="auth-title" style="color: #ef4444;">Erreur de vérification</h2>
+                        <p class="auth-subtitle" id="errorMessage">
+                            Le lien de vérification est invalide ou a expiré.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="successActions" style="display: none; text-align: center; padding: 0 24px 24px;">
+                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 16px;">
+                        Redirection vers la saisie du code OTP...
+                    </p>
+                    <a href="/" class="btn btn-primary btn-block" id="goOtpBtn">
+                        Saisir le code OTP
+                    </a>
+                </div>
+
+                <div id="errorActions" style="display: none; text-align: center; padding: 0 24px 24px;">
+                    <button onclick="resendVerification()" class="btn btn-secondary btn-block" id="resendBtn">
+                        Renvoyer l'email de vérification
+                    </button>
+                    <a href="/" class="btn btn-primary btn-block" style="margin-top: 12px;">
+                        Retour à la connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = "/api";
+
+            async function verifyEmail() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get("token");
+
+                if (!token) {
+                    showError("Aucun token de vérification fourni.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/verify-email?token=${encodeURIComponent(token)}`,
+                        { method: "GET", headers: { Accept: "application/json" } }
+                    );
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (response.ok && data.success) {
+                        showSuccess(data);
+
+                        if (data.otp_token) {
+                            localStorage.setItem("otp_token", data.otp_token);
+                            localStorage.setItem("otp_email_hint", data.email_hint || "");
+                            const params = new URLSearchParams({
+                                verified: "true",
+                                otp_token: data.otp_token,
+                                email_hint: data.email_hint || "",
+                                expires_in: String(data.expires_in || 600),
+                            });
+                            if (data.email_delivered === false) {
+                                params.set("email_delivered", "false");
+                            }
+                            setTimeout(() => {
+                                window.location.href = `/?${params.toString()}`;
+                            }, 1800);
+                        } else {
+                            setTimeout(() => {
+                                window.location.href = "/?verified=true";
+                            }, 2500);
+                        }
+                    } else {
+                        showError(data.detail || "Erreur lors de la vérification.");
+                    }
+                } catch (error) {
+                    console.error("Verification error:", error);
+                    showError("Erreur de connexion. Veuillez réessayer.");
+                }
+            }
+
+            function showSuccess(data) {
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("success").style.display = "block";
+                document.getElementById("successActions").style.display = "block";
+                if (data && data.message) {
+                    document.getElementById("successMessage").textContent = data.message;
+                }
+                if (data && data.otp_token) {
+                    const params = new URLSearchParams({
+                        verified: "true",
+                        otp_token: data.otp_token,
+                        email_hint: data.email_hint || "",
+                        expires_in: String(data.expires_in || 600),
+                    });
+                    document.getElementById("goOtpBtn").href = `/?${params.toString()}`;
+                }
+            }
+
+            function showError(message) {
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("error").style.display = "block";
+                document.getElementById("errorMessage").textContent = message;
+                document.getElementById("errorActions").style.display = "block";
+            }
+
+            async function resendVerification() {
+                const email = prompt("Entrez votre adresse email :");
+                if (!email) return;
+
+                const btn = document.getElementById("resendBtn");
+                btn.disabled = true;
+                btn.textContent = "Envoi...";
+
+                try {
+                    const formData = new FormData();
+                    formData.append("email", email);
+
+                    const response = await fetch(`${API_BASE}/resend-verification`, {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        alert("✅ " + data.message);
+                        window.location.href = "/";
+                    } else {
+                        alert("❌ " + (data.detail || "Erreur lors de l'envoi"));
+                    }
+                } catch (error) {
+                    alert("❌ Erreur de connexion");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Renvoyer l'email de vérification";
+                }
+            }
+
+            window.addEventListener("DOMContentLoaded", verifyEmail);
+        </script>
+    </body>
+</html>

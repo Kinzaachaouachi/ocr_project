@@ -1,47 +1,59 @@
+# ══════════════════════════════════════════════════════════════
+# OCR Intelligence v3.0 — Requirements
+# Install: pip install -r requirements.txt
+# ══════════════════════════════════════════════════════════════
 
+# ── OCR Engines ───────────────────────────────────────────────
 paddleocr==2.7.0.3
-paddlepaddle==2.6.2
+paddlepaddle>=3.0.0
 docling==2.10.0
 docling-core
-
-
+easyocr==1.7.2
 rapidocr==3.8.4
 onnxruntime==1.23.2
 
+# ── Deep Learning ─────────────────────────────────────────────
+transformers>=4.36.0
+sentencepiece>=0.2.0
+tiktoken>=0.7.0
+# PyTorch CPU pour Windows:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+torchvision>=0.15.0
 
+# ── Image & Document processing ───────────────────────────────
 numpy==1.26.4
 opencv-python==4.6.0.66
 pillow
 pymupdf
 img2pdf
 
-
-easyocr==1.7.2
-transformers==4.25.0
-# PyTorch CPU pour Windows - installer avec: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-torch>=2.0.0
-torchvision>=0.15.0
-
-
+# ── Web Framework ─────────────────────────────────────────────
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 
+# ── Database ──────────────────────────────────────────────────
 sqlalchemy==2.0.23
 pymysql==1.1.0
 cryptography==41.0.7
 alembic==1.13.1
 
-
-langdetect==1.0.9
-pycld2==0.41
-
-# JWT Authentication
+# ── Authentication ────────────────────────────────────────────
 PyJWT==2.8.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-pydantic[email]==2.5.0
 bcrypt==4.0.1
+pydantic[email]==2.5.0
 
-# Environment variables
+# ── Language Detection ────────────────────────────────────────
+langdetect==1.0.9
+
+# ── Utilities ─────────────────────────────────────────────────
 python-dotenv==1.0.0
+openpyxl==3.1.2
+
+# ── Testing ───────────────────────────────────────────────────
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+httpx>=0.25.0

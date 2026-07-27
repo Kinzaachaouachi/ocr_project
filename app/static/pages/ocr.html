@@ -1,0 +1,1217 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extraction OCR - OCR Intelligence</title>
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="app-shell">
+    <nav class="sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <a href="/app" class="sidebar-logo">
+                <span class="sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                </span>
+                <span>OCR Intelligence</span>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navigation</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/ocr" class="menu-item active">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Extraction OCR</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/history" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span>Historique</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Rapports</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app/local-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Benchmark Local</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/olm-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                            </svg>
+                            <span>Rapport OLM Global</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/app/profile" class="user-profile-link" id="sidebarUserProfile">
+                <div class="user-avatar" id="sidebarAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUsername">Chargement...</div>
+                    <div class="user-role">Utilisateur</div>
+                </div>
+            </a>
+            <a href="#" onclick="logout(event)" class="menu-item" style="margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        
+        <header class="page-header">
+            <h1 class="page-title">Extraction OCR</h1>
+            <p class="page-description">Extrayez du texte avec 4 moteurs OCR en parallèle</p>
+            <div class="model-badges">
+                <span class="model-badge-item badge-primary">🏆 PaddleOCR</span>
+                <span class="model-badge-item badge-success">📄 Docling</span>
+                <span class="model-badge-item badge-warning">👁️ EasyOCR</span>
+                <span class="model-badge-item badge-info">🤖 TrOCR</span>
+            </div>
+        </header>
+
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Upload de Document</h3>
+                <p class="card-description">Glissez-déposez ou cliquez pour sélectionner un fichier</p>
+            </div>
+            <div class="card-body">
+                <div class="upload-zone" id="uploadZone">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="upload-text"><strong>Cliquez pour uploader</strong> ou glissez-déposez</p>
+                    <p class="upload-hint">PNG, JPG, PDF, DOCX, XLSX, TXT • Maximum 10 MB</p>
+                    <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.pdf,.docx,.xlsx,.txt,.bmp,.tiff,.webp" style="display: none;">
+                </div>
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar-container">
+                        <div id="progressBar" class="progress-bar-fill"></div>
+                    </div>
+                    <p id="progressText" class="progress-text">Upload en cours...</p>
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="resultsSection" style="display: none;">
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Informations du Fichier</h3>
+                    <button class="btn btn-secondary btn-sm" onclick="resetUpload()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        Nouveau Document
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="fileInfo" class="file-info-grid"></div>
+                </div>
+            </div>
+
+            
+            <div class="results-grid" id="extractionResults"></div>
+        </div>
+    </main>
+
+    <style>
+        .model-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .model-badge-item {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-primary {
+            background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+            color: var(--primary-700);
+        }
+        .badge-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+        .badge-warning {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+        }
+        .badge-info {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--border-radius);
+            padding: 48px 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            background: var(--gray-50);
+        }
+        .upload-zone:hover {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+        .upload-zone.dragover {
+            border-color: var(--primary-500);
+            background: var(--primary-100);
+            transform: scale(1.02);
+        }
+        .upload-zone svg {
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+        .upload-zone:hover svg {
+            color: var(--primary-500);
+        }
+        .upload-text {
+            font-size: 16px;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+        .upload-hint {
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+        
+        .upload-progress {
+            margin-top: 20px;
+        }
+        .progress-bar-container {
+            background: var(--gray-200);
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            margin-top: 12px;
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .file-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .file-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .file-info-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            letter-spacing: 0.5px;
+        }
+        .file-info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        .results-grid {
+            display: grid;
+            gap: 24px;
+        }
+        .result-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: all var(--transition-fast);
+        }
+        .result-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        .result-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--gray-50);
+        }
+        .result-card-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .result-card-title h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+        .result-card-meta {
+            font-size: 13px;
+            color: var(--gray-600);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .result-card-body {
+            padding: 24px;
+        }
+        .result-text-container {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            color: var(--gray-800);
+        }
+        .result-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .result-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .best-result {
+            border: 2px solid var(--primary-500);
+            box-shadow: 0 4px 16px rgba(79, 110, 247, 0.15);
+        }
+        
+        .best-result .result-card-header {
+            background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+        }
+
+        
+        .ocr-word {
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .ocr-word:hover {
+            background: rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .result-text-editable {
+            word-break: break-word;
+            user-select: text;
+            transition: all 0.2s ease;
+        }
+        
+        .result-text-editable[contenteditable="true"] {
+            border: 2px solid var(--primary-500) !important;
+            background: white !important;
+            cursor: text;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .result-text-editable[contenteditable="true"]:focus {
+            outline: none;
+        }
+
+        
+        .text-edit-wrapper { margin-bottom: 12px; }
+
+        
+        .result-text-display {
+            padding: 16px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            line-height: 2;
+            min-height: 80px;
+            font-size: 14px;
+            word-break: break-word;
+            white-space: pre-wrap;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        [data-editing="true"] .result-text-display {
+            border: 2px solid #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+            cursor: text;
+            outline: none;
+        }
+        [data-editing="true"] .result-text-display:focus {
+            outline: none;
+        }
+
+        
+        .result-text-editable {
+            display: none !important;
+        }
+
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+
+        .editing-hint {
+            display: none;
+            font-size: 11px;
+            color: #3b82f6;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        [data-editing="true"] + * .editing-hint,
+        .editing-active .editing-hint { display: inline-block; }
+    </style>
+
+    <script src="/static/js/app.js?v=20260723b"></script>
+    <script src="/static/js/benchmark_download.js"></script>
+    <script>
+        let currentFileData = null;
+        let extractionState = {}; 
+
+        
+        function loadExtractionState() {
+            
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                
+                sessionStorage.removeItem('ocrExtractionState');
+                return;
+            }
+
+            const saved = sessionStorage.getItem('ocrExtractionState');
+            if (saved) {
+                try {
+                    extractionState = JSON.parse(saved);
+                    
+                    
+                    if (extractionState.token !== token) {
+                        
+                        console.log('⚠️ Token différent, effacement de l\'extraction précédente');
+                        sessionStorage.removeItem('ocrExtractionState');
+                        extractionState = {};
+                        return;
+                    }
+                    
+                    if (extractionState.data) {
+                        currentFileData = extractionState.data;
+                        
+                        const baselines = extractionState.baselines || {};
+                        Object.keys(baselines).forEach((key) => {
+                            const idx = parseInt(key, 10);
+                            if (currentFileData.results?.[idx]) {
+                                currentFileData.results[idx]._editBaseline = baselines[key];
+                            }
+                        });
+                        displayResults(extractionState.data, extractionState.edits || {});
+                        document.getElementById('resultsSection').style.display = 'block';
+                        
+                        setTimeout(() => {
+                            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 300);
+                        console.log('✅ État d\'extraction restauré');
+                    }
+                } catch (e) {
+                    console.log('Impossible de restaurer l\'état d\'extraction:', e);
+                    sessionStorage.removeItem('ocrExtractionState');
+                }
+            }
+        }
+
+        
+        function saveExtractionState() {
+            const token = localStorage.getItem('access_token');
+            if (currentFileData && token) {
+                
+                const baselines = {};
+                (currentFileData.results || []).forEach((r, i) => {
+                    if (r && r._editBaseline) baselines[String(i)] = r._editBaseline;
+                });
+                sessionStorage.setItem('ocrExtractionState', JSON.stringify({
+                    data: currentFileData,
+                    edits: extractionState.edits || {},
+                    baselines,
+                    token: token 
+                }));
+                console.log('✅ État d\'extraction sauvegardé');
+            }
+        }
+
+        
+        function clearExtractionState() {
+            sessionStorage.removeItem('ocrExtractionState');
+            currentFileData = null;
+            extractionState = {};
+            console.log('✅ État d\'extraction effacé');
+        }
+
+        
+        window.addEventListener('beforeunload', () => {
+            if (currentFileData) {
+                saveExtractionState();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAuth();
+            loadExtractionState(); 
+            
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            
+            uploadZone.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            uploadZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    await handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+            fileInput.addEventListener('change', async (e) => {
+                if (e.target.files.length > 0) {
+                    await handleFileUpload(e.target.files[0]);
+                }
+            });
+        });
+
+        async function handleFileUpload(file) {
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showError('Le fichier est trop volumineux. Maximum : 10 MB');
+                return;
+            }
+            
+            progressDiv.style.display = 'block';
+            progressBar.style.width = '30%';
+            progressText.textContent = 'Upload en cours...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                progressBar.style.width = '60%';
+                progressText.textContent = 'Extraction OCR en cours avec 4 modèles...';
+                
+                const headers = getAuthHeaders();
+                delete headers['Content-Type'];
+                
+                const response = await fetch('/api/extract-all', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                
+                progressBar.style.width = '100%';
+                
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || `Erreur HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                currentFileData = data;
+                extractionState = { data, edits: {} };
+                displayResults(data);
+                saveExtractionState();
+                
+                progressDiv.style.display = 'none';
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                showSuccess(`Extraction terminée ! ${data.successful_extractions || 0}/${data.total_models_tested || 0} modèles réussis`);
+                
+                setTimeout(async () => {
+                    try {
+                        const statsResponse = await authenticatedFetch('/api/dashboard/stats');
+                        if (statsResponse.ok) console.log('✅ Dashboard stats updated');
+                    } catch (e) {
+                        console.log('Dashboard stats refresh skipped:', e);
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'Erreur lors de l\'extraction OCR');
+                progressDiv.style.display = 'none';
+            }
+        }
+
+        
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /* ── Confidence → color (correct principle) ── */
+        function getConfidenceColor(conf) {
+            const c = typeof conf === 'number' ? conf : parseFloat(conf) || 0;
+            if (c >= 0.9)  return '#111827'; // Noir — correct (≥90%)
+            if (c >= 0.7)  return '#F59E0B'; // Orange — probable erreur (70–89%)
+            return '#EF4444';                // Rouge — faux (<70%)
+        }
+
+        function tokenizeWords(text) {
+            const words = [];
+            String(text || '').split(/([ \t\n]+)/).forEach(t => {
+                if (!/^[ \t\n]+$/.test(t) && t.length > 0) words.push(t);
+            });
+            return words;
+        }
+
+        /** Baseline text+confidence used for colorizing (updated after each save). */
+        function getEditBaseline(index) {
+            const result = currentFileData?.results?.[parseInt(index)];
+            if (!result) return { text: '', confidences: [] };
+            if (result._editBaseline) return result._editBaseline;
+            const wcd = result.word_confidence || [];
+            return {
+                text: result.text || '',
+                confidences: wcd.map(w => (typeof w.confidence === 'number' ? w.confidence : 0.75)),
+            };
+        }
+
+        function setEditBaseline(index, text, confidences) {
+            const result = currentFileData?.results?.[parseInt(index)];
+            if (!result) return;
+            result._editBaseline = { text, confidences };
+        }
+
+        /*
+         * buildColoredText — POSITIONAL confidence matching.
+         */
+        function buildColoredText(text, wordConfidenceData) {
+            if (!text) return '';
+            const wcd = wordConfidenceData || [];
+            const tokens = text.split(/([ \t\n]+)/);
+            let wordIdx = 0;
+            return tokens.map(tok => {
+                if (/^[ \t\n]+$/.test(tok)) {
+                    return tok.replace(/\n/g, '<br>');
+                }
+                const conf = (typeof wcd[wordIdx] === 'number')
+                    ? wcd[wordIdx]
+                    : (wcd[wordIdx]?.confidence ?? 0.75);
+                const color = getConfidenceColor(conf);
+                const pct   = (conf * 100).toFixed(0);
+                wordIdx++;
+                return `<span class="ocr-word" style="color:${color};" title="Confiance: ${pct}%">${escHtml(tok)}</span>`;
+            }).join('');
+        }
+
+        /** Index du mot sous le curseur (0-based), ou -1. */
+        function getWordIndexAtOffset(text, offset) {
+            const tokens = String(text || '').split(/([ \t\n]+)/);
+            let pos = 0;
+            let wordIdx = 0;
+            const caret = Math.max(0, offset || 0);
+            for (const tok of tokens) {
+                const len = tok.length;
+                if (/^[ \t\n]+$/.test(tok)) {
+                    pos += len;
+                    continue;
+                }
+                const start = pos;
+                const end = pos + len;
+                // Curseur dans le mot, juste avant, ou juste après (saisie)
+                if (caret >= start && caret <= end) return wordIdx;
+                pos = end;
+                wordIdx++;
+            }
+            return wordIdx > 0 ? wordIdx - 1 : -1;
+        }
+
+        /**
+         * Marque les mots touchés pendant l'édition :
+         * - tout mot dont le contenu a changé
+         * - le mot sous le curseur à chaque input (même si on retape le même texte)
+         */
+        function markTouchedWords(displayEl, newText, caretOffset) {
+            if (!displayEl._touchedWords) displayEl._touchedWords = new Set();
+            const prev = displayEl._lastEditWords || [];
+            const curr = tokenizeWords(newText);
+            const maxLen = Math.max(prev.length, curr.length);
+            for (let i = 0; i < maxLen; i++) {
+                if ((prev[i] || '') !== (curr[i] || '')) {
+                    displayEl._touchedWords.add(i);
+                }
+            }
+            const atCaret = getWordIndexAtOffset(newText, caretOffset);
+            if (atCaret >= 0) displayEl._touchedWords.add(atCaret);
+            displayEl._lastEditWords = curr;
+            return displayEl._touchedWords;
+        }
+
+        function buildColoredFromBaseline(text, baseline, touchedWords = null) {
+            const baseWords = tokenizeWords(baseline.text);
+            const confs = baseline.confidences || [];
+            const tokens = String(text || '').split(/([ \t\n]+)/);
+            let wordIdx = 0;
+            return tokens.map(tok => {
+                if (/^[ \t\n]+$/.test(tok)) {
+                    return tok.replace(/\n/g, '<br>');
+                }
+                const origWord = baseWords[wordIdx];
+                const origConf = confs[wordIdx] ?? 0.75;
+                // Mot touché en édition → noir, même si le texte est identique
+                const modified = (tok !== origWord) || (touchedWords && touchedWords.has(wordIdx));
+                const color  = modified ? '#111827' : getConfidenceColor(origConf);
+                const weight = modified ? '600' : 'normal';
+                const tip = modified
+                    ? 'Mot modifié ✏️'
+                    : `Confiance: ${(origConf * 100).toFixed(0)}%`;
+                wordIdx++;
+                return `<span class="ocr-word" style="color:${color};font-weight:${weight};" title="${tip}">${escHtml(tok)}</span>`;
+            }).join('');
+        }
+
+        /* Caret helpers for contenteditable recolor */
+        function getCaretOffset(el) {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return 0;
+            const range = sel.getRangeAt(0);
+            const pre = range.cloneRange();
+            pre.selectNodeContents(el);
+            pre.setEnd(range.endContainer, range.endOffset);
+            return pre.toString().length;
+        }
+
+        function setCaretOffset(el, offset) {
+            const sel = window.getSelection();
+            if (!sel) return;
+            let remaining = Math.max(0, offset);
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+            let node;
+            while ((node = walker.nextNode())) {
+                const len = node.textContent.length;
+                if (remaining <= len) {
+                    const range = document.createRange();
+                    range.setStart(node, remaining);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    return;
+                }
+                remaining -= len;
+            }
+            // fallback: end
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+
+        /**
+         * liveColorize — keep colors of untouched words; turn edited words black
+         * (même si le mot retapé est identique à l'original).
+         */
+        function liveColorize(index, opts = {}) {
+            const displayEl = document.getElementById(`display-${index}`);
+            const editEl    = document.getElementById(`edit-${index}`);
+            if (!displayEl) return;
+
+            const baseline = getEditBaseline(index);
+            const isEditing = displayEl.getAttribute('contenteditable') === 'true';
+            const newText = isEditing
+                ? (displayEl.innerText || displayEl.textContent || '')
+                : (editEl ? editEl.value : (displayEl.innerText || ''));
+
+            if (isEditing) {
+                const caret = getCaretOffset(displayEl);
+                const touched = opts.trackTouches
+                    ? markTouchedWords(displayEl, newText, caret)
+                    : (displayEl._touchedWords || null);
+                displayEl.innerHTML = buildColoredFromBaseline(newText, baseline, touched);
+                setCaretOffset(displayEl, caret);
+                if (editEl) editEl.value = newText;
+            } else {
+                displayEl.innerHTML = buildColoredFromBaseline(
+                    newText, baseline, displayEl._touchedWords || null
+                );
+                if (editEl) editEl.value = newText;
+            }
+        }
+
+        function displayResults(data, edits = {}) {
+            const fileInfoEl = document.getElementById('fileInfo');
+            const resultsEl = document.getElementById('extractionResults');
+            
+            fileInfoEl.innerHTML = `
+                <div class="file-info-item">
+                    <div class="file-info-label">Fichier</div>
+                    <div class="file-info-value">${data.file || 'N/A'}</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Type</div>
+                    <div class="file-info-value">${data.file_type || 'N/A'}</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Langue Détectée</div>
+                    <div class="file-info-value">${data.detected_language?.name || 'N/A'}</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Temps Total</div>
+                    <div class="file-info-value">${data.total_processing_time_s || 0}s</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Meilleur Modèle</div>
+                    <div class="file-info-value">${data.best_model_name || 'N/A'}</div>
+                </div>
+            `;
+            
+            // Afficher le document si disponible
+            let documentHTML = '';
+            if (data.file_path) {
+                const fileType = data.file_type?.toLowerCase() || '';
+                if (fileType.includes('image') || fileType.includes('png') || fileType.includes('jpg') || fileType.includes('jpeg') || fileType.includes('bmp')) {
+                    documentHTML = `
+                        <div class="card" style="margin-bottom: 24px;">
+                            <div class="card-header">
+                                <h3 class="card-title">Document Extracté</h3>
+                            </div>
+                            <div class="card-body" style="text-align: center;">
+                                <img src="${data.file_path}" alt="Document extracté" style="max-width: 100%; max-height: 600px; border-radius: var(--border-radius); border: 1px solid var(--gray-200);">
+                            </div>
+                        </div>
+                    `;
+                } else if (fileType.includes('pdf')) {
+                    documentHTML = `
+                        <div class="card" style="margin-bottom: 24px;">
+                            <div class="card-header">
+                                <h3 class="card-title">Document PDF Extracté</h3>
+                            </div>
+                            <div class="card-body" style="text-align: center;">
+                                <embed src="${data.file_path}" type="application/pdf" style="width: 100%; height: 600px; border-radius: var(--border-radius);">
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            resultsEl.innerHTML = documentHTML + data.results.map((result, index) => {
+                const isBest = result.model_id === data.best_model;
+                const modelIcons = {'paddleocr': '🏆', 'docling': '📄', 'easyocr': '👁️', 'trocr': '🤖'};
+                const icon = modelIcons[result.model_id] || '📊';
+                const modelId = result.model_id;
+                const editedText = edits[modelId] || result.text || '';
+                // Prefer saved edit baseline (after corrections) for coloring
+                const baseline = result._editBaseline || {
+                    text: result.text || '',
+                    confidences: (result.word_confidence || []).map(w =>
+                        (typeof w === 'number' ? w : (w?.confidence ?? 0.75))
+                    ),
+                };
+                const coloredHtml = buildColoredFromBaseline(editedText, baseline);
+                
+                return `
+                    <div class="result-card ${isBest ? 'best-result' : ''}">
+                        <div class="result-card-header">
+                            <div class="result-card-title">
+                                <h4>${icon} ${result.model_name}${isBest ? ' ⭐' : ''}</h4>
+                                ${result.status === 'success' ? `
+                                    <div class="result-card-meta">
+                                        <span>📝 ${result.char_count || 0} caractères</span>
+                                        <span>📖 ${result.word_count || 0} mots</span>
+                                        <span>⏱️ ${(result.timing?.ocr_time_s || 0).toFixed(2)}s</span>
+                                        <span>⚡ Score: ${result.quality_score || 0}/100</span>
+                                    </div>
+                                ` : `<div class="result-card-meta"><span style="color: var(--error);">❌ ${result.status}</span></div>`}
+                            </div>
+                            ${result.status === 'success' ? `
+                                <div class="result-actions">
+                                    <button class="btn btn-sm btn-secondary" onclick="copyText('result-${index}')">Copier</button>
+                                    <button class="btn btn-sm btn-primary" onclick="downloadText('result-${index}', '${result.model_id}')">Télécharger</button>
+                                    <button class="btn btn-sm btn-secondary" onclick="translateText('${modelId}')">Traduire</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="result-card-body">
+                            ${result.status === 'success' ? `
+                                <div style="margin-bottom: 12px; padding: 8px; background: var(--gray-100); border-radius: 4px;">
+                                    <small style="color: var(--gray-600);">
+                                        <span style="color: #111827;">■ Confiance ≥ 90% (Correct)</span> | 
+                                        <span style="color: #F59E0B;">■ Confiance 70-89% (Probable erreur)</span> | 
+                                        <span style="color: #EF4444;">■ Confiance &lt; 70% (Faux)</span>
+                                    </small>
+                                </div>
+                                <div id="wrapper-${index}" data-editing="false">
+                                    <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:4px;">
+                                        <div style="display:flex;gap:6px;">
+                                            <button class="btn btn-sm btn-secondary" id="edit-btn-${index}" onclick="toggleEditMode(${index})">✏️ Modifier</button>
+                                            <button class="btn btn-sm btn-success" id="save-btn-${index}" onclick="saveEdits(${index},'${modelId}')" style="display:none;">💾 Enregistrer</button>
+                                            <button class="btn btn-sm btn-secondary" id="cancel-btn-${index}" onclick="cancelEdit(${index})" style="display:none;">❌ Annuler</button>
+                                        </div>
+                                    </div>
+                                    <div class="text-edit-wrapper">
+                                        <div class="result-text-display" id="display-${index}" spellcheck="false">${coloredHtml}</div>
+                                        <textarea id="edit-${index}" class="result-text-editable" aria-hidden="true">${escHtml(editedText)}</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div id="translation-container-${index}" style="display: none; margin-top: 16px; padding: 12px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 8px; border: 2px solid var(--primary-400); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);">
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">🌐 Langue cible:</label>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <select id="lang-select-${index}" style="padding: 8px 12px; border-radius: 4px; border: 1px solid var(--primary-300); font-size: 14px; background: white; cursor: pointer; flex: 1; max-width: 250px;">
+                                                <option value="">Sélectionnez une langue...</option>
+                                                <option value="en">English (en)</option>
+                                                <option value="es">Español (es)</option>
+                                                <option value="de">Deutsch (de)</option>
+                                                <option value="fr">Français (fr)</option>
+                                                <option value="it">Italiano (it)</option>
+                                                <option value="pt">Português (pt)</option>
+                                                <option value="ja">日本語 (ja)</option>
+                                                <option value="zh">中文 (zh)</option>
+                                                <option value="ru">Русский (ru)</option>
+                                                <option value="ko">한국어 (ko)</option>
+                                                <option value="tr">Türkçe (tr)</option>
+                                                <option value="nl">Nederlands (nl)</option>
+                                                <option value="pl">Polski (pl)</option>
+                                                <option value="vi">Tiếng Việt (vi)</option>
+                                            </select>
+                                            <button class="btn btn-sm btn-primary" onclick="performTranslation('${index}', '${modelId}')">Traduire</button>
+                                            <button class="btn btn-sm btn-secondary" onclick="closeTranslation('${index}')" title="Fermer">✕</button>
+                                        </div>
+                                    </div>
+                                    <div id="translation-result-${index}" style="display: none; padding: 12px; background: white; border-radius: 4px; margin-top: 12px; line-height: 1.6; color: var(--gray-800);"></div>
+                                </div>
+                            ` : `
+                                <div class="result-error">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                                    </svg>
+                                    <span>${result.error || 'Erreur inconnue'}</span>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ── Toggle edit mode: coloré reste visible + contenteditable ── */
+        function toggleEditMode(index) {
+            const wrapper   = document.getElementById(`wrapper-${index}`);
+            const displayEl = document.getElementById(`display-${index}`);
+            const editEl    = document.getElementById(`edit-${index}`);
+            const editBtn   = document.getElementById(`edit-btn-${index}`);
+            const saveBtn   = document.getElementById(`save-btn-${index}`);
+            const cancelBtn = document.getElementById(`cancel-btn-${index}`);
+            if (!wrapper || !displayEl) return;
+
+            // Snapshot for cancel
+            const currentText = displayEl.innerText || displayEl.textContent || '';
+            displayEl._originalText = currentText;
+            displayEl._originalHTML = displayEl.innerHTML;
+            displayEl._touchedWords = new Set();
+            displayEl._lastEditWords = tokenizeWords(currentText);
+            if (editEl) editEl._originalText = currentText;
+
+            wrapper.setAttribute('data-editing', 'true');
+            displayEl.setAttribute('contenteditable', 'true');
+            displayEl.setAttribute('role', 'textbox');
+            editBtn.style.display   = 'none';
+            saveBtn.style.display   = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+
+            // Couleurs inchangées à l'ouverture (aucun mot encore touché)
+            liveColorize(index, { trackTouches: false });
+
+            if (displayEl._inputHandler) {
+                displayEl.removeEventListener('input', displayEl._inputHandler);
+            }
+            displayEl._inputHandler = () => liveColorize(index, { trackTouches: true });
+            displayEl.addEventListener('input', displayEl._inputHandler);
+            displayEl.focus();
+        }
+
+        /* ── Cancel: restore snapshot and exit edit mode ── */
+        function cancelEdit(index) {
+            const wrapper   = document.getElementById(`wrapper-${index}`);
+            const displayEl = document.getElementById(`display-${index}`);
+            const editEl    = document.getElementById(`edit-${index}`);
+            const editBtn   = document.getElementById(`edit-btn-${index}`);
+            const saveBtn   = document.getElementById(`save-btn-${index}`);
+            const cancelBtn = document.getElementById(`cancel-btn-${index}`);
+
+            if (displayEl) {
+                if (displayEl._inputHandler) {
+                    displayEl.removeEventListener('input', displayEl._inputHandler);
+                    displayEl._inputHandler = null;
+                }
+                displayEl.setAttribute('contenteditable', 'false');
+                displayEl._touchedWords = null;
+                displayEl._lastEditWords = null;
+                if (displayEl._originalHTML) {
+                    displayEl.innerHTML = displayEl._originalHTML;
+                } else {
+                    const restored = displayEl._originalText ?? (editEl?._originalText ?? '');
+                    if (editEl) editEl.value = restored;
+                    liveColorize(index, { trackTouches: false });
+                }
+                if (editEl && displayEl._originalText != null) {
+                    editEl.value = displayEl._originalText;
+                }
+            }
+
+            wrapper.setAttribute('data-editing', 'false');
+            editBtn.style.display   = 'inline-block';
+            saveBtn.style.display   = 'none';
+            cancelBtn.style.display = 'none';
+        }
+
+        /* ── Save edits: persist, update color baseline, allow re-edit ── */
+        function saveEdits(index, modelId) {
+            const wrapper   = document.getElementById(`wrapper-${index}`);
+            const displayEl = document.getElementById(`display-${index}`);
+            const editEl    = document.getElementById(`edit-${index}`);
+            const editBtn   = document.getElementById(`edit-btn-${index}`);
+            const saveBtn   = document.getElementById(`save-btn-${index}`);
+            const cancelBtn = document.getElementById(`cancel-btn-${index}`);
+
+            const newText = (displayEl?.innerText || displayEl?.textContent || editEl?.value || '').replace(/\u00a0/g, ' ');
+            if (!newText.trim()) {
+                showError('Le texte ne peut pas être vide');
+                return;
+            }
+
+            const baseline = getEditBaseline(index);
+            const baseWords = tokenizeWords(baseline.text);
+            const newWords = tokenizeWords(newText);
+            const touched = displayEl?._touchedWords || new Set();
+            const newConfs = newWords.map((w, i) => {
+                // Mot touché ou contenu différent → noir (confiance 100%)
+                if (touched.has(i) || w !== baseWords[i]) return 1.0;
+                return baseline.confidences[i] ?? 0.75;
+            });
+            setEditBaseline(index, newText, newConfs);
+
+            // Persist the edit for session restore
+            extractionState.edits = extractionState.edits || {};
+            extractionState.edits[modelId] = newText;
+            saveExtractionState();
+
+            if (editEl) editEl.value = newText;
+            if (displayEl) {
+                if (displayEl._inputHandler) {
+                    displayEl.removeEventListener('input', displayEl._inputHandler);
+                    displayEl._inputHandler = null;
+                }
+                displayEl.setAttribute('contenteditable', 'false');
+                displayEl._touchedWords = null;
+                displayEl._lastEditWords = null;
+                // Après save, la baseline a déjà conf=1.0 pour les mots touchés → noir
+                displayEl.innerHTML = buildColoredFromBaseline(newText, getEditBaseline(index));
+            }
+
+            wrapper.setAttribute('data-editing', 'false');
+            editBtn.style.display   = 'inline-block';
+            saveBtn.style.display   = 'none';
+            cancelBtn.style.display = 'none';
+
+            showSuccess('✅ Texte enregistré ! Vous pouvez recliquer sur Modifier pour continuer.');
+        }
+
+        function getResultPlainText(index) {
+            const displayEl = document.getElementById(`display-${index}`);
+            const editEl = document.getElementById(`edit-${index}`);
+            if (displayEl) {
+                return (displayEl.innerText || displayEl.textContent || '').replace(/\u00a0/g, ' ');
+            }
+            return editEl ? editEl.value : '';
+        }
+
+        function copyText(elementId) {
+            const index = elementId.replace('result-', '');
+            const text = getResultPlainText(index);
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('Texte copié !');
+            }).catch(err => {
+                showError('Impossible de copier');
+            });
+        }
+
+        function downloadText(elementId, modelId) {
+            const index = elementId.replace('result-', '');
+            const text = getResultPlainText(index);
+            const filename = `${currentFileData.file.split('.')[0]}_${modelId}.txt`;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showSuccess('Fichier téléchargé !');
+        }
+
+        function openTranslation(index) {
+            const container = document.getElementById(`translation-container-${index}`);
+            if (container) {
+                container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function closeTranslation(index) {
+            const container = document.getElementById(`translation-container-${index}`);
+            if (container) {
+                container.style.display = 'none';
+            }
+        }
+
+        async function performTranslation(index, modelId) {
+            const result = currentFileData.results.find(r => r.model_id === modelId);
+            if (!result) return;
+
+            const text = getResultPlainText(index) || result.text;
+            const langSelect = document.getElementById(`lang-select-${index}`);
+            const targetLang = langSelect.value;
+
+            if (!targetLang) {
+                showError('Veuillez sélectionner une langue');
+                return;
+            }
+
+            try {
+                const response = await authenticatedFetch('/api/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ text, target_lang: targetLang })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const resultDiv = document.getElementById(`translation-result-${index}`);
+                    resultDiv.innerHTML = `<strong style="color: var(--primary-600);">📝 Traduction (${targetLang}):</strong><br><p style="margin-top: 8px;">${data.translated_text}</p>`;
+                    resultDiv.style.display = 'block';
+                    showSuccess('✅ Traduction effectuée !');
+                } else {
+                    showError('Erreur lors de la traduction');
+                }
+            } catch (error) {
+                showError('Erreur de traduction: ' + error.message);
+            }
+        }
+
+        async function translateText(modelId) {
+            const result = currentFileData.results.find(r => r.model_id === modelId);
+            if (!result) return;
+
+            const index = currentFileData.results.indexOf(result);
+            const container = document.getElementById(`translation-container-${index}`);
+            
+            if (container) {
+                container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function resetUpload() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            currentFileData = null;
+            extractionState = {};
+            sessionStorage.removeItem('ocrExtractionState');
+            document.getElementById('uploadZone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    </script>
+</body>
+</html>

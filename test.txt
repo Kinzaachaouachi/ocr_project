@@ -27,6 +27,8 @@ python run_all_benchmarks.py
 # Terminal 1:
 uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload
 
+
+ python start_app.py
 # Terminal 2:
 python test_api.py
 

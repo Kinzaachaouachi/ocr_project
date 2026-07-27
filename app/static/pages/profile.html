@@ -1,0 +1,693 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - OCR Intelligence</title>
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="app-shell">
+    <nav class="sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <a href="/app" class="sidebar-logo">
+                <span class="sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                </span>
+                <span>OCR Intelligence</span>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navigation</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/ocr" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Extraction OCR</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/history" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span>Historique</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Rapports</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app/local-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Benchmark Local</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/olm-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                            </svg>
+                            <span>Rapport OLM Global</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/app/profile" class="user-profile-link" id="sidebarUserProfile">
+                <div class="user-avatar" id="sidebarAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUsername">Chargement...</div>
+                    <div class="user-role">Utilisateur</div>
+                </div>
+            </a>
+            <a href="#" onclick="logout(event)" class="menu-item" style="margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        
+        <header class="page-header">
+            <h1 class="page-title">Mon Profil</h1>
+            <p class="page-description">Gérez vos informations personnelles et votre photo de profil</p>
+        </header>
+
+        <div class="profile-grid">
+            
+            <div class="profile-sidebar">
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Photo de Profil</h3>
+                    </div>
+                    <div class="card-body profile-avatar-section">
+                        <div class="avatar-upload-container">
+                            <div class="avatar-preview" id="avatarPreview">
+                                <img id="profileAvatarImg" src="" alt="Avatar">
+                            </div>
+                            <label for="avatarInput" class="avatar-upload-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </label>
+                            <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" style="display: none;">
+                        </div>
+                        <div class="avatar-info">
+                            <p class="avatar-hint">JPG, PNG, GIF ou WEBP</p>
+                            <p class="avatar-hint">Maximum 5 MB</p>
+                            <p class="avatar-hint">Recommandé : 400x400px</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="profile-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Informations Personnelles</h3>
+                        <p class="card-description">Mettez à jour vos informations de profil</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName" class="form-label">Prénom <span class="required">*</span></label>
+                                    <input type="text" id="firstName" class="form-input" required placeholder="Votre prénom">
+                                    <div class="form-error" id="firstName-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName" class="form-label">Nom <span class="required">*</span></label>
+                                    <input type="text" id="lastName" class="form-input" required placeholder="Votre nom">
+                                    <div class="form-error" id="lastName-error"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email <span class="required">*</span></label>
+                                <input type="email" id="email" class="form-input" required placeholder="votre.email@exemple.com">
+                                <div class="form-error" id="email-error"></div>
+                            </div>
+
+                            <div class="form-divider"></div>
+
+                            <h4 class="form-section-title">Changer le Mot de Passe</h4>
+                            <p class="form-section-description">Laissez vide si vous ne souhaitez pas modifier votre mot de passe</p>
+                            
+                            <div class="form-group">
+                                <label for="currentPassword" class="form-label">Mot de Passe Actuel</label>
+                                <input type="password" id="currentPassword" class="form-input" placeholder="••••••••">
+                                <div class="form-error" id="currentPassword-error"></div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newPassword" class="form-label">Nouveau Mot de Passe</label>
+                                    <input type="password" id="newPassword" class="form-input" placeholder="••••••••">
+                                    <div class="form-error" id="newPassword-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword" class="form-label">Confirmer le Mot de Passe</label>
+                                    <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••">
+                                    <div class="form-error" id="confirmPassword-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    Enregistrer les Modifications
+                                </button>
+                                <button type="button" class="btn btn-outline" onclick="resetForm()">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 32px;
+        }
+        
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .profile-avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 24px;
+        }
+        
+        .avatar-upload-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .avatar-preview {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid var(--gray-200);
+            background: var(--gray-100);
+            position: relative;
+        }
+        
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-upload-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 110, 247, 0.3);
+            transition: all var(--transition-fast);
+        }
+        
+        .avatar-upload-btn:hover {
+            background: var(--primary-600);
+            transform: scale(1.1);
+        }
+        
+        .avatar-info {
+            text-align: center;
+        }
+        
+        .avatar-hint {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin: 4px 0;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+        
+        .required {
+            color: var(--error);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            color: var(--gray-900);
+            transition: all var(--transition-fast);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: var(--error);
+        }
+        
+        .form-error {
+            font-size: 12px;
+            color: var(--error);
+            margin-top: 6px;
+            display: none;
+        }
+        
+        .form-divider {
+            border-top: 1px solid var(--gray-200);
+            margin: 32px 0 24px 0;
+        }
+        
+        .form-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+        
+        .form-section-description {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 20px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        
+        @media (max-width: 1024px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-sidebar {
+                order: 2;
+            }
+            
+            .profile-content {
+                order: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script src="/static/js/app.js?v=20260723b"></script>
+    <script src="/static/js/benchmark_download.js"></script>
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAuth();
+            loadUserProfile();
+
+            document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
+            document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
+
+            
+            document.getElementById('firstName').addEventListener('input', validateFirstName);
+            document.getElementById('lastName').addEventListener('input', validateLastName);
+            document.getElementById('email').addEventListener('input', validateEmailField);
+            document.getElementById('newPassword').addEventListener('input', validatePasswordFields);
+            document.getElementById('confirmPassword').addEventListener('input', validatePasswordFields);
+        });
+
+        async function loadUserProfile() {
+            try {
+                const response = await authenticatedFetch('/api/me');
+                if (!response.ok) throw new Error('Erreur chargement profil');
+
+                currentUser = await response.json();
+                
+                document.getElementById('firstName').value = currentUser.first_name || '';
+                document.getElementById('lastName').value = currentUser.last_name || '';
+                document.getElementById('email').value = currentUser.email || '';
+
+                const avatarImg = document.getElementById('profileAvatarImg');
+                const initials = (currentUser.first_name?.[0] || currentUser.email?.[0] || 'U').toUpperCase();
+                if (typeof applyAvatarToElement === 'function') {
+                    applyAvatarToElement(avatarImg, currentUser.profile_image, initials);
+                } else if (currentUser.profile_image) {
+                    const img = currentUser.profile_image.startsWith('/')
+                        ? currentUser.profile_image
+                        : `/uploads/avatars/${currentUser.profile_image}`;
+                    avatarImg.src = img;
+                } else {
+                    avatarImg.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%234F6EF7" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".35em" fill="white" font-size="40" font-family="Inter">${initials}</text></svg>`;
+                }
+
+                localStorage.setItem('user_data', JSON.stringify(currentUser));
+                updateUserDisplay(currentUser);
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showError('Erreur de chargement du profil');
+            }
+        }
+
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showError('L\'image ne doit pas dépasser 5 MB');
+                event.target.value = '';
+                return;
+            }
+
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showError('Format non supporté. Utilisez JPG, PNG, GIF ou WEBP');
+                event.target.value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const headers = getAuthHeaders();
+                delete headers['Content-Type'];
+                
+                const response = await fetch('/api/me/avatar', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Erreur upload avatar');
+                }
+
+                const data = await response.json();
+                currentUser.profile_image = data.profile_image;
+                localStorage.setItem('user_data', JSON.stringify(currentUser));
+
+                const initials = (currentUser.first_name?.[0] || currentUser.email?.[0] || 'U').toUpperCase();
+                const bust = `?t=${Date.now()}`;
+                const baseUrl = (typeof getProfileImageUrl === 'function')
+                    ? getProfileImageUrl(data.profile_image)
+                    : (String(data.profile_image).startsWith('/')
+                        ? data.profile_image
+                        : `/uploads/avatars/${data.profile_image}`);
+                const avatarUrl = `${baseUrl}${bust}`;
+
+                document.getElementById('profileAvatarImg').src = avatarUrl;
+                applyAvatarToElement(document.getElementById('userAvatar'), data.profile_image, initials);
+                applyAvatarToElement(document.getElementById('sidebarAvatar'), data.profile_image, initials);
+                updateUserDisplay(currentUser);
+                updateSidebarUserInfo(currentUser);
+
+                showSuccess('Photo de profil mise à jour !');
+            } catch (error) {
+                console.error('Error uploading avatar:', error);
+                showError(error.message || 'Erreur lors du téléchargement');
+            }
+            
+            event.target.value = '';
+        }
+
+        async function handleProfileUpdate(event) {
+            event.preventDefault();
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            
+            const errors = [];
+            if (!validateField('firstName', firstName)) errors.push('firstName');
+            if (!validateField('lastName', lastName)) errors.push('lastName');
+            if (!validateField('email', email)) errors.push('email');
+
+            if (newPassword || confirmPassword) {
+                if (!currentPassword) {
+                    setFieldError('currentPassword', 'Le mot de passe actuel est requis');
+                    errors.push('currentPassword');
+                }
+                if (newPassword !== confirmPassword) {
+                    setFieldError('confirmPassword', 'Les mots de passe ne correspondent pas');
+                    errors.push('confirmPassword');
+                } else if (newPassword && !validatePassword(newPassword)) {
+                    errors.push('newPassword');
+                }
+            }
+
+            if (errors.length > 0) {
+                showError('Veuillez corriger les erreurs dans le formulaire');
+                return;
+            }
+
+            const updateData = {
+                first_name: firstName,
+                last_name: lastName,
+                email: email
+            };
+
+            if (newPassword) {
+                updateData.current_password = currentPassword;
+                updateData.new_password = newPassword;
+            }
+
+            try {
+                const response = await authenticatedFetch('/api/me', {
+                    method: 'PUT',
+                    body: JSON.stringify(updateData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Erreur mise à jour');
+                }
+
+                const data = await response.json();
+                localStorage.setItem('user_data', JSON.stringify(data));
+                currentUser = data;
+                updateUserDisplay(data);
+
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+
+                showSuccess('Profil mis à jour avec succès !');
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showError(error.message || 'Erreur lors de la mise à jour');
+            }
+        }
+
+        function validateFirstName() {
+            const value = document.getElementById('firstName').value.trim();
+            return validateField('firstName', value);
+        }
+
+        function validateLastName() {
+            const value = document.getElementById('lastName').value.trim();
+            return validateField('lastName', value);
+        }
+
+        function validateEmailField() {
+            const value = document.getElementById('email').value.trim();
+            return validateField('email', value);
+        }
+
+        function validateField(fieldId, value) {
+            let error = null;
+            
+            if (fieldId === 'firstName' || fieldId === 'lastName') {
+                const fieldName = fieldId === 'firstName' ? 'prénom' : 'nom';
+                if (!value || value.length < 2) {
+                    error = `Le ${fieldName} doit contenir au moins 2 caractères`;
+                } else if (value.length > 50) {
+                    error = `Le ${fieldName} ne doit pas dépasser 50 caractères`;
+                } else if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(value)) {
+                    error = `Le ${fieldName} contient des caractères invalides`;
+                }
+            } else if (fieldId === 'email') {
+                if (!value) {
+                    error = 'L\'email est requis';
+                } else if (!validateEmail(value)) {
+                    error = 'Format d\'email invalide';
+                } else if (value.length > 100) {
+                    error = 'L\'email est trop long';
+                }
+            }
+
+            setFieldError(fieldId, error);
+            return error === null;
+        }
+
+        function validatePassword(password) {
+            if (!password) return true;
+            
+            let error = null;
+            if (password.length < 8) {
+                error = 'Le mot de passe doit contenir au moins 8 caractères';
+            } else if (!/[A-Z]/.test(password)) {
+                error = 'Doit contenir au moins une majuscule';
+            } else if (!/[a-z]/.test(password)) {
+                error = 'Doit contenir au moins une minuscule';
+            } else if (!/[0-9]/.test(password)) {
+                error = 'Doit contenir au moins un chiffre';
+            } else if (!/[!@#$%^&*(),.?":{}|<>_\-+=]/.test(password)) {
+                error = 'Doit contenir au moins un caractère spécial';
+            }
+
+            setFieldError('newPassword', error);
+            return error === null;
+        }
+
+        function validatePasswordFields() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword) {
+                validatePassword(newPassword);
+            } else {
+                setFieldError('newPassword', null);
+            }
+
+            if (confirmPassword) {
+                if (newPassword !== confirmPassword) {
+                    setFieldError('confirmPassword', 'Les mots de passe ne correspondent pas');
+                } else {
+                    setFieldError('confirmPassword', null);
+                }
+            } else {
+                setFieldError('confirmPassword', null);
+            }
+        }
+
+        function setFieldError(fieldId, error) {
+            const input = document.getElementById(fieldId);
+            const errorEl = document.getElementById(`${fieldId}-error`);
+            
+            if (error) {
+                input.classList.add('error');
+                errorEl.textContent = error;
+                errorEl.style.display = 'block';
+            } else {
+                input.classList.remove('error');
+                errorEl.style.display = 'none';
+            }
+        }
+
+        function resetForm() {
+            if (currentUser) {
+                document.getElementById('firstName').value = currentUser.first_name || '';
+                document.getElementById('lastName').value = currentUser.last_name || '';
+                document.getElementById('email').value = currentUser.email || '';
+            }
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            ['firstName', 'lastName', 'email', 'currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+                setFieldError(id, null);
+            });
+        }
+    </script>
+</body>
+</html>

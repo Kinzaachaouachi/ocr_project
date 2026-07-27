@@ -1,0 +1,361 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmark Local — OCR Intelligence</title>
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        
+        .download-wrapper { position: relative; display: inline-block; }
+        .btn-download, #dlBtn .arrow { transition: transform 0.2s; }
+        #dlBtn.open .arrow { transform: rotate(180deg); }
+        .download-menu {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            background: white; border: 1px solid var(--gray-200); border-radius: 12px;
+            box-shadow: var(--shadow-lg); min-width: 180px; z-index: 100; overflow: hidden;
+        }
+        .download-menu.open { display: block; }
+        .download-menu a {
+            display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+            color: var(--gray-700); text-decoration: none; font-size: 0.92em; font-weight: 500;
+            transition: background 0.15s;
+        }
+        .download-menu a:hover { background: var(--primary-50); color: var(--primary-700); }
+        .download-menu a + a { border-top: 1px solid var(--gray-100); }
+
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .kpi-card {
+            background: white; border-radius: 14px; padding: 22px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;
+            text-align: center; transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-icon { font-size: 2em; margin-bottom: 8px; }
+        .kpi-value { font-size: 2.2em; font-weight: 800; color: #1e3a8a; }
+        .kpi-label { font-size: 0.82em; color: #64748b; margin-top: 4px; font-weight: 500; }
+
+        
+        .section { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; margin-bottom: 24px; }
+        .section h2 { font-size: 1.25em; font-weight: 700; color: #1e3a8a; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+        
+        .model-grid { display: grid; gap: 16px; }
+        .model-card {
+            border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+            transition: box-shadow 0.2s; background: #fafbfc;
+        }
+        .model-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .model-card.best { border-color: #fbbf24; background: linear-gradient(135deg, #fffbeb, #fefce8); }
+        .model-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .model-name { font-size: 1.1em; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+        .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75em; font-weight: 700; }
+        .badge-best { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #78350f; }
+        .badge-good { background: #dbeafe; color: #1e40af; }
+        .badge-ok { background: #fef3c7; color: #92400e; }
+        .badge-low { background: #fee2e2; color: #991b1b; }
+        .model-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .metric { background: white; border-radius: 8px; padding: 10px 14px; border: 1px solid #e2e8f0; }
+        .metric-label { font-size: 0.75em; color: #64748b; font-weight: 500; }
+        .metric-value { font-size: 1.1em; font-weight: 700; color: #1e3a8a; }
+        .olm-box {
+            margin-top: 12px; padding: 10px 14px; background: #eff6ff;
+            border-left: 3px solid #2563eb; border-radius: 0 8px 8px 0;
+            font-size: 0.85em; color: #1e40af;
+        }
+
+        
+        .olm-table { width: 100%; border-collapse: collapse; }
+        .olm-table th { background: #1e3a8a; color: white; padding: 10px 14px; text-align: left; font-size: 0.85em; }
+        .olm-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.9em; }
+        .olm-table tr:hover td { background: #f8fafc; }
+        .rank-gold { background: linear-gradient(135deg,#fbbf24,#f59e0b); color:#78350f; padding:2px 8px; border-radius:10px; font-weight:700; font-size:0.82em; }
+        .rank-silver { background:#e2e8f0; color:#374151; padding:2px 8px; border-radius:10px; font-weight:700; font-size:0.82em; }
+        .rank-bronze { background:linear-gradient(135deg,#d97706,#b45309); color:white; padding:2px 8px; border-radius:10px; font-weight:700; font-size:0.82em; }
+
+        
+        .loading-block { text-align:center; padding:60px 20px; color:#64748b; }
+        .spinner { width:48px; height:48px; border:4px solid #e2e8f0; border-top-color:#2563eb; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 16px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .error-box { background:#fee2e2; color:#991b1b; padding:20px; border-radius:12px; border-left:4px solid #dc2626; margin:20px 0; }
+        .empty-box { background:#fefce8; color:#92400e; padding:20px; border-radius:12px; border-left:4px solid #fbbf24; margin:20px 0; }
+    </style>
+</head>
+<body class="app-shell">
+
+    <nav class="sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <a href="/app" class="sidebar-logo">
+                <span class="sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                </span>
+                <span>OCR Intelligence</span>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navigation</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/ocr" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Extraction OCR</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/history" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span>Historique</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Rapports</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app/local-benchmark" class="menu-item active">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Benchmark Local</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/olm-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                            </svg>
+                            <span>Rapport OLM Global</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/app/profile" class="user-profile-link" id="sidebarUserProfile">
+                <div class="user-avatar" id="sidebarAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUsername">Chargement...</div>
+                    <div class="user-role">Utilisateur</div>
+                </div>
+            </a>
+            <a href="#" onclick="logout(event)" class="menu-item" style="margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Benchmark Local</h1>
+                <p class="page-description">Statistiques de vos extractions OCR par modèle</p>
+                <p id="reportDate" class="page-description" style="font-size:13px;margin-top:4px;"></p>
+            </div>
+            <div class="download-wrapper">
+                <button class="btn btn-primary" id="dlBtn" onclick="toggleDownloadMenu()">
+                    Télécharger
+                    <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+                </button>
+                <div class="download-menu" id="dlMenu">
+                    <a href="#" onclick="doDownload(event,'pdf')">PDF</a>
+                    <a href="#" onclick="doDownload(event,'docx')">Word</a>
+                    <a href="#" onclick="doDownload(event,'excel')">Excel</a>
+                    <a href="#" onclick="doDownload(event,'csv')">CSV</a>
+                </div>
+            </div>
+        </header>
+
+        <div id="content">
+            <div class="loading-block">
+                <div class="spinner"></div>
+                <p>Chargement de vos données...</p>
+            </div>
+        </div>
+    </main>
+
+<script src="/static/js/app.js?v=20260723b"></script>
+<script>
+const API = '/api';
+let reportData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) { window.location.href = '/'; return; }
+    initializeAuth();
+    loadData();
+});
+
+document.addEventListener('click', e => {
+    const btn = document.getElementById('dlBtn');
+    const menu = document.getElementById('dlMenu');
+    if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+        btn.classList.remove('open');
+    }
+});
+
+function toggleDownloadMenu() {
+    document.getElementById('dlMenu').classList.toggle('open');
+    document.getElementById('dlBtn').classList.toggle('open');
+}
+
+async function loadData() {
+    try {
+        const token = localStorage.getItem('access_token');
+        const tokenType = localStorage.getItem('token_type') || 'Bearer';
+        const res = await fetch(`${API}/local-benchmark/data`, {
+            headers: { 'Authorization': `${tokenType} ${token}` }
+        });
+        if (!res.ok) throw new Error('Erreur API: ' + res.status);
+        reportData = await res.json();
+        renderReport(reportData);
+    } catch (e) {
+        document.getElementById('content').innerHTML = `
+            <div class="error-box"><strong>❌ Erreur de chargement</strong><p>${e.message}</p></div>`;
+    }
+}
+
+function renderReport(d) {
+    const date = d.generated_at ? new Date(d.generated_at).toLocaleString('fr-FR') : '';
+    document.getElementById('reportDate').textContent = `Généré le ${date}`;
+
+    if (d.total_extractions === 0) {
+        document.getElementById('content').innerHTML = `
+            <div class="empty-box">
+                <strong>⚠️ Aucune extraction trouvée</strong>
+                <p>Effectuez des extractions OCR pour voir vos statistiques de performance ici.</p>
+                <a href="/app/ocr" style="color:#92400e; font-weight:600;">→ Aller à l'Extraction OCR</a>
+            </div>`;
+        return;
+    }
+
+    
+    const perfLevel = getLevel(d.overall_avg_global_score);
+    let html = `
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon">📁</div><div class="kpi-value">${d.total_extractions}</div><div class="kpi-label">Extractions Totales</div></div>
+            <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value">${d.success_rate}%</div><div class="kpi-label">Taux de Succès</div></div>
+            <div class="kpi-card"><div class="kpi-icon">🎯</div><div class="kpi-value">${d.overall_avg_precision}%</div><div class="kpi-label">Précision Moyenne</div></div>
+            <div class="kpi-card"><div class="kpi-icon">⚡</div><div class="kpi-value">${d.overall_avg_time}s</div><div class="kpi-label">Temps Moyen</div></div>
+            <div class="kpi-card"><div class="kpi-icon">🏆</div><div class="kpi-value" style="color:${perfLevel.color}">${d.overall_avg_global_score}</div><div class="kpi-label">Score Global Moyen</div></div>
+        </div>`;
+
+    
+    html += `<div class="section"><h2>📱 Performance par Modèle</h2><div class="model-grid">`;
+
+    d.models_performance.forEach((m, i) => {
+        const perf = getLevel(m.avg_global_score);
+        const badgeClass = i === 0 ? 'badge-best' : (m.avg_global_score >= 80 ? 'badge-good' : m.avg_global_score >= 60 ? 'badge-ok' : 'badge-low');
+        const badgeText = i === 0 ? '🥇 Meilleur' : perf.label;
+        const isOlmLinked = m.olm_comparison && m.olm_comparison.has_olm_data;
+
+        html += `
+            <div class="model-card ${i === 0 ? 'best' : ''}">
+                <div class="model-top">
+                    <div class="model-name">
+                        ${m.model_name}
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div style="font-size:0.85em;color:#64748b;">${m.total_uses} utilisations (${m.usage_percentage}%)</div>
+                </div>
+                <div class="model-metrics">
+                    <div class="metric"><div class="metric-label">Score Global</div><div class="metric-value" style="color:${perf.color}">${m.avg_global_score}/100</div></div>
+                    <div class="metric"><div class="metric-label">Précision</div><div class="metric-value">${m.avg_precision}%</div></div>
+                    <div class="metric"><div class="metric-label">Temps Moy.</div><div class="metric-value">${m.avg_time}s</div></div>
+                    <div class="metric"><div class="metric-label">Robustesse</div><div class="metric-value">${m.avg_robustness}</div></div>
+                    <div class="metric"><div class="metric-label">Score Max</div><div class="metric-value" style="color:#059669">${m.max_score}</div></div>
+                    <div class="metric"><div class="metric-label">Score Min</div><div class="metric-value" style="color:#dc2626">${m.min_score}</div></div>
+                </div>
+                ${m.olm_recommendations ? `<div class="olm-box">💡 <strong>OLM Bench :</strong> ${m.olm_recommendations}</div>` : ''}
+                ${isOlmLinked ? `<div class="olm-box" style="background:#f0fdf4;border-left-color:#059669;color:#166534;margin-top:6px;">📊 Équivalent OLM : <strong>${m.olm_comparison.name}</strong> — Rang #${m.olm_comparison.rank} — Score ${m.olm_comparison.overall_score}</div>` : ''}
+            </div>`;
+    });
+
+    html += `</div></div>`;
+
+    document.getElementById('content').innerHTML = html;
+}
+
+function getLevel(score) {
+    if (score >= 90) return { label:'Excellent', color:'#059669' };
+    if (score >= 80) return { label:'Bon', color:'#2563eb' };
+    if (score >= 60) return { label:'Acceptable', color:'#d97706' };
+    return { label:'Faible', color:'#dc2626' };
+}
+
+async function doDownload(e, format) {
+    e.preventDefault();
+    document.getElementById('dlMenu').classList.remove('open');
+    document.getElementById('dlBtn').classList.remove('open');
+
+    const labels = { pdf:'PDF', docx:'Word', excel:'Excel', csv:'CSV' };
+    try {
+        showInfo(`⏳ Génération du rapport ${labels[format]}...`);
+        const token = localStorage.getItem('access_token');
+        const tokenType = localStorage.getItem('token_type') || 'Bearer';
+        const res = await fetch(`${API}/local-benchmark/download/${format}`, {
+            headers: { 'Authorization': `${tokenType} ${token}` }
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Erreur téléchargement');
+        }
+        const cd = res.headers.get('Content-Disposition');
+        const exts = { pdf:'pdf', docx:'docx', excel:'xlsx', csv:'csv' };
+        let filename = `benchmark_local.${exts[format]}`;
+        if (cd) { const m = cd.match(/filename="(.+)"/); if (m) filename = m[1]; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        URL.revokeObjectURL(url); document.body.removeChild(a);
+        showSuccess(`✅ Rapport ${labels[format]} téléchargé !`);
+    } catch (err) {
+        showError(`❌ ${err.message}`);
+    }
+}
+</script>
+</body>
+</html>

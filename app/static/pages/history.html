@@ -1,0 +1,1168 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique - OCR Intelligence</title>
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727e">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="app-shell">
+    <nav class="sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <a href="/app" class="sidebar-logo">
+                <span class="sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                </span>
+                <span>OCR Intelligence</span>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navigation</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/ocr" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Extraction OCR</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/history" class="menu-item active">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span>Historique</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Rapports</div>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/app/local-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Benchmark Local</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/app/olm-benchmark" class="menu-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                            </svg>
+                            <span>Rapport OLM Global</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/app/profile" class="user-profile-link" id="sidebarUserProfile">
+                <div class="user-avatar" id="sidebarAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUsername">Chargement...</div>
+                    <div class="user-role">Utilisateur</div>
+                </div>
+            </a>
+            <a href="#" onclick="logout(event)" class="menu-item" style="margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Historique des Extractions</h1>
+                <p class="page-description">Consultez toutes vos extractions OCR avec métriques détaillées</p>
+            </div>
+            <div class="filter-actions">
+                <select id="modelFilter" class="filter-select">
+                    <option value="">Tous les modèles</option>
+                    <option value="paddleocr">🏆 PaddleOCR</option>
+                    <option value="docling">📄 Docling</option>
+                    <option value="easyocr">👁️ EasyOCR</option>
+                    <option value="trocr">🤖 TrOCR</option>
+                </select>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="success">✓ Succès</option>
+                    <option value="error">✗ Erreur</option>
+                </select>
+            </div>
+        </header>
+
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Historique Complet</h3>
+                <p class="card-description" id="historyCount">0 extraction(s)</p>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Fichier</th>
+                                <th>Date & Heure</th>
+                                <th>Modèle OCR</th>
+                                <th>Aperçu du Texte</th>
+                                <th>Métriques</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="7" class="loading-cell">
+                                    <div class="spinner"></div>
+                                    <span>Chargement de l'historique...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    
+    <div id="textModal" class="text-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-container modal-large">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="modalTitle">Résultat d'Extraction OCR</h2>
+                    <p class="modal-subtitle" id="modalSubtitle"></p>
+                </div>
+                <button onclick="closeModal()" class="modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            
+            <div class="view-mode-toggle">
+                <button class="toggle-btn active" onclick="setViewMode('split')" id="btn-split">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="18"></rect>
+                        <rect x="14" y="3" width="7" height="18"></rect>
+                    </svg>
+                    Comparaison
+                </button>
+                <button class="toggle-btn" onclick="setViewMode('document')" id="btn-document">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Document
+                </button>
+                <button class="toggle-btn" onclick="setViewMode('text')" id="btn-text">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    Texte
+                </button>
+            </div>
+            
+            <div class="modal-body modal-body-split">
+                
+                <div id="splitView" class="split-view">
+                    <div class="split-panel">
+                        <div class="panel-header">
+                            <h3>📄 Document Original</h3>
+                        </div>
+                        <div class="panel-content" id="documentPanel">
+                            <div class="document-viewer" id="documentViewer">
+                                <div class="loading-spinner">Chargement...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="split-divider"></div>
+                    <div class="split-panel">
+                        <div class="panel-header">
+                            <h3>📝 Texte Extrait</h3>
+                        </div>
+                        <div class="panel-content">
+                            <pre id="modalText" class="modal-text-content"></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div id="documentView" class="single-view" style="display: none;">
+                    <div class="document-viewer" id="documentViewerFull">
+                        <div class="loading-spinner">Chargement...</div>
+                    </div>
+                </div>
+                
+                
+                <div id="textView" class="single-view" style="display: none;">
+                    <pre id="modalTextFull" class="modal-text-content"></pre>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button onclick="copyModalText()" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copier
+                </button>
+                <button onclick="downloadModalText()" class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Télécharger
+                </button>
+                <button onclick="closeModal()" class="btn btn-outline">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select {
+            padding: 10px 36px 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-sm);
+            background-color: white;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        
+        .filter-select:hover {
+            border-color: var(--primary-500);
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.1);
+        }
+        
+        .history-table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .history-table thead {
+            background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
+        }
+        
+        .history-table th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+        }
+        
+        .history-table tbody tr {
+            border-bottom: 1px solid var(--gray-100);
+            transition: background-color var(--transition-fast);
+        }
+        
+        .history-table tbody tr:hover {
+            background-color: var(--gray-50);
+        }
+        
+        .history-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        .history-table td {
+            padding: 16px;
+            color: var(--gray-700);
+            vertical-align: top;
+        }
+        
+        .history-table td:nth-child(4) {
+            max-width: 350px;
+        }
+        
+        .text-preview {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--gray-600);
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .metrics-grid {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .metrics-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--primary-100);
+            color: var(--primary-700);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-badge.success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+        
+        .status-badge.error {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+        }
+        
+        .text-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-container {
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease;
+        }
+        
+        .modal-large {
+            max-width: 1400px;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-header {
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: linear-gradient(135deg, var(--primary-50), var(--gray-50));
+        }
+        
+        .modal-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .modal-subtitle {
+            margin: 6px 0 0 0;
+            font-size: 14px;
+            color: var(--gray-600);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .modal-close {
+            padding: 8px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            color: var(--gray-500);
+            transition: all var(--transition-fast);
+            border-radius: 8px;
+        }
+        
+        .modal-close:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+            border-color: var(--gray-300);
+        }
+        
+        .view-mode-toggle {
+            display: flex;
+            gap: 8px;
+            padding: 16px 28px;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .toggle-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--primary-400);
+            color: var(--primary-600);
+        }
+        
+        .toggle-btn.active {
+            background: var(--primary-600);
+            border-color: var(--primary-600);
+            color: white;
+        }
+        
+        .toggle-btn.active:hover {
+            background: var(--primary-700);
+            border-color: var(--primary-700);
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-body-split {
+            padding: 0;
+        }
+        
+        .split-view {
+            display: flex;
+            height: 100%;
+            gap: 0;
+        }
+        
+        .split-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
+            border-bottom: 2px solid var(--gray-200);
+        }
+        
+        .panel-header h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        .split-divider {
+            width: 1px;
+            background: var(--gray-300);
+            flex-shrink: 0;
+        }
+        
+        .single-view {
+            height: 100%;
+            overflow-y: auto;
+            padding: 24px 28px;
+        }
+        
+        .document-viewer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+        
+        .document-viewer img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .document-viewer embed,
+        .document-viewer iframe {
+            width: 100%;
+            height: 70vh;
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+        
+        .loading-spinner::before {
+            content: '';
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            border: 3px solid var(--gray-300);
+            border-top-color: var(--primary-500);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .modal-text-content {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: var(--gray-800);
+            margin: 0;
+            max-height: none;
+        }
+        
+        .modal-footer {
+            padding: 20px 28px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            background: var(--gray-50);
+        }
+        
+        .btn-outline {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+        
+        .empty-cell {
+            padding: 60px 20px !important;
+            text-align: center;
+        }
+        
+        .empty-state-inline {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: var(--gray-500);
+        }
+        
+        .empty-state-inline svg {
+            opacity: 0.5;
+        }
+        
+        .empty-state-inline p {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+        
+        .empty-state-inline small {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+        
+        .loading-cell {
+            padding: 60px 20px !important;
+            text-align: center;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--gray-300);
+            border-top-color: var(--primary-500);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-actions {
+                width: 100%;
+            }
+            
+            .filter-select {
+                flex: 1;
+            }
+            
+            .modal-container {
+                width: 95%;
+                max-height: 95vh;
+            }
+            
+            .modal-large {
+                max-width: 95%;
+            }
+            
+            .history-table-container {
+                overflow-x: scroll;
+            }
+            
+            .split-view {
+                flex-direction: column;
+            }
+            
+            .split-divider {
+                width: 100%;
+                height: 1px;
+            }
+            
+            .view-mode-toggle {
+                flex-wrap: wrap;
+            }
+            
+            .toggle-btn {
+                flex: 1;
+                min-width: 100px;
+                justify-content: center;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .page-header > div:first-child {
+                text-align: center;
+            }
+        }
+    </style>
+
+    <script src="/static/js/app.js?v=20260723b"></script>
+    <script src="/static/js/benchmark_download.js"></script>
+    <script>
+        let currentHistory = [];
+        let currentModalFilename = '';
+        let currentModalData = null;
+        let currentViewMode = 'split';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAuth();
+            loadHistory();
+
+            document.getElementById('modelFilter').addEventListener('change', filterHistory);
+            document.getElementById('statusFilter').addEventListener('change', filterHistory);
+            
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('textModal').style.display !== 'none') {
+                    closeModal();
+                }
+            });
+        });
+
+        async function loadHistory() {
+            try {
+                const response = await authenticatedFetch('/api/history?limit=100');
+
+                if (!response.ok) {
+                    throw new Error('Erreur chargement historique');
+                }
+
+                const data = await response.json();
+                currentHistory = data.history || [];
+                displayHistory(currentHistory);
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Erreur de chargement de l\'historique');
+                document.getElementById('historyTableBody').innerHTML = `
+                    <tr><td colspan="7" class="empty-cell">
+                        <div class="empty-state-inline">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                            <p>Erreur de chargement</p>
+                            <button onclick="loadHistory()" class="btn btn-primary btn-sm">Réessayer</button>
+                        </div>
+                    </td></tr>
+                `;
+            }
+        }
+
+        function filterHistory() {
+            const modelFilter = document.getElementById('modelFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filtered = currentHistory;
+            
+            if (modelFilter) {
+                filtered = filtered.filter(item => item.model_id === modelFilter);
+            }
+            
+            if (statusFilter) {
+                filtered = filtered.filter(item => item.status === statusFilter);
+            }
+
+            displayHistory(filtered);
+        }
+
+        function displayHistory(history) {
+            const tbody = document.getElementById('historyTableBody');
+            const countEl = document.getElementById('historyCount');
+            
+            countEl.textContent = `${history.length} extraction(s)`;
+            
+            if (history.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="empty-cell">
+                        <div class="empty-state-inline">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            <p>Aucune extraction trouvée</p>
+                            <small>Commencez par extraire du texte d'un document</small>
+                            <a href="/app/ocr" class="btn btn-primary" style="margin-top: 16px;">Nouvelle Extraction</a>
+                        </div>
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = history.map(item => {
+                const date = new Date(item.processed_at);
+                const dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                
+                const precision = item.benchmark?.precision != null ? (item.benchmark.precision).toFixed(1) + '%' : '-';
+                const execTime = item.benchmark?.execution_time != null ? (item.benchmark.execution_time).toFixed(2) + 's' : '-';
+                const globalScore = item.benchmark?.global_score != null ? (item.benchmark.global_score).toFixed(1) : '-';
+                
+                const modelIcons = {
+                    'paddleocr': '🏆',
+                    'docling': '📄',
+                    'easyocr': '👁️',
+                    'trocr': '🤖'
+                };
+                const icon = modelIcons[item.model_id] || '📊';
+                
+                return `
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: var(--gray-900);">${escapeHtml(item.filename)}</div>
+                        <div style="font-size: 12px; color: var(--gray-500); margin-top: 2px;">${item.file_type || ''}</div>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <div>${dateStr}</div>
+                        <div style="color: var(--gray-500); font-size: 12px;">${timeStr}</div>
+                    </td>
+                    <td>
+                        <span class="model-badge-item badge-${item.model_id === 'paddleocr' ? 'primary' : item.model_id === 'docling' ? 'success' : item.model_id === 'easyocr' ? 'warning' : 'info'}">
+                            ${icon} ${escapeHtml(item.model_name || item.model_id)}
+                        </span>
+                    </td>
+                    <td>
+                        ${item.status === 'success' && item.text_preview
+                            ? `<div class="text-preview">${escapeHtml(item.text_preview)}</div>`
+                            : item.status === 'error'
+                            ? `<span style="color: var(--error); font-size: 13px;">${escapeHtml(item.error_message || 'Erreur inconnue')}</span>`
+                            : '<span style="color: var(--gray-400);">Aucun texte</span>'
+                        }
+                    </td>
+                    <td>
+                        ${item.benchmark && item.status === 'success' ? `
+                            <div class="metrics-grid">
+                                <span class="metrics-badge" title="Précision">P: ${precision}</span>
+                                <span class="metrics-badge" title="Temps">${execTime}</span>
+                                <span class="metrics-badge" title="Score">S: ${globalScore}</span>
+                            </div>
+                        ` : '<span style="color: var(--gray-400);">-</span>'}
+                    </td>
+                    <td>
+                        ${item.status === 'success' 
+                            ? '<span class="status-badge success">✓ Succès</span>'
+                            : '<span class="status-badge error">✗ Erreur</span>'
+                        }
+                    </td>
+                    <td>
+                        ${item.status === 'success' && item.extracted_text ? `
+                            <button onclick="viewTextById(${item.id})" class="btn btn-sm btn-primary" title="Voir le texte complet">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                Voir
+                            </button>
+                        ` : '<span style="color: var(--gray-400);">-</span>'}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function viewTextById(id) {
+            const item = currentHistory.find(h => h.id === id);
+            if (!item) {
+                showError('Entrée introuvable');
+                return;
+            }
+            viewText({
+                id: item.id,
+                filename: item.filename,
+                model: item.model_name || item.model_id,
+                text: item.extracted_text || '',
+                chars: item.char_count,
+                words: item.word_count,
+                file_path: item.file_path,
+                file_type: item.file_type
+            });
+        }
+
+        function viewText(data) {
+            currentModalFilename = data.filename;
+            currentModalData = data;
+            
+            document.getElementById('modalTitle').textContent = data.filename;
+            document.getElementById('modalSubtitle').innerHTML = `
+                <span>${data.model}</span>
+                <span>•</span>
+                <span>${data.chars || 0} caractères</span>
+                <span>•</span>
+                <span>${data.words || 0} mots</span>
+            `;
+            
+            
+            document.getElementById('modalText').textContent = data.text || 'Aucun texte extrait';
+            document.getElementById('modalTextFull').textContent = data.text || 'Aucun texte extrait';
+            
+            
+            loadDocumentPreview(data.file_path, data.file_type);
+            
+            
+            setViewMode('split');
+            document.getElementById('textModal').style.display = 'flex';
+        }
+
+        function loadDocumentPreview(filePath, fileType) {
+            const docViewer = document.getElementById('documentViewer');
+            const docViewerFull = document.getElementById('documentViewerFull');
+            
+            if (!filePath) {
+                const noDocHtml = '<div style="padding: 40px; text-align: center; color: var(--gray-500);">📄 Document non disponible</div>';
+                docViewer.innerHTML = noDocHtml;
+                docViewerFull.innerHTML = noDocHtml;
+                return;
+            }
+            
+            const fileTypeLC = (fileType || '').toLowerCase();
+            let previewHtml = '';
+            
+            if (fileTypeLC.includes('image') || fileTypeLC.includes('png') || fileTypeLC.includes('jpg') || fileTypeLC.includes('jpeg') || fileTypeLC.includes('bmp') || fileTypeLC.includes('webp')) {
+                previewHtml = `<img src="${filePath}" alt="Document" onload="this.parentElement.querySelector('.loading-spinner')?.remove()" onerror="this.parentElement.innerHTML='<div style=\\'padding:40px;text-align:center;color:var(--error)\\'>❌ Erreur de chargement</div>'">`;
+            } else if (fileTypeLC.includes('pdf')) {
+                previewHtml = `<embed src="${filePath}" type="application/pdf" style="width: 100%; height: 600px; border-radius: 8px;" onload="this.parentElement.querySelector('.loading-spinner')?.remove()">`;
+            } else {
+                previewHtml = '<div style="padding: 40px; text-align: center; color: var(--gray-500);">📄 Aperçu non disponible pour ce type de fichier</div>';
+            }
+            
+            docViewer.innerHTML = previewHtml;
+            docViewerFull.innerHTML = previewHtml;
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            
+            
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+            
+            
+            document.getElementById('splitView').style.display = 'none';
+            document.getElementById('documentView').style.display = 'none';
+            document.getElementById('textView').style.display = 'none';
+            
+            
+            if (mode === 'split') {
+                document.getElementById('splitView').style.display = 'flex';
+            } else if (mode === 'document') {
+                document.getElementById('documentView').style.display = 'block';
+            } else if (mode === 'text') {
+                document.getElementById('textView').style.display = 'block';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('textModal').style.display = 'none';
+            currentModalData = null;
+        }
+
+        function copyModalText() {
+            const text = document.getElementById('modalText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('✅ Texte copié dans le presse-papiers !');
+            }).catch(err => {
+                console.error('Erreur copie:', err);
+                showError('❌ Impossible de copier le texte');
+            });
+        }
+
+        function downloadModalText() {
+            const text = document.getElementById('modalText').textContent;
+            const filename = currentModalFilename ? currentModalFilename.split('.')[0] + '_extraction.txt' : 'extraction.txt';
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showSuccess('✅ Fichier téléchargé !');
+        }
+
+        
+        function initializeBenchmarkMenu() {
+            const menu = document.getElementById('benchmarkMenu');
+            const submenu = document.getElementById('benchmarkSubmenu');
+            
+            if (menu && submenu) {
+                menu.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    submenu.classList.toggle('show');
+                    menu.classList.toggle('active');
+                });
+                
+                
+                document.addEventListener('click', (e) => {
+                    if (!menu.contains(e.target) && !submenu.contains(e.target)) {
+                        submenu.classList.remove('show');
+                        menu.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        
+        async function downloadBenchmark(event, format) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const formatNames = {
+                'pdf': 'PDF',
+                'docx': 'Word',
+                'excel': 'Excel',
+                'csv': 'CSV'
+            };
+            
+            try {
+                showInfo(`Génération du rapport ${formatNames[format]}...`);
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/local-benchmark/download/${format}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Erreur lors du téléchargement ${formatNames[format]}`);
+                }
+                
+                
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `benchmark_local.${format === 'docx' ? 'docx' : format === 'excel' ? 'xlsx' : format}`;
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match) {
+                        filename = match[1];
+                    }
+                }
+                
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showSuccess(`✅ Rapport ${formatNames[format]} téléchargé avec succès!`);
+                
+                
+                const submenu = document.getElementById('benchmarkSubmenu');
+                const menu = document.getElementById('benchmarkMenu');
+                if (submenu) submenu.classList.remove('show');
+                if (menu) menu.classList.remove('active');
+                
+            } catch (error) {
+                console.error('Erreur téléchargement:', error);
+                showError(`❌ ${error.message}`);
+            }
+        }
+
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAuth();
+            loadHistory();
+            initializeBenchmarkMenu();
+
+            document.getElementById('modelFilter').addEventListener('change', filterHistory);
+            document.getElementById('statusFilter').addEventListener('change', filterHistory);
+            
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('textModal').style.display !== 'none') {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
