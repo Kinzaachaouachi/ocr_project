@@ -1046,6 +1046,10 @@
                             if (data.user) {
                                 localStorage.setItem("user_data", JSON.stringify(data.user));
                             }
+                            try {
+                                sessionStorage.removeItem("auth_logged_out");
+                                document.cookie = "ocr_auth=1; path=/; SameSite=Lax; Max-Age=86400";
+                            } catch (e) {}
                         }
 
                         localStorage.removeItem("otp_token");
@@ -1056,7 +1060,7 @@
                         }
 
                         setTimeout(() => {
-                            window.location.href = "/app";
+                            window.location.replace("/app");
                         }, 1000);
                     } else {
                         showAlert(
@@ -1187,6 +1191,18 @@
                 const verified = urlParams.get("verified") === "true";
                 const emailHint = urlParams.get("email_hint") || localStorage.getItem("otp_email_hint") || "";
                 const expiresIn = parseInt(urlParams.get("expires_in") || "600", 10);
+
+                if (
+                    !otpToken &&
+                    localStorage.getItem("access_token") &&
+                    sessionStorage.getItem("auth_logged_out") !== "1"
+                ) {
+                    try {
+                        document.cookie = "ocr_auth=1; path=/; SameSite=Lax; Max-Age=86400";
+                    } catch (e) {}
+                    window.location.replace("/app");
+                    return;
+                }
 
                 if (otpToken) {
                     showOtpScreen(

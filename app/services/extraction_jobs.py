@@ -1,4 +1,4 @@
-"""Background OCR extract-all jobs — survive page navigation."""
+"""Jobs OCR extract-all en arrière-plan."""
 
 from __future__ import annotations
 
@@ -41,7 +41,6 @@ def get_job(job_id: str) -> Optional[Dict[str, Any]]:
 
 
 def get_active_job_for_user(user_id: int) -> Optional[Dict[str, Any]]:
-    """Return the newest non-finished job for this user, if any."""
     with _lock:
         candidates = [
             dict(j)
@@ -65,6 +64,26 @@ def get_active_job_for_user(user_id: int) -> Optional[Dict[str, Any]]:
     return candidates[0]
 
 
+def _start_soft_progress(job_id: str, stop_event: threading.Event) -> None:
+    def _run():
+        while not stop_event.wait(1.25):
+            with _lock:
+                job = _jobs.get(job_id)
+                if not job or job.get("status") not in ("queued", "running"):
+                    return
+                p = float(job.get("progress") or 0)
+                ceiling = float(job.get("progress_ceiling") or 35)
+                if p >= ceiling:
+                    continue
+                step = 1.2 if p < 25 else 0.7 if p < 50 else 0.4
+                job["progress"] = round(min(ceiling, p + step), 1)
+                job["updated_at"] = datetime.now().isoformat()
+
+    threading.Thread(
+        target=_run, daemon=True, name=f"ocr-soft-prog-{job_id[:8]}"
+    ).start()
+
+
 def process_extract_all_file(
     *,
     tmp_path: str,
@@ -75,9 +94,17 @@ def process_extract_all_file(
     client_ip: str = "unknown",
     job_id: Optional[str] = None,
 ) -> dict:
-    """Run all OCR models and persist history. Safe to call from a worker thread."""
+    """Exécute les modèles OCR et enregistre l'historique."""
+    soft_stop = threading.Event()
     if job_id:
-        _update_job(job_id, status="running", progress=5, message="Préparation…")
+        _update_job(
+            job_id,
+            status="running",
+            progress=5,
+            progress_ceiling=14,
+            message="Préparation du document…",
+        )
+        _start_soft_progress(job_id, soft_stop)
 
     detected_lang_from_filename = detect_language_from_filename(filename)
     available_models = [
@@ -86,17 +113,51 @@ def process_extract_all_file(
         if file_type in minfo["supported_formats"]
     ]
     if not available_models:
+        soft_stop.set()
         raise ValueError(f"Aucun modèle ne supporte le format '{file_type}'")
+
+    def _on_prep_done():
+        if not job_id:
+            return
+        _update_job(
+            job_id,
+            progress=16,
+            progress_ceiling=28,
+            message=f"Extraction en cours ({len(available_models)} modèles)…",
+        )
+
+    def _on_model_done(done: int, total: int, model_id: str):
+        if not job_id:
+            return
+        pct = 18 + int(67 * done / max(1, total))
+        name = MODELS_INFO.get(model_id, {}).get("name", model_id)
+        _update_job(
+            job_id,
+            progress=pct,
+            progress_ceiling=min(88, pct + 5),
+            message=f"Modèle terminé ({done}/{total}) : {name}",
+        )
+
+    overall_start = time.time()
+    try:
+        futures = run_models_in_parallel(
+            tmp_path,
+            file_type,
+            available_models,
+            on_prep_done=_on_prep_done if job_id else None,
+            on_model_done=_on_model_done if job_id else None,
+        )
+    except Exception:
+        soft_stop.set()
+        raise
 
     if job_id:
         _update_job(
             job_id,
-            progress=15,
-            message=f"Extraction avec {len(available_models)} modèles…",
+            progress=88,
+            progress_ceiling=94,
+            message="Analyse et enregistrement des résultats…",
         )
-
-    overall_start = time.time()
-    futures = run_models_in_parallel(tmp_path, file_type, available_models)
 
     db = SessionLocal()
     try:
@@ -111,11 +172,15 @@ def process_extract_all_file(
 
         for i, (model_id, result, wall_time) in enumerate(futures):
             if job_id:
-                pct = 20 + int(60 * (i + 1) / total)
+                pct = 88 + int(6 * (i + 1) / total)
                 _update_job(
                     job_id,
                     progress=pct,
-                    message=f"Modèle terminé : {MODELS_INFO.get(model_id, {}).get('name', model_id)}",
+                    progress_ceiling=min(96, pct + 2),
+                    message=(
+                        f"Analyse : "
+                        f"{MODELS_INFO.get(model_id, {}).get('name', model_id)}"
+                    ),
                 )
             try:
                 if result.get("status") == "success":
@@ -236,7 +301,7 @@ def process_extract_all_file(
             detected_language_confidence = 0.5
 
         if job_id:
-            _update_job(job_id, progress=95, message="Finalisation…")
+            _update_job(job_id, progress=95, progress_ceiling=98, message="Finalisation…")
 
         return {
             "status": "success",
@@ -263,6 +328,7 @@ def process_extract_all_file(
             "processed_at": datetime.now().isoformat(),
         }
     finally:
+        soft_stop.set()
         db.close()
 
 
@@ -271,6 +337,14 @@ def _update_job(job_id: str, **fields):
         job = _jobs.get(job_id)
         if not job:
             return
+        if "progress" in fields:
+            try:
+                new_p = float(fields["progress"])
+                old_p = float(job.get("progress") or 0)
+                if new_p < old_p and fields.get("status") not in ("completed", "failed"):
+                    fields = {**fields, "progress": old_p}
+            except (TypeError, ValueError):
+                pass
         job.update(fields)
         job["updated_at"] = datetime.now().isoformat()
 

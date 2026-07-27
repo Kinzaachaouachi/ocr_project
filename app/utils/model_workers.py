@@ -72,7 +72,7 @@ except Exception as e:
 
 
 def resize_image_if_needed(image_path: str, max_side: int = MAX_OCR_SIDE) -> str:
-    """Downscale large images — major OCR speedup with little quality loss."""
+    """Réduit les grandes images pour accélérer l'OCR."""
     try:
         img = cv2.imread(image_path)
         if img is None:
@@ -95,7 +95,7 @@ def resize_image_if_needed(image_path: str, max_side: int = MAX_OCR_SIDE) -> str
 
 
 def enhance_image_for_ocr(image_path: str, light: bool = True) -> str:
-    """Light preprocess by default (CLAHE + sharpen). Heavy denoise only if light=False."""
+    """Prétraitement léger (CLAHE + netteté). Denoise lourd si light=False."""
     try:
         img = cv2.imread(image_path)
         if img is None:
@@ -185,11 +185,7 @@ def cleanup_tmp(paths):
 
 
 def prepare_shared_ocr_inputs(file_path: str, file_type: str) -> dict:
-    """
-    One-shot prep shared by all models in extract-all:
-    PDF→images (once), downscale large images (once).
-    Docling keeps the original PDF when possible (native pipeline is faster).
-    """
+    """Préparation partagée PDF/images pour extract-all (une seule fois)."""
     cleanup = []
 
     if file_type == "pdf":
@@ -318,38 +314,81 @@ def init_trocr():
             )
 
         import torch
-        from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+
+        try:
+            from transformers import VisionEncoderDecoderModel
+        except ImportError as e:
+            raise Exception(
+                "Package transformers manquant ou cassé. "
+                "Exécutez: pip install -U transformers"
+            ) from e
+
+        # TrOCRProcessor peut manquer selon la version / install partielle
+        TrOCRProcessor = None
+        AutoProcessor = None
+        try:
+            from transformers import TrOCRProcessor as _TrOCRProcessor
+
+            TrOCRProcessor = _TrOCRProcessor
+        except ImportError:
+            try:
+                from transformers import AutoProcessor as _AutoProcessor
+
+                AutoProcessor = _AutoProcessor
+            except ImportError as e:
+                raise Exception(
+                    "Impossible d'importer TrOCRProcessor / AutoProcessor. "
+                    "Exécutez: pip install -U \"transformers>=4.36.0\" sentencepiece tiktoken"
+                ) from e
 
         _trocr_device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"TrOCR utilise le device: {_trocr_device}")
 
         model_name = "microsoft/trocr-small-printed"
-        try:
-            from transformers import ViTImageProcessor, XLMRobertaTokenizer
+        last_err = None
+        _trocr_processor = None
 
-            image_processor = ViTImageProcessor.from_pretrained(model_name)
-            tokenizer = XLMRobertaTokenizer.from_pretrained(model_name)
-            _trocr_processor = TrOCRProcessor(
-                image_processor=image_processor, tokenizer=tokenizer
-            )
-        except Exception as primary_err:
-            err_txt = str(primary_err).lower()
-            if "sentencepiece" in err_txt or "no module named 'sentencepiece'" in err_txt:
-                raise Exception(
-                    "TrOCR nécessite sentencepiece. "
-                    "Exécutez: pip install sentencepiece tiktoken"
-                ) from primary_err
-
+        # TrOCRProcessor.from_pretrained
+        if TrOCRProcessor is not None:
             try:
                 _trocr_processor = TrOCRProcessor.from_pretrained(model_name)
-                print(
-                    f"TrOCRProcessor.from_pretrained OK (après échec XLM: {type(primary_err).__name__})"
-                )
-            except Exception as fallback_err:
-                raise Exception(
-                    f"Impossible d'initialiser TrOCRProcessor "
-                    f"(primary={primary_err}; fallback={fallback_err})"
-                ) from fallback_err
+            except Exception as e:
+                last_err = e
+                _trocr_processor = None
+                # Compose manuel
+                try:
+                    from transformers import ViTImageProcessor, XLMRobertaTokenizer
+
+                    image_processor = ViTImageProcessor.from_pretrained(model_name)
+                    tokenizer = XLMRobertaTokenizer.from_pretrained(model_name)
+                    _trocr_processor = TrOCRProcessor(
+                        image_processor=image_processor, tokenizer=tokenizer
+                    )
+                except Exception as e2:
+                    last_err = e2
+                    err_txt = str(e2).lower()
+                    if "sentencepiece" in err_txt:
+                        raise Exception(
+                            "TrOCR nécessite sentencepiece. "
+                            "Exécutez: pip install sentencepiece tiktoken"
+                        ) from e2
+                    _trocr_processor = None
+
+        # Fallback AutoProcessor
+        if _trocr_processor is None and AutoProcessor is not None:
+            try:
+                _trocr_processor = AutoProcessor.from_pretrained(model_name)
+                print("TrOCR: AutoProcessor OK")
+            except Exception as e:
+                last_err = e
+                _trocr_processor = None
+
+        if _trocr_processor is None:
+            raise Exception(
+                "Impossible d'initialiser le processor TrOCR. "
+                "Exécutez: pip install -U \"transformers>=4.36.0\" sentencepiece tiktoken. "
+                f"Détail: {last_err}"
+            )
 
         _trocr_tokenizer = getattr(_trocr_processor, "tokenizer", None)
         _trocr_model = VisionEncoderDecoderModel.from_pretrained(model_name).to(
@@ -360,7 +399,7 @@ def init_trocr():
 
 
 def warmup_all_models(models=None):
-    """Preload OCR engines so extract-all does not pay cold-start cost."""
+    """Précharge les moteurs OCR."""
     targets = models or list(INIT_FUNCS.keys())
     for name in targets:
         fn = INIT_FUNCS.get(name)

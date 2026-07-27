@@ -334,7 +334,7 @@ LOCAL_TO_OLM_MAPPING = {
 
 
 def get_olm_matrix():
-    """Return the full OLM benchmark matrix."""
+    """Matrice complète olmOCR-Bench."""
     return OLM_BENCHMARK_MATRIX
 
 
@@ -366,7 +366,7 @@ def get_top_models(n=5, criteria="overall"):
 
 
 def compare_with_olm_models(model_name):
-    """Compare a local model with its OLM Bench equivalent."""
+    """Compare un modèle local à son équivalent OLM Bench."""
     mapping = LOCAL_TO_OLM_MAPPING.get(model_name)
 
     if mapping and mapping["olm_id"] and mapping["olm_id"] in OLM_BENCHMARK_MATRIX:
@@ -407,7 +407,7 @@ def get_criteria_icon(criteria):
 
 
 def get_model_strengths(model_id):
-    """Get the strengths (scores ≥ 80) of a model."""
+    """Points forts (scores ≥ 80)."""
     if model_id not in OLM_BENCHMARK_MATRIX:
         return []
 
@@ -432,7 +432,7 @@ def get_model_strengths(model_id):
 
 
 def get_model_weaknesses(model_id):
-    """Get the weaknesses (scores < 60) of a model."""
+    """Points faibles (scores < 60)."""
     if model_id not in OLM_BENCHMARK_MATRIX:
         return []
 
@@ -457,7 +457,7 @@ def get_model_weaknesses(model_id):
 
 
 def get_performance_level(score: float) -> Dict:
-    """Classify a score into a performance level with color coding."""
+    """Niveau de performance et couleur associée."""
     if score >= 90:
         return {
             "level": "Excellent",

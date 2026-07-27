@@ -9,7 +9,7 @@ import subprocess
 import sys
 import os
 
-# Fix Windows console encoding
+# Encodage console Windows
 if sys.platform == "win32":
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
     try:
@@ -37,7 +37,7 @@ def main():
     )
     args = parser.parse_args()
 
-    # Hot-reload OFF par defaut : sinon les extractions en arriere-plan sont tuees
+    # Hot-reload désactivé par défaut (jobs OCR)
     reload = bool(args.reload) and not bool(args.no_reload)
 
     print("=" * 65)

@@ -34,7 +34,7 @@ def run_worker(
     skip_enhance: bool = False,
     docling_path: str = None,
 ) -> dict:
-    """Run a single OCR model worker."""
+    """Exécute un worker OCR pour un modèle."""
     try:
         if model not in model_workers.INFERENCE_FUNCS:
             return {"status": "error", "error": f"Modèle '{model}' non supporté"}
@@ -72,13 +72,14 @@ def _run_worker_timed(
     return model_id, result, round(time.time() - t0, 2)
 
 
-def run_models_in_parallel(file_path: str, file_type: str, model_ids: list) -> list:
-    """
-    Run OCR models concurrently with shared preprocessing:
-    - PDF→images converted once
-    - large images downscaled once
-    - heavy per-model enhance skipped (already resized)
-    """
+def run_models_in_parallel(
+    file_path: str,
+    file_type: str,
+    model_ids: list,
+    on_prep_done=None,
+    on_model_done=None,
+) -> list:
+    """Exécute les modèles OCR en parallèle avec prétraitement partagé."""
     results = []
     shared = None
     try:
@@ -89,13 +90,20 @@ def run_models_in_parallel(file_path: str, file_type: str, model_ids: list) -> l
             f"⚡ Préparation partagée OCR: {prep_s}s "
             f"({len(shared.get('images') or [])} image(s))"
         )
+        if on_prep_done:
+            try:
+                on_prep_done()
+            except Exception:
+                pass
 
         prepared_images = shared.get("images") or None
         docling_path = shared.get("docling_path") or file_path
-        
+
         image_models = {"paddleocr", "easyocr", "trocr"}
 
         max_workers = max(1, len(model_ids))
+        total = max(1, len(model_ids))
+        done = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_model = {}
             for model_id in model_ids:
@@ -123,6 +131,12 @@ def run_models_in_parallel(file_path: str, file_type: str, model_ids: list) -> l
                     results.append(
                         (model_id, {"status": "error", "error": str(exc)}, 0.0)
                     )
+                done += 1
+                if on_model_done:
+                    try:
+                        on_model_done(done, total, model_id)
+                    except Exception:
+                        pass
     finally:
         if shared and shared.get("cleanup"):
             model_workers.cleanup_tmp(shared["cleanup"])
@@ -190,7 +204,7 @@ def save_ocr_result(
     wall_time: float,
     client_ip: str,
 ) -> OCRHistory:
-    """Save an OCR extraction result to the database with benchmark metrics."""
+    """Enregistre le résultat OCR et les métriques en base."""
     try:
         if result.get("status") == "success":
             text = result.get("text", "")

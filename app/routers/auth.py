@@ -39,20 +39,11 @@ from ..services.email_service import (
 router = APIRouter(prefix="/api", tags=["Authentification"])
 
 
-def _mask_email(email: str) -> str:
-    parts = email.split("@")
-    local = parts[0]
-    masked = local[0] + "***" if len(local) > 1 else "***"
-    return f"{masked}@{parts[1]}"
-
-
 def _verification_link(token: str) -> str:
-    """Lien vers la page UI de vérification (pas l'API directement)."""
     return f"{APP_BASE_URL}/verify-email?token={token}"
 
 
 def _email_delivery_meta() -> dict:
-    """Info sur le dernier envoi SMTP (pour UI / debug)."""
     err = get_last_smtp_error()
     if err.get("code"):
         return {
@@ -72,7 +63,6 @@ def _email_delivery_meta() -> dict:
 
 
 def _issue_and_send_otp(db: Session, user: User) -> tuple[str, str, dict]:
-    """Génère un OTP et l'envoie par email uniquement. Retourne (otp_token, plain_code, delivery_meta)."""
     otp_token, plain_code = create_otp_code(db, user.id)
     send_otp_email(
         to_email=user.email,
@@ -84,7 +74,6 @@ def _issue_and_send_otp(db: Session, user: User) -> tuple[str, str, dict]:
 
 
 def _send_verification_to_user(db: Session, user: User) -> tuple[str, dict]:
-    """Génère un token et envoie UNIQUEMENT l'email de vérification (pas d'OTP)."""
     verification_token = secrets.token_urlsafe(32)
     user.email_verification_token = verification_token
     user.email_verification_token_expiry = datetime.now() + timedelta(hours=24)
@@ -108,10 +97,6 @@ async def register(
     profile_image: UploadFile = File(None),
     db: Session = Depends(get_db),
 ):
-    """
-    Register a new user.
-    Account is created as inactive; activation email is sent immediately.
-    """
     try:
 
         if password != confirm_password:
@@ -188,10 +173,6 @@ async def register(
 
 @router.get("/verify-email")
 async def verify_email(token: str, db: Session = Depends(get_db)):
-    """
-    Active le compte via le token email, puis envoie automatiquement un OTP
-    pour valider la connexion. Retourne JSON (consommé par /verify-email page).
-    """
     try:
         user = db.query(User).filter(User.email_verification_token == token).first()
         if not user:
@@ -214,7 +195,7 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         db.commit()
 
         otp_token, _, delivery = _issue_and_send_otp(db, user)
-        email_hint = _mask_email(user.email)
+        email_hint = user.email
         expires_in = OTP_EXPIRY_MINUTES * 60
 
         message = (
@@ -245,7 +226,6 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
 
 @router.post("/resend-verification")
 async def resend_verification(email: str = Form(...), db: Session = Depends(get_db)):
-    """Resend account activation email."""
     try:
         user = get_user_by_email(db, email)
         if not user:
@@ -281,11 +261,6 @@ async def resend_verification(email: str = Form(...), db: Session = Depends(get_
 
 @router.post("/login")
 async def login(login_data: UserLogin, db: Session = Depends(get_db)):
-    """
-    Connexion étape 1 :
-      - Identifiants OK + compte NON vérifié → renvoi email de vérification (pas d'OTP)
-      - Identifiants OK + compte vérifié → envoi OTP pour valider la connexion
-    """
     try:
         user = authenticate_user(db, login_data.email, login_data.password)
         if not user:
@@ -312,7 +287,7 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
                     "code": "EMAIL_NOT_VERIFIED",
                     "verification_sent": True,
                     "email": user.email,
-                    "email_hint": _mask_email(user.email),
+                    "email_hint": user.email,
                     "requires_email_verification": True,
                     **delivery,
                 },
@@ -325,7 +300,7 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
             )
 
         otp_token, _, delivery = _issue_and_send_otp(db, user)
-        message = f"Un code de vérification a été envoyé à {_mask_email(user.email)}"
+        message = f"Un code de vérification a été envoyé à {user.email}"
         if not delivery.get("email_delivered"):
             message = (
                 "Échec d'envoi du code OTP (SMTP). "
@@ -334,7 +309,7 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
 
         return OTPLoginResponse(
             otp_token=otp_token,
-            email_hint=_mask_email(user.email),
+            email_hint=user.email,
             expires_in=OTP_EXPIRY_MINUTES * 60,
             message=message,
             email_delivered=delivery.get("email_delivered"),
@@ -351,9 +326,6 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
 
 @router.post("/verify-otp", response_model=TokenResponse)
 async def verify_otp(verify_data: OTPVerifyRequest, db: Session = Depends(get_db)):
-    """
-    Step 2 of login: validate OTP code and return JWT access token.
-    """
     try:
         user_id, error = verify_otp_code(
             db, verify_data.otp_token, verify_data.otp_code
@@ -396,7 +368,6 @@ async def verify_otp(verify_data: OTPVerifyRequest, db: Session = Depends(get_db
 
 @router.post("/resend-otp", response_model=OTPLoginResponse)
 async def resend_otp(resend_data: ResendOTPRequest, db: Session = Depends(get_db)):
-    """Resend a new OTP code (cooldown: 60 seconds)."""
     try:
         otp = get_otp_by_token(db, resend_data.otp_token)
         if not otp:
@@ -422,9 +393,9 @@ async def resend_otp(resend_data: ResendOTPRequest, db: Session = Depends(get_db
 
         return OTPLoginResponse(
             otp_token=new_otp_token,
-            email_hint=_mask_email(user.email),
+            email_hint=user.email,
             expires_in=OTP_EXPIRY_MINUTES * 60,
-            message=f"Nouveau code envoyé à {_mask_email(user.email)}",
+            message=f"Nouveau code envoyé à {user.email}",
             email_delivered=delivery.get("email_delivered"),
             email_delivery=delivery.get("email_delivery"),
             smtp_error=delivery.get("smtp_error"),
@@ -439,7 +410,6 @@ async def resend_otp(resend_data: ResendOTPRequest, db: Session = Depends(get_db
 
 @router.post("/forgot-password")
 async def forgot_password(data: dict, db: Session = Depends(get_db)):
-    """Send a password reset email."""
     try:
         email = data.get("email", "").strip()
         if not email:
@@ -482,7 +452,6 @@ async def reset_password(
     confirm_password: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    """Reset password with a valid token."""
     try:
         if new_password != confirm_password:
             raise HTTPException(
@@ -513,5 +482,4 @@ async def reset_password(
 
 @router.post("/logout")
 async def logout(current_user: User = Depends(get_current_user)):
-    """Logout endpoint (client should discard JWT)."""
     return {"message": "Déconnexion réussie", "user": current_user.email}

@@ -4,11 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Profil - OCR Intelligence</title>
-    <link rel="stylesheet" href="/static/css/theme.css?v=20260727j">
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727r">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+    (function () {
+        try {
+            var token = localStorage.getItem("access_token");
+            if (!token) {
+                document.documentElement.style.visibility = "hidden";
+                location.replace("/");
+                return;
+            }
+            document.cookie = "ocr_auth=1; path=/; SameSite=Lax; Max-Age=86400";
+            window.addEventListener("pageshow", function (e) {
+                if (!localStorage.getItem("access_token")) {
+                    document.documentElement.style.visibility = "hidden";
+                    try { document.body.innerHTML = ""; } catch (err) {}
+                    location.replace("/");
+                }
+            });
+        } catch (e) {
+            location.replace("/");
+        }
+    })();
+    </script>
 </head>
 <body class="app-shell">
     <nav class="sidebar" id="appSidebar">
@@ -135,11 +157,6 @@
                                 </svg>
                             </label>
                             <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" style="display: none;">
-                        </div>
-                        <div class="avatar-info">
-                            <p class="avatar-hint">JPG, PNG, GIF ou WEBP</p>
-                            <p class="avatar-hint">Maximum 5 MB</p>
-                            <p class="avatar-hint">Recommandé : 400x400px</p>
                         </div>
                     </div>
                 </div>
@@ -390,7 +407,7 @@
         }
     </style>
 
-    <script src="/static/js/app.js?v=20260727n"></script>
+    <script src="/static/js/app.js?v=20260727r"></script>
     <script src="/static/js/benchmark_download.js"></script>
     <script>
         let currentUser = null;

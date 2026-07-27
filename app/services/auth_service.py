@@ -28,7 +28,7 @@ security = HTTPBearer()
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a signed JWT access token."""
+    """Crée un JWT d'accès signé."""
     to_encode = data.copy()
     expire = datetime.utcnow() + (
         expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -110,7 +110,7 @@ def create_user(
     last_name: str = None,
     profile_image: str = None,
 ) -> User:
-    """Create a new inactive user (email verification required)."""
+    """Crée un utilisateur inactif (vérification email requise)."""
     user = User(
         email=email,
         first_name=first_name,
@@ -127,7 +127,7 @@ def create_user(
 
 
 def hash_password(password: str) -> str:
-    """Hash a password (mirrors User.set_password for direct updates)."""
+    """Hash du mot de passe (équivalent User.set_password)."""
     salt = secrets.token_bytes(32)
     pw_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
     return salt.hex() + pw_hash.hex()

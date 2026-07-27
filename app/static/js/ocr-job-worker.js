@@ -3,7 +3,7 @@
 
 const ports = new Set();
 let pollTimer = null;
-let activeJob = null; // { jobId, filename, status, progress, message }
+let activeJob = null; // { jobId, filename, status, progress, message, startedAt }
 
 function broadcast(msg) {
     ports.forEach((port) => {
@@ -22,6 +22,14 @@ function stopPolling() {
     }
 }
 
+function mergeProgress(prev, next) {
+    const a = Number(prev != null ? prev : 0);
+    const b = Number(next != null ? next : 0);
+    if (!Number.isFinite(b)) return a;
+    if (!Number.isFinite(a)) return b;
+    return Math.max(a, b);
+}
+
 async function pollOnce(jobId, token, tokenType) {
     const res = await fetch(`/api/extract-all/jobs/${jobId}`, {
         headers: { Authorization: `${tokenType} ${token}` },
@@ -37,29 +45,42 @@ async function pollOnce(jobId, token, tokenType) {
 
 function startPolling(jobId, filename, token, tokenType) {
     stopPolling();
+    const prev = activeJob && String(activeJob.jobId) === String(jobId) ? activeJob : null;
     activeJob = {
         jobId,
-        filename,
-        status: 'queued',
-        progress: 0,
-        message: 'Extraction démarrée…',
+        filename: filename || (prev && prev.filename) || 'document',
+        status: (prev && prev.status) || 'queued',
+        progress: prev ? Number(prev.progress) || 0 : 0,
+        message: (prev && prev.message) || 'Extraction démarrée…',
+        startedAt: (prev && prev.startedAt) || new Date().toISOString(),
+        created_at: prev && prev.created_at,
     };
     broadcast({ type: 'job', job: activeJob });
 
     const tick = async () => {
         try {
             const job = await pollOnce(jobId, token, tokenType);
+            const prevProg = activeJob ? activeJob.progress : 0;
             activeJob = {
                 jobId: job.job_id,
                 filename: job.filename || filename,
                 status: job.status,
-                progress: job.progress || 0,
-                message: job.message || '',
+                progress: mergeProgress(prevProg, job.progress),
+                message: job.message || (activeJob && activeJob.message) || '',
+                startedAt: (activeJob && activeJob.startedAt) || job.created_at,
+                created_at: job.created_at,
             };
             broadcast({ type: 'job', job: activeJob });
 
             if (job.status === 'completed' && job.result) {
                 stopPolling();
+                activeJob = {
+                    ...activeJob,
+                    status: 'completed',
+                    progress: 100,
+                    message: 'Extraction terminée',
+                };
+                broadcast({ type: 'job', job: activeJob });
                 activeJob = null;
                 broadcast({ type: 'completed', result: job.result });
             } else if (job.status === 'failed') {
@@ -69,7 +90,6 @@ function startPolling(jobId, filename, token, tokenType) {
                 broadcast({ type: 'failed', error: err, filename });
             }
         } catch (e) {
-            // Ne pas tuer le job sur erreur réseau temporaire
             broadcast({
                 type: 'job',
                 job: {
@@ -81,7 +101,7 @@ function startPolling(jobId, filename, token, tokenType) {
     };
 
     tick();
-    pollTimer = setInterval(tick, 2000);
+    pollTimer = setInterval(tick, 1000);
 }
 
 self.onconnect = (e) => {
@@ -118,7 +138,6 @@ self.onconnect = (e) => {
                 return;
             }
 
-            // Nouveau job : stopper l'ancien suivi
             stopPolling();
             activeJob = {
                 jobId: null,
@@ -126,6 +145,7 @@ self.onconnect = (e) => {
                 status: 'uploading',
                 progress: 5,
                 message: 'Envoi du fichier au serveur…',
+                startedAt: new Date().toISOString(),
             };
             broadcast({ type: 'job', job: activeJob });
 
@@ -150,6 +170,15 @@ self.onconnect = (e) => {
                     throw new Error('job_id manquant dans la réponse serveur');
                 }
 
+                activeJob = {
+                    jobId: data.job_id,
+                    filename: data.file || filename,
+                    status: 'queued',
+                    progress: Math.max(8, Number(activeJob && activeJob.progress) || 8),
+                    message: 'En file d\'attente…',
+                    startedAt: (activeJob && activeJob.startedAt) || new Date().toISOString(),
+                };
+                broadcast({ type: 'job', job: activeJob });
                 startPolling(data.job_id, data.file || filename, token, tokenType);
             } catch (err) {
                 stopPolling();
@@ -166,6 +195,10 @@ self.onconnect = (e) => {
         if (msg.type === 'resume') {
             const { jobId, filename, token, tokenType = 'Bearer' } = msg;
             if (jobId && token) {
+                if (activeJob && String(activeJob.jobId) === String(jobId) && pollTimer) {
+                    port.postMessage({ type: 'job', job: activeJob });
+                    return;
+                }
                 startPolling(jobId, filename || 'document', token, tokenType);
             }
             return;

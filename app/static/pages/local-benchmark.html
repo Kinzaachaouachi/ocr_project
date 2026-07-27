@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Benchmark Local — OCR Intelligence</title>
-    <link rel="stylesheet" href="/static/css/theme.css?v=20260727k">
+    <link rel="stylesheet" href="/static/css/theme.css?v=20260727r">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,6 +85,28 @@
         .error-box { background:#fee2e2; color:#991b1b; padding:20px; border-radius:12px; border-left:4px solid #dc2626; margin:20px 0; }
         .empty-box { background:#fefce8; color:#92400e; padding:20px; border-radius:12px; border-left:4px solid #fbbf24; margin:20px 0; }
     </style>
+    <script>
+    (function () {
+        try {
+            var token = localStorage.getItem("access_token");
+            if (!token) {
+                document.documentElement.style.visibility = "hidden";
+                location.replace("/");
+                return;
+            }
+            document.cookie = "ocr_auth=1; path=/; SameSite=Lax; Max-Age=86400";
+            window.addEventListener("pageshow", function (e) {
+                if (!localStorage.getItem("access_token")) {
+                    document.documentElement.style.visibility = "hidden";
+                    try { document.body.innerHTML = ""; } catch (err) {}
+                    location.replace("/");
+                }
+            });
+        } catch (e) {
+            location.replace("/");
+        }
+    })();
+    </script>
 </head>
 <body class="app-shell">
 
@@ -207,7 +229,7 @@
         </div>
     </main>
 
-<script src="/static/js/app.js?v=20260727n"></script>
+<script src="/static/js/app.js?v=20260727r"></script>
 <script>
 const API = '/api';
 let reportData = null;

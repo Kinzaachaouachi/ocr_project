@@ -165,7 +165,7 @@ async def extract_all_models(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Lancement asynchrone : le job continue même si l'utilisateur change de page."""
+    """Démarre l'extraction en arrière-plan."""
     file_type = detect_file_type(file.filename)
     if file_type is None:
         raise HTTPException(
@@ -218,7 +218,7 @@ async def extract_all_models(
             user_id=current_user.id,
             client_ip=client_ip,
         )
-        # tmp_path ownership transferred to the job worker (deleted there)
+        # Fichier temporaire nettoyé par le worker
         tmp_path = None
 
         return {

@@ -44,7 +44,7 @@ def update_user_profile(
 
 
 async def save_avatar(user: User, file: UploadFile, db: Session) -> str:
-    """Save an avatar image file and update user profile_image."""
+    """Enregistre l'avatar et met à jour profile_image."""
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_AVATAR_EXTENSIONS:
         raise ValueError(

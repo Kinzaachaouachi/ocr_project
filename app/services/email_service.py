@@ -47,7 +47,7 @@ def _normalize_smtp_password(password: str) -> str:
 
 
 def _gmail_password_hint(user: str, password: str) -> str:
-    """Return a French hint when Gmail credentials look wrong."""
+    """Message d'aide si les identifiants Gmail semblent incorrects."""
     domain = (user or "").split("@")[-1].lower()
     if (
         domain not in ("gmail.com", "googlemail.com")

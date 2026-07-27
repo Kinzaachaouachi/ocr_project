@@ -116,6 +116,26 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+
+@app.middleware("http")
+async def protect_app_pages(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/app"):
+        accept = (request.headers.get("accept") or "").lower()
+        is_html_nav = "text/html" in accept or accept == "*/*" or not accept
+        if is_html_nav and not path.startswith("/api"):
+            if not request.cookies.get("ocr_auth"):
+                from fastapi.responses import RedirectResponse
+
+                return RedirectResponse(url="/", status_code=303)
+    response = await call_next(request)
+    if path.startswith("/app") or path in ("/", "/register", "/reset-password", "/verify-email"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

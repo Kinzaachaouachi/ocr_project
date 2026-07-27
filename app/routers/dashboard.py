@@ -74,7 +74,7 @@ async def export_benchmark_csv(
 async def global_benchmark(
     current_user: User = Depends(get_current_user),
 ):
-    """Serve the global benchmark report HTML."""
+    """Sert le HTML du rapport benchmark global."""
     benchmark_file = BASE_DIR / "benchmark_report.html"
     if benchmark_file.exists():
         return FileResponse(path=str(benchmark_file), media_type="text/html")

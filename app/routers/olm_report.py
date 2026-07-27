@@ -88,7 +88,7 @@ async def download_pdf_report(
 async def preview_report(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
-    """Get a preview of the report with basic statistics."""
+    """Aperçu du rapport (statistiques de base)."""
     try:
         report_data = generate_olm_report_data(db, user_id=current_user.id)
 

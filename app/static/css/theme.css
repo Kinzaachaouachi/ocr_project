@@ -366,7 +366,6 @@ body.app-shell .navbar {
     background: linear-gradient(180deg, transparent, rgba(239, 246, 255, 0.5));
 }
 
-/* ── Centre de notifications (extraction OCR, etc.) ── */
 .app-notif-root {
     position: fixed;
     top: 18px;
@@ -511,6 +510,177 @@ body.app-shell .navbar {
 .app-notif-item.type-error .app-notif-item-title { color: #dc2626; }
 .app-notif-item.type-info .app-notif-item-title { color: var(--primary-700); }
 
+.ocr-progress-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 24px;
+    z-index: 1090;
+    font-family: inherit;
+    display: none;
+}
+
+.ocr-progress-fab.visible {
+    display: block;
+}
+
+.ocr-progress-fab-btn {
+    width: 64px;
+    height: 64px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    cursor: pointer;
+    position: relative;
+    padding: 0;
+    color: var(--primary-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ocr-progress-fab-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(37, 99, 235, 0.22);
+}
+
+.ocr-progress-fab-btn svg.ring {
+    position: absolute;
+    inset: 0;
+    width: 64px;
+    height: 64px;
+    transform: rotate(-90deg);
+}
+
+.ocr-progress-fab-btn .ring-bg {
+    fill: none;
+    stroke: #e2e8f0;
+    stroke-width: 5;
+}
+
+.ocr-progress-fab-btn .ring-fg {
+    fill: none;
+    stroke: #2563eb;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 157;
+    stroke-dashoffset: 157;
+    transition: stroke-dashoffset 0.35s ease, stroke 0.2s ease;
+}
+
+.ocr-progress-fab.done .ring-fg { stroke: #059669; }
+.ocr-progress-fab.failed .ring-fg { stroke: #dc2626; }
+
+.ocr-progress-fab-pct {
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #1e3a8a;
+}
+
+.ocr-progress-fab.done .ocr-progress-fab-pct { color: #047857; }
+.ocr-progress-fab.failed .ocr-progress-fab-pct { color: #b91c1c; }
+
+.ocr-progress-fab-panel {
+    display: none;
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 12px);
+    width: min(300px, calc(100vw - 40px));
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+    padding: 14px 16px;
+}
+
+.ocr-progress-fab.open .ocr-progress-fab-panel {
+    display: block;
+}
+
+.ocr-progress-fab-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ocr-progress-fab-msg {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 10px;
+    line-height: 1.35;
+    min-height: 1.35em;
+}
+
+.ocr-progress-fab-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.ocr-progress-fab-bar > span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    border-radius: 999px;
+    transition: width 0.35s ease;
+}
+
+.ocr-progress-fab.done .ocr-progress-fab-bar > span {
+    background: linear-gradient(90deg, #059669, #10b981);
+}
+
+.ocr-progress-fab.failed .ocr-progress-fab-bar > span {
+    background: linear-gradient(90deg, #dc2626, #f87171);
+}
+
+.ocr-progress-fab-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 10px;
+}
+
+.ocr-progress-fab-meta strong {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.ocr-progress-fab-link {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563eb;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    background: #eff6ff;
+}
+
+.ocr-progress-fab-link:hover {
+    background: #dbeafe;
+}
+
+@media (max-width: 640px) {
+    .ocr-progress-fab {
+        right: 14px;
+        bottom: 16px;
+    }
+}
+
 #notification-container {
     top: 72px !important;
 }
@@ -596,7 +766,6 @@ body.app-shell .navbar {
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    /* Espace pour la cloche de notifications (position: fixed, top-right) */
     padding-right: 72px;
     box-sizing: border-box;
 }
