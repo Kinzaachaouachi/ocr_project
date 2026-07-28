@@ -194,7 +194,7 @@ def _send_smtp(to_email: str, subject: str, html_body: str, text_body: str) -> b
 
     if not sender:
         msg = "Aucun email expéditeur configuré (SMTP_FROM vide)"
-        _safe_print(f"❌ SMTP : {msg}")
+        _safe_print(f"❌* SMTP : {msg}")
         _set_smtp_error("NO_SENDER", msg)
         return False
 

@@ -52,7 +52,7 @@ async function downloadBenchmark(event, format) {
         event.preventDefault();
         event.stopPropagation();
     }
-    // Benchmarks: PDF only
+   
     format = 'pdf';
 
     try {
@@ -108,7 +108,6 @@ async function downloadOlmReport(event, format) {
         event.preventDefault();
         event.stopPropagation();
     }
-    // Benchmarks: PDF only
     format = 'pdf';
 
     try {

@@ -36,8 +36,26 @@ function clearAuthSession() {
         sessionStorage.removeItem('ocrExtractionState');
         sessionStorage.removeItem('ocrKeepOnNextLoad');
         sessionStorage.setItem('auth_logged_out', '1');
+        sessionStorage.setItem('ocr_force_clean', '1');
     } catch (e) {}
     _clearAuthCookie();
+}
+
+function clearOcrSessionState() {
+    try { localStorage.removeItem('ocrExtractionState'); } catch (e) {}
+    try { localStorage.removeItem('ocrActiveJob'); } catch (e) {}
+    try { localStorage.removeItem('ocrNotifiedJobs'); } catch (e) {}
+    try {
+        sessionStorage.removeItem('ocrExtractionState');
+        sessionStorage.removeItem('ocrKeepOnNextLoad');
+        sessionStorage.setItem('ocr_force_clean', '1');
+    } catch (e) {}
+    try {
+        if (typeof stopOcrJobPolling === 'function') stopOcrJobPolling();
+    } catch (e) {}
+    try {
+        if (typeof hideOcrProgressFab === 'function') hideOcrProgressFab();
+    } catch (e) {}
 }
 
 function isProtectedAppPath(pathname) {
@@ -273,10 +291,16 @@ function updateUserDisplay(user) {
 function logout(event) {
     if (event) event.preventDefault();
 
+    window.__ocrLogoutInProgress = true;
+
+    try {
+        if (typeof resetUpload === 'function') resetUpload();
+        else if (typeof clearExtractionState === 'function') clearExtractionState();
+    } catch (e) {}
+
     clearAuthSession();
     console.log('✅ Déconnexion — session effacée');
 
-    // replace : la page protégée ne reste pas dans l'historique "avant"
     window.location.replace('/');
 }
 
@@ -611,14 +635,14 @@ function _onOcrCompleted(result, jobId) {
     if (jobId && _wasJobNotified(jobId)) {
         persistCompletedOcrResult(result);
         setActiveOcrJob(null);
-        hideOcrProgressFab(2200);
+        hideOcrProgressFab(20000);
         window.dispatchEvent(new CustomEvent('ocr-job-completed', { detail: result }));
         return;
     }
     if (jobId) _markJobNotified(jobId);
     stopOcrJobPolling();
     setActiveOcrJob(null);
-    hideOcrProgressFab(2800);
+    hideOcrProgressFab(20000);
     persistCompletedOcrResult(result);
     if (typeof notifyExtractionComplete === 'function') {
         notifyExtractionComplete(result);
@@ -793,7 +817,15 @@ function getOcrSharedWorker() {
     }
 }
 
-async function recoverOcrJobFromServer(preferredFilename) {
+async function recoverOcrJobFromServer(preferredFilename, options) {
+    const opts = options || {};
+    // Après déconnexion / nouvelle session : ne pas réafficher d'anciens résultats
+    try {
+        if (sessionStorage.getItem('ocr_force_clean') === '1' && !opts.force) {
+            return false;
+        }
+    } catch (e) {}
+
     try {
         const res = await authenticatedFetch('/api/extract-all/jobs/active');
         if (!res || !res.ok) return false;
@@ -801,18 +833,21 @@ async function recoverOcrJobFromServer(preferredFilename) {
         const job = data.job;
         if (!job) return false;
 
+        const local = getActiveOcrJob();
+        const expectCompleted = !!(local && local.jobId) || !!preferredFilename;
+
+        // Jobs terminés : uniquement si on suivait déjà ce job (pas après reconnexion)
         if (job.status === 'completed' && job.result) {
+            if (!expectCompleted) return false;
             _onOcrCompleted(job.result, job.job_id);
             return true;
         }
         if (job.status === 'failed') {
+            if (!expectCompleted) return false;
             _onOcrFailed(job.error || job.message, job.filename || preferredFilename, job.job_id);
             return true;
         }
         if (job.status === 'queued' || job.status === 'running') {
-            if (typeof notifyExtractionStarted === 'function' && preferredFilename) {
-                // déjà notifié au lancement — skip
-            }
             startOcrJobPolling(job.job_id, job.filename || preferredFilename);
             const port = getOcrSharedWorker();
             if (port) {
@@ -834,6 +869,14 @@ async function recoverOcrJobFromServer(preferredFilename) {
 }
 
 async function resumeActiveOcrJobPolling() {
+    try {
+        if (sessionStorage.getItem('ocr_force_clean') === '1') {
+            setActiveOcrJob(null);
+            if (typeof hideOcrProgressFab === 'function') hideOcrProgressFab();
+            return;
+        }
+    } catch (e) {}
+
     const port = getOcrSharedWorker();
     if (port) {
         port.postMessage({ type: 'subscribe' });
@@ -841,7 +884,6 @@ async function resumeActiveOcrJobPolling() {
 
     const active = getActiveOcrJob();
     if (active && active.jobId && active.status !== 'completed' && active.status !== 'failed') {
-        console.log('🔁 Reprise du suivi extraction:', active.jobId);
         if (port) {
             port.postMessage({
                 type: 'resume',
@@ -856,7 +898,7 @@ async function resumeActiveOcrJobPolling() {
         return;
     }
 
-    // Pas de job local → demander au serveur
+    // Uniquement reprendre un job encore en cours (pas un résultat terminé)
     await recoverOcrJobFromServer();
 }
 
@@ -944,7 +986,7 @@ let _ocrFabAnimRaf = null;
 let _ocrFabDisplayProgress = 0;
 let _ocrFabTargetProgress = 0;
 let _ocrFabJobMeta = null;
-const OCR_FAB_RING = 157; // 2 * π * 25
+const OCR_FAB_RING = 157; 
 
 function _mergeOcrProgress(prev, next, status) {
     const a = Number(prev != null ? prev : 0);
@@ -952,7 +994,6 @@ function _mergeOcrProgress(prev, next, status) {
     if (status === 'completed') return 100;
     if (!Number.isFinite(b)) return Number.isFinite(a) ? a : 0;
     if (!Number.isFinite(a)) return b;
-    // Ne jamais reculer pendant un job en cours
     return Math.max(a, b);
 }
 
@@ -1035,7 +1076,7 @@ function startOcrFabAnim() {
             _ocrFabAnimRaf = null;
             return;
         }
-        // Interpolation douce (plus rapide si écart grand)
+      
         const speed = Math.abs(diff) > 20 ? 0.18 : 0.12;
         _ocrFabDisplayProgress += diff * speed + Math.sign(diff) * 0.08;
         if (_ocrFabJobMeta) applyOcrFabVisual(_ocrFabDisplayProgress, _ocrFabJobMeta);
@@ -1053,7 +1094,7 @@ function startOcrFabEtaTicker() {
             stopOcrFabEtaTicker();
             return;
         }
-        // Léger creep local si le serveur stagne un moment
+
         const target = Number(active.progress) || 0;
         if (_ocrFabDisplayProgress < Math.min(target + 4, 92) && active.status === 'running') {
             const soft = Math.min(_ocrFabTargetProgress + 0.6, Math.min(target + 4, 92));
@@ -1175,7 +1216,7 @@ function updateOcrProgressFab(job, options) {
         _ocrFabTargetProgress = Math.max(_ocrFabTargetProgress, progress);
     }
 
-    // Au premier rendu d'une page, snap sans animation flash 0→N
+    
     if (options && options.snap) {
         _ocrFabDisplayProgress = _ocrFabTargetProgress;
         applyOcrFabVisual(_ocrFabDisplayProgress, _ocrFabJobMeta);

@@ -1,9 +1,8 @@
-/* SharedWorker — garde l'upload + le polling OCR vivants entre les pages */
-/* global self */
+
 
 const ports = new Set();
 let pollTimer = null;
-let activeJob = null; // { jobId, filename, status, progress, message, startedAt }
+let activeJob = null; 
 
 function broadcast(msg) {
     ports.forEach((port) => {

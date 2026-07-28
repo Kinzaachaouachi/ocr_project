@@ -52,6 +52,10 @@ langdetect==1.0.9
 # ── Utilities ─────────────────────────────────────────────────
 python-dotenv==1.0.0
 openpyxl==3.1.2
+xhtml2pdf>=0.2.11
+# WeasyPrint optionnel (nécessite GTK sous Windows) :
+# weasyprint
+
 
 # ── Testing ───────────────────────────────────────────────────
 pytest>=7.4.0

@@ -9,7 +9,7 @@ import subprocess
 import sys
 import os
 
-# Encodage console Windows
+
 if sys.platform == "win32":
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
     try:

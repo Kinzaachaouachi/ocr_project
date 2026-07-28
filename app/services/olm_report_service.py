@@ -443,17 +443,11 @@ def generate_html_report(report_data: dict) -> str:
 
 
 def generate_pdf_report(report_data: dict) -> bytes:
-    """Generate PDF report from report data using WeasyPrint."""
-    try:
-        from weasyprint import HTML
+    """Génère le rapport PDF OLM (WeasyPrint ou xhtml2pdf sous Windows)."""
+    from ..utils.pdf_html import html_to_pdf
 
-        html_content = generate_html_report(report_data)
-        pdf_bytes = HTML(string=html_content).write_pdf()
-        return pdf_bytes
-    except ImportError:
-        raise Exception(
-            "WeasyPrint n'est pas installé. Installez-le avec: pip install weasyprint"
-        )
+    html_content = generate_html_report(report_data)
+    return html_to_pdf(html_content)
 
 
 def generate_docx_report(report_data: dict) -> bytes:

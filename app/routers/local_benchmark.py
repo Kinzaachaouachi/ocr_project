@@ -43,12 +43,8 @@ async def download_pdf_benchmark(
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
-    except ImportError:
-        raise HTTPException(
-            status_code=500,
-            detail="WeasyPrint n'est pas installé. Veuillez installer avec: pip install weasyprint",
-        )
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Erreur lors de la génération du PDF: {str(e)}"
+            status_code=500,
+            detail=f"Erreur lors de la génération du PDF: {str(e)}",
         )

@@ -34,4 +34,7 @@ python test_api.py
 
 
 
-https://riverbed-sufferer-lurk.ngrok-free.dev 
+ngrok http 8000 
+
+https://riverbed-sufferer-lurk.ngrok-free.dev
+

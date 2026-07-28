@@ -1049,6 +1049,13 @@
                             try {
                                 sessionStorage.removeItem("auth_logged_out");
                                 document.cookie = "ocr_auth=1; path=/; SameSite=Lax; Max-Age=86400";
+                                // Nouvelle connexion = interface OCR vierge
+                                localStorage.removeItem("ocrExtractionState");
+                                localStorage.removeItem("ocrActiveJob");
+                                localStorage.removeItem("ocrNotifiedJobs");
+                                sessionStorage.removeItem("ocrExtractionState");
+                                sessionStorage.removeItem("ocrKeepOnNextLoad");
+                                sessionStorage.setItem("ocr_force_clean", "1");
                             } catch (e) {}
                         }
 

@@ -46,7 +46,7 @@ Plateforme web + API REST d’extraction OCR avec **4 moteurs en parallèle** (P
 
 ---
 
-## 1. Fonctionnalités (inventaire complet)
+## 1. Fonctionnalités
 
 ### Authentification & sécurité
 - Inscription (`email`, prénom, nom, mot de passe, confirmation, avatar optionnel)
@@ -206,14 +206,12 @@ python -m venv venv
 pip install -r requirements.txt
 pip install weasyprint
 
-# PyTorch CPU (Windows) si besoin :
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# TrOCR (souvent déjà via requirements) :
 pip install sentencepiece tiktoken
 
 copy .env.example .env
-# Éditer .env (MySQL + SMTP + JWT)
+
 ```
 
 Créer la base MySQL `ocr_intelligence` (utf8mb4) ou laisser l’app initialiser / basculer sur SQLite.
@@ -521,7 +519,7 @@ Préfixe authentifié : header `Authorization: Bearer <token>` (sauf auth publiq
 | GET | `/api/olm-report/download/pdf` |
 | GET | `/api/olm-report/preview` |
 
-> `app/routers/smtp_admin.py` définit des routes `/api/admin/smtp/*` mais **n’est pas inclus** dans `main.py` (inactif tant qu’il n’est pas remonté).
+
 
 Documentation interactive : `/docs`.
 
@@ -563,10 +561,9 @@ Voir `requirements.txt` pour les versions épinglées.
 ## 22. Scripts & tests
 
 ```powershell
-# Tests unitaires / API
+
 pytest tests/ -q
 
-# Benchmarks / utilitaires (dossier scripts/)
 python scripts/run_all_benchmarks.py
 python scripts/generate_olm_report.py
 python scripts/run_all_multiformat_tests.py

@@ -41,6 +41,7 @@ def get_job(job_id: str) -> Optional[Dict[str, Any]]:
 
 
 def get_active_job_for_user(user_id: int) -> Optional[Dict[str, Any]]:
+    """Dernier job encore en cours (queued/running/uploading) pour cet utilisateur."""
     with _lock:
         candidates = [
             dict(j)
@@ -49,17 +50,7 @@ def get_active_job_for_user(user_id: int) -> Optional[Dict[str, Any]]:
             and j.get("status") in ("queued", "running", "uploading")
         ]
     if not candidates:
-       
-        with _lock:
-            recent = [
-                dict(j)
-                for j in _jobs.values()
-                if j.get("user_id") == user_id
-                and j.get("status") in ("completed", "failed")
-            ]
-        recent.sort(key=lambda j: j.get("updated_at") or j.get("created_at") or "", reverse=True)
-        return recent[0] if recent else None
-
+        return None
     candidates.sort(key=lambda j: j.get("created_at") or "", reverse=True)
     return candidates[0]
 

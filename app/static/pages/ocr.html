@@ -464,7 +464,7 @@
         .editing-active .editing-hint { display: inline-block; }
     </style>
 
-    <script src="/static/js/app.js?v=20260727r"></script>
+    <script src="/static/js/app.js?v=20260728c"></script>
     <script src="/static/js/benchmark_download.js"></script>
     <script>
         let currentFileData = null;
@@ -627,10 +627,18 @@
             sessionStorage.removeItem(OCR_NAV_FLAG);
             currentFileData = null;
             extractionState = {};
-            console.log('🗑️ État d\'extraction effacé');
+            try {
+                const resultsSection = document.getElementById('resultsSection');
+                if (resultsSection) resultsSection.style.display = 'none';
+                const resultsEl = document.getElementById('extractionResults');
+                if (resultsEl) resultsEl.innerHTML = '';
+                const fileInfoEl = document.getElementById('fileInfo');
+                if (fileInfoEl) fileInfoEl.innerHTML = '';
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) fileInput.value = '';
+            } catch (e) {}
         }
 
-        /** Avant d'aller vers Dashboard / Rapports / Historique / Profil : sauver + marquer */
         function prepareLeaveOcrPage() {
             if (!currentFileData) return;
             saveExtractionState();
@@ -643,7 +651,6 @@
             ).forEach((link) => {
                 link.addEventListener('click', () => {
                     const href = link.getAttribute('href') || '';
-                    // Ne pas marquer si on reste sur OCR ou déconnexion
                     if (!href || href === '#' || href.includes('logout') || href.includes('/app/ocr')) {
                         return;
                     }
@@ -652,14 +659,26 @@
             });
 
             window.addEventListener('pagehide', () => {
-                // Sauvegarder sans marquer : un F5 ne doit pas être traité comme navigation
+                if (window.__ocrLogoutInProgress) return;
                 if (currentFileData) saveExtractionState();
             });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeAuth();
-            loadExtractionState();
+
+            // Après déconnexion / nouvelle connexion : page OCR vide
+            if (sessionStorage.getItem('ocr_force_clean') === '1') {
+                clearExtractionState();
+                if (typeof clearOcrSessionState === 'function') clearOcrSessionState();
+                if (typeof hideOcrProgressFab === 'function') hideOcrProgressFab();
+                // Garder le flag jusqu'à ce que le polling de reprise soit sauté, puis le retirer
+                setTimeout(() => {
+                    try { sessionStorage.removeItem('ocr_force_clean'); } catch (e) {}
+                }, 1500);
+            } else {
+                loadExtractionState();
+            }
             bindNavPersistence();
 
             const uploadZone = document.getElementById('uploadZone');

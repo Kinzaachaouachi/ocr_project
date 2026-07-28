@@ -309,10 +309,9 @@ def generate_excel_report(data: Dict) -> bytes:
 
 def generate_pdf_report(data: Dict) -> bytes:
     """Generate PDF report with OLM Bench comparison and recommendations."""
-    try:
-        from weasyprint import HTML
+    from ..utils.pdf_html import html_to_pdf
 
-        html_content = f"""
+    html_content = f"""
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -335,13 +334,11 @@ def generate_pdf_report(data: Dict) -> bytes:
             padding-bottom: 8px; margin-bottom: 15px; font-size: 1.3em;
         }}
         .section h3 {{ color: #334155; font-size: 1.1em; margin: 12px 0 8px; }}
-        .stats-grid {{
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 12px; margin-bottom: 20px;
-        }}
-        .stat-item {{
-            background: #f8fafc; padding: 14px; border-radius: 8px;
-            border-left: 3px solid #2563eb;
+        .stats-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
+        .stats-table td {{
+            width: 50%; background: #f8fafc; padding: 14px;
+            border: 1px solid #e2e8f0; border-left: 3px solid #2563eb;
+            vertical-align: top;
         }}
         .stat-label {{ font-weight: 600; color: #475569; font-size: 0.88em; }}
         .stat-value {{ font-size: 1.4em; color: #1e3a8a; font-weight: 700; }}
@@ -353,7 +350,7 @@ def generate_pdf_report(data: Dict) -> bytes:
         td {{ padding: 8px 10px; border: 1px solid #e2e8f0; }}
         tr:nth-child(even) {{ background: #f8fafc; }}
         .best-badge {{
-            background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #78350f;
+            background: #fbbf24; color: #78350f;
             padding: 2px 8px; border-radius: 10px; font-size: 0.78em; font-weight: 700;
         }}
         .score-excellent {{ color: #059669; font-weight: 700; }}
@@ -377,51 +374,55 @@ def generate_pdf_report(data: Dict) -> bytes:
 </head>
 <body>
     <div class="header">
-        <h1>📊 Rapport Benchmark Local OCR</h1>
+        <h1>Rapport Benchmark Local OCR</h1>
         <p>Analyse personnalisée de vos extractions — basée sur olmOCR-Bench</p>
         <p>Généré le {data['generated_at'].strftime('%d/%m/%Y à %H:%M')}</p>
     </div>
 """
 
-        html_content += f"""
+    html_content += f"""
     <div class="section">
-        <h2>📈 Statistiques Globales</h2>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-label">Extractions Totales</div>
-                <div class="stat-value">{data['total_extractions']}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Taux de Succès</div>
-                <div class="stat-value">{data['success_rate']}%</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Précision Moyenne</div>
-                <div class="stat-value">{data['overall_avg_precision']}%</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Score Global Moyen</div>
-                <div class="stat-value">{data['overall_avg_global_score']}/100</div>
-            </div>
-        </div>
+        <h2>Statistiques Globales</h2>
+        <table class="stats-table">
+            <tr>
+                <td>
+                    <div class="stat-label">Extractions Totales</div>
+                    <div class="stat-value">{data['total_extractions']}</div>
+                </td>
+                <td>
+                    <div class="stat-label">Taux de Succès</div>
+                    <div class="stat-value">{data['success_rate']}%</div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="stat-label">Précision Moyenne</div>
+                    <div class="stat-value">{data['overall_avg_precision']}%</div>
+                </td>
+                <td>
+                    <div class="stat-label">Score Global Moyen</div>
+                    <div class="stat-value">{data['overall_avg_global_score']}/100</div>
+                </td>
+            </tr>
+        </table>
     </div>
 """
 
-        if data["best_model"]:
-            bm = data["best_model"]
-            perf = bm.get("performance_level", {})
-            html_content += f"""
+    if data["best_model"]:
+        bm = data["best_model"]
+        perf = bm.get("performance_level", {})
+        html_content += f"""
     <div class="section">
-        <h2>🏆 Meilleur Modèle</h2>
+        <h2>Meilleur Modèle</h2>
         <p><strong>{bm['model_name']}</strong> — Score moyen : <strong>{bm['avg_global_score']}</strong>/100
         <span class="best-badge">{perf.get('level', '')}</span></p>
         <p>Utilisé {bm['total_uses']} fois ({bm['usage_percentage']}% de vos extractions)</p>
     </div>
 """
 
-        html_content += """
+    html_content += """
     <div class="section">
-        <h2>📊 Performance par Modèle</h2>
+        <h2>Performance par Modèle</h2>
         <table>
             <thead>
                 <tr>
@@ -436,12 +437,12 @@ def generate_pdf_report(data: Dict) -> bytes:
             <tbody>
 """
 
-        for i, model in enumerate(data["models_performance"]):
-            badge = '<span class="best-badge">MEILLEUR</span>' if i == 0 else ""
-            perf = model.get("performance_level", {})
-            score_cls = perf.get("css_class", "")
+    for i, model in enumerate(data["models_performance"]):
+        badge = '<span class="best-badge">MEILLEUR</span>' if i == 0 else ""
+        perf = model.get("performance_level", {})
+        score_cls = perf.get("css_class", "")
 
-            html_content += f"""
+        html_content += f"""
                 <tr>
                     <td>{model['model_name']} {badge}</td>
                     <td>{model['total_uses']} ({model['usage_percentage']}%)</td>
@@ -452,31 +453,31 @@ def generate_pdf_report(data: Dict) -> bytes:
                 </tr>
 """
 
-            if model.get("olm_recommendations"):
-                html_content += f"""
+        if model.get("olm_recommendations"):
+            html_content += f"""
                 <tr>
                     <td colspan="6">
                         <div class="recommendation">
-                            <strong>💡 Recommandation OLM Bench :</strong> {model['olm_recommendations']}
+                            <strong>Recommandation OLM Bench :</strong> {model['olm_recommendations']}
                         </div>
                     </td>
                 </tr>
 """
 
-            olm_comp = model.get("olm_comparison", {})
-            if olm_comp.get("has_olm_data"):
-                html_content += f"""
+        olm_comp = model.get("olm_comparison", {})
+        if olm_comp.get("has_olm_data"):
+            html_content += f"""
                 <tr>
                     <td colspan="6">
                         <div class="recommendation" style="background: #f0fdf4; border-left-color: #059669;">
-                            <strong>📊 Comparaison OLM Bench :</strong>
+                            <strong>Comparaison OLM Bench :</strong>
                             Équivalent : {olm_comp['name']} (Rang #{olm_comp['rank']}, Score {olm_comp['overall_score']})
                         </div>
                     </td>
                 </tr>
 """
 
-        html_content += """
+    html_content += """
             </tbody>
         </table>
     </div>
@@ -490,13 +491,7 @@ def generate_pdf_report(data: Dict) -> bytes:
 </html>
 """
 
-        pdf_bytes = HTML(string=html_content).write_pdf()
-        return pdf_bytes
-
-    except ImportError:
-        raise Exception(
-            "WeasyPrint n'est pas installé. Installez-le avec: pip install weasyprint"
-        )
+    return html_to_pdf(html_content)
 
 
 def generate_word_report(data: Dict) -> bytes:

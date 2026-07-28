@@ -218,7 +218,6 @@ async def extract_all_models(
             user_id=current_user.id,
             client_ip=client_ip,
         )
-        # Fichier temporaire nettoyé par le worker
         tmp_path = None
 
         return {
