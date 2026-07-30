@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-OCR Intelligence v3.0 -- Application Launcher
-Usage: python start_app.py [--host HOST] [--port PORT] [--reload]
-"""
 
 import argparse
 import subprocess
@@ -37,11 +33,11 @@ def main():
     )
     args = parser.parse_args()
 
-    # Hot-reload désactivé par défaut (jobs OCR)
+  
     reload = bool(args.reload) and not bool(args.no_reload)
 
     print("=" * 65)
-    print("  OCR Intelligence v3.0.0")
+    print("  OCR Intelligence  ")
     print("=" * 65)
     print(f"  Interface  : http://{args.host}:{args.port}")
     print(f"  API Docs   : http://{args.host}:{args.port}/docs")

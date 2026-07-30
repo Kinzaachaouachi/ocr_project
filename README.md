@@ -9,7 +9,6 @@ Plateforme web + API REST d’extraction OCR avec **4 moteurs en parallèle** (P
 
 | | |
 |---|---|
-| **Version** | `3.0.0` |
 | **Dépôt** | https://github.com/Kinzaachaouachi/ocr_project |
 | **Branche de travail** | `ocr` |
 | **Docs API** | http://127.0.0.1:8000/docs · `/redoc` |
